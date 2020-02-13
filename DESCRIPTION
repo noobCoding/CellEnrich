@@ -1,0 +1,26 @@
+Package: CellEnrich
+Title: Pathway Enrichment Analysis, Visualize for Single Cell Data
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Jinhwan",
+           family = "Kim",
+           role = c("aut", "cre"),
+           email = "hwanistic@gmail.com")
+Description: What the package does (one paragraph).
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports:
+    SingleCellExperiment,
+    Rtsne,
+    shinyCyJS,
+    shiny,
+    DT,
+    ggplot2,
+    Seurat,
+    htmltools,
+    magrittr,
+    shinymaterial
+Suggests: 
+    testthat (>= 2.1.0)
+RoxygenNote: 7.0.2
