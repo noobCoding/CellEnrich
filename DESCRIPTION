@@ -10,6 +10,17 @@ Description: What the package does (one paragraph).
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
+Imports:
+    SingleCellExperiment,
+    Rtsne,
+    shinyCyJS,
+    shiny,
+    DT,
+    ggplot2,
+    Seurat,
+    htmltools,
+    magrittr,
+    shinymaterial
 Suggests: 
     testthat (>= 2.1.0)
 RoxygenNote: 7.0.2
