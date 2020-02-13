@@ -1,10 +1,16 @@
+#' @importFrom DT datatable
 #' @export
 
 buildDT = function(pres2){
-  datatable(
+  DT::datatable(
     data.frame(
-      Name = names(pres2),
+      Geneset = names(pres2),
       Count = as.numeric(pres2)
-    )
+    ),
+    options = list(
+      dom = 'ltp'
+    ),
+    rownames = FALSE,
+    selection = 'single'
   )
 }
