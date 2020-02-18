@@ -13,6 +13,7 @@
 #' @import magrittr
 #' @import shinymaterial
 #' @import waiter
+#' @import shinyjs
 #'
 #' @export
 
@@ -23,101 +24,12 @@ CellEnrich = function(scData){
   require(Rtsne)
   require(ggplot2)
 
-  ui = material_page(
-    use_waitress(color = '#697682', percent_color = '#333333'),
-    title = "CellEnrich",
-    nav_bar_fixed = FALSE,
-    nav_bar_color = "light-blue darken-1",
-    font_color = '#ffffff',
-    include_fonts = FALSE,
-    include_nav_bar = TRUE,
-    include_icons = FALSE,
-
-    ## Tabs
-    material_tabs(
-      tabs = c(
-        "Start" = "tab_start",
-        "Cell" = "tab_cell",
-        "Cluster" = "tab_cluster"
-      ),
-      color = 'blue'
-    ),
-
-    ## navigator
-
-    # Define tab content
-    material_tab_content(
-      tab_id = 'tab_start',
-      material_row(
-        material_column(
-          material_card(title = 'card4',
-            fileInput(
-              inputId = 'fileinput',
-              label = 'upload RDS File',
-              accept = c('.RDS','.rds')
-            ),
-            div(
-              actionButton('btn','Submit', style = 'color : #e53935')
-              ,style = 'margin-left : 45%'
-            )
-          ),
-          width = 6
-        ),
-        material_column(
-          material_card(title = 'card5',
-            material_dropdown(
-              input_id = 'dropdowninput',
-              label = 'select Method',
-              choices = c('mean', 'median', '0'),
-              selected = 'mean'
-            )
-          ),
-          width = 6
-        ),
-        style = 'margin : 1em'
-      ),
-      textOutput('txt1')
-    ),
-
-    material_tab_content(
-      tab_id = "tab_cell",
-      tags$h1("cell Tab Content"),
-      material_button('btn2','btn2'),
-      #material_button('btn3','btn3'),
-      textOutput(outputId = 'txtbox'),
-      material_row(
-        material_column(
-          material_card(
-            title = 'card 1',
-            depth = 3,
-            plotOutput('img1', height = '600px')
-          ),
-        width = 6) ,
-        material_column(
-          material_card(
-            title = 'card 2',
-            depth = 3,
-            DT::dataTableOutput('tab', height = '600px')
-            ),
-          width =6),
-        style = 'margin : 1em'
-      ),
-      material_row(
-        material_card(
-          plotOutput('img2'), title = 'card 3', depth = 3
-        ), style = 'margin : 1em'
-      )
-    ),
-    material_tab_content(
-      tab_id = "tab_cluster",
-      tags$h1("clutser Tab Content")
-    ),
-  )
+  ui = CellEnrichUI()
 
   server = function(input, output, session){
 
     load("c2v7.RData")
-
+    A <- length(unique(unlist(genesets)))
     myf = function(genesetnames, pres){
       idx = which(names(genesets)== genesetnames)
       res = c()
@@ -129,7 +41,7 @@ CellEnrich = function(scData){
       return(res)
     }
 
-    ggobj2 = ggobj = dtobj = dfobj = pres = ''
+    ggobj2 = ggobj = dtobj = dfobj = pres = gt = pres2 = ''
     observeEvent(input$btn, {
 
       w = Waitress$new(selector = NULL, theme = 'overlay')$start()
@@ -137,11 +49,11 @@ CellEnrich = function(scData){
       n = cellNames(scData)
       s = findSigGenes(v)
       names(s) = n
-
+      # for test
       res = list()
       for(i in 1:length(s)){
         w$inc(1/length(s))
-        pvh = getHyperPvalue(s[[i]] , genesets)
+        pvh = getHyperPvalue(s[[i]], genesets)
         qvh = p.adjust(pvh, 'fdr')
         res[[i]] = unname(which(qvh<0.1))
       }
@@ -151,13 +63,14 @@ CellEnrich = function(scData){
 
       pres2 = sort(table(unlist(pres)), decreasing = T)
       names(pres2) = names(genesets)[as.numeric(names(pres2))]
+      pres2 <<- pres2
 
       dtobj <<- buildDT(pres2)
 
       tsneE = Rtsne(t(v), check_duplicates = FALSE, perplexity = 15)
 
-      ggobj <<- ggplot(nasDF(n), aes(x = name, fill = name)) +
-        geom_histogram(stat = 'count', binwidth = 0.2)
+      ggobj <<- ggplot(data.frame(table(n)), aes(x = n,y = Freq, fill = n)) +
+        geom_bar(stat = 'identity')
 
       dfobj = data.frame(tsneE$Y, col = n)
       colnames(dfobj) = c('x','y', 'col')
@@ -169,6 +82,12 @@ CellEnrich = function(scData){
       output$img1 = shiny::renderPlot(ggobj2)
       output$img2 = shiny::renderPlot(ggobj)
       output$tab = DT::renderDataTable(dtobj)
+      gt <<- groupTable()
+      dtobj2 = DT::datatable(gt, options = list(dom = 'ltp'), rownames = FALSE, selection = 'single')
+
+      output$tab2 = DT::renderDataTable(dtobj2)
+
+
 
     })
 
@@ -185,11 +104,35 @@ CellEnrich = function(scData){
       ggobj2 = ggplot(dfobj_new, aes(x = x, y = y, color = col, size = size)) +
         geom_point()
       output$img1 = shiny::renderPlot( ggobj2 )
+
     })
+
+    output$dynamic = renderUI({
+      if(input$btn3==0){return(NULL)}
+      input$btn3
+      numTabs = length(unique(gt[,1]))
+      lapply(1:numTabs, function(i){
+        DT::dataTableOutput(paste0('dt',i))
+      })
+
+    })
+
+    observeEvent(input$btn4, {
+      if(input$btn4==0){return(NULL)}
+      #shinyjs::hide('btn4')
+      #shinyjs::hide('btn3')
+      g = unique(gt[,1])
+      for(i in 1:length(g)){
+        t = paste0('output$dt',i,' = DT::renderDataTable(DT::datatable(gt[which(gt[,1]==g[',i,']),]))')
+        eval( parse( text = t ) )
+      }
+    })
+
   }
 
   shiny::shinyApp(ui,server, options = list(launch.browser = TRUE))
 }
+
 
 findPathway = function(s, w, genesets){
   res = list()
@@ -203,7 +146,139 @@ findPathway = function(s, w, genesets){
   return(res)
 }
 
+CellEnrichUI = function(){
+  material_page(
+    shinyjs::useShinyjs(),
+    use_waitress(color = '#697682', percent_color = '#333333'),
+    title = "CellEnrich",
+    nav_bar_fixed = FALSE,
+    nav_bar_color = "light-blue darken-1",
+    font_color = '#ffffff',
+    include_fonts = FALSE,
+    include_nav_bar = TRUE,
+    include_icons = FALSE,
 
+    ## Tabs
+    material_tabs(
+      tabs = c(
+        "Start" = "tab_start",
+        "Cell" = "tab_cell",
+        "Group" = "tab_group"
+      ),
+      color = 'blue'
+    ),
+
+    ## navigator
+
+    # Define tab content
+    material_tab_content(
+      tab_id = 'tab_start',
+      material_row(
+        material_column(
+          material_card(
+            title = 'card4',
+            fileInput(
+              inputId = 'fileinput',
+              label = 'upload RDS File',
+              accept = c('.RDS','.rds')
+            ),
+            div(
+              actionButton(
+                'btn',
+                'Submit',
+                style = 'color : #e53935'
+              ),
+              style = 'margin-left : 45%'
+            )
+          ),
+          width = 6
+        ),
+        material_column(
+          material_card(
+            title = 'card5',
+            material_dropdown(
+              input_id = 'dropdowninput',
+              label = 'select Method',
+              choices = c('median', 'GSVA'),
+              selected = 'median'
+            )
+          ),
+          width = 6
+        ),
+        style = 'margin : 1em'
+      ),
+      textOutput('txt1')
+    ),
+
+    material_tab_content(
+      tab_id = "tab_cell",
+      textOutput(outputId = 'txtbox'),
+      material_row(
+        material_column(
+          material_card(
+            title = 'card 1',
+            depth = 3,
+            plotOutput('img1', height = '700px')
+          ),
+          width = 6) ,
+        material_column(
+          material_card(
+            title = 'card 2',
+            depth = 3,
+            DT::dataTableOutput('tab', height = '600px'),
+            material_button('btn2','btn2'),
+          ),
+          width =6),
+        style = 'margin : 1em'
+      ),
+      material_row(
+        material_card(
+          plotOutput('img2'), title = 'card 3', depth = 3
+        ), style = 'margin : 1em'
+      )
+    ),
+    material_tab_content(
+      tab_id = "tab_group",
+      material_card(
+        DT::dataTableOutput('tab2'),
+        actionButton('btn3', 'btn3'),
+        actionButton('btn4', 'btn4'),
+        uiOutput('dynamic'),
+        depth = 3
+      )
+    ),
+  )
+}
+
+buildDT = function(pres2){
+  DT::datatable(
+    data.frame(
+      Geneset = names(pres2),
+      Count = as.numeric(pres2)
+    ),
+    options = list(
+      dom = 'ltp'
+    ),
+    rownames = FALSE,
+    selection = 'single'
+  )
+}
+
+mapColor = function(v){
+  as.factor(v)
+}
+
+getHyperPvalue <- function(genes, genesets) {
+  pv = sapply(1:length(genesets),function(i){
+    q <- length(intersect(genesets[[i]], genes))
+    m <- length(genesets[[i]])
+    n <- A - m
+    k <- length(genes)
+    1 - phyper(q - 1, m, n, k)
+  })
+  names(pv) <- names(genesets)
+  return(pv)
+}
 
 
 # load sample Data
@@ -211,3 +286,43 @@ findPathway = function(s, w, genesets){
 # load sample geneset Data
 # load("c2v7.RData")
 
+groupTable = function(){
+
+  # for pres2
+  genesetIdx = sapply(names(pres2), function(i){which(i==names(genesets))}, USE.NAMES = FALSE)
+  pres2Idx = pres2
+  names(pres2Idx) = genesetIdx
+
+  groups = as.character(unique(dfobj$col))
+  res = data.frame(stringsAsFactors = FALSE)
+
+  for(i in 1:length(groups)){
+    pathways = rep(0,length(genesets))
+    names(pathways) = 1:length(genesets)
+    tt = table(unlist(pres[which(dfobj$col==groups[i])]))
+    pathways[as.numeric(names(tt))] = unname(tt)
+
+    pathways = pathways[which(pathways!=0)] # remove zero genesets
+
+    # what genesets are enriched per each group.
+    tot = sum(pres2Idx)
+    gt = sort(sapply(1:length(pathways), function(i){
+      q = pathways[i] # selected white ball
+      m = unname(pres2Idx[names(pathways[i])]) # total white ball
+      n = tot-m # total black ball
+      k = sum(pathways)
+      round(phyper(q-1,m,n,k),4)
+    }))
+    gt = gt[which(gt<0.25)] # pvalue 0.25
+    res = rbind(res, cbind(groups[i], names(gt), unname(gt)))
+  }
+  colnames(res) = c('groups',"genesetidx", 'pvalue')
+
+  res$groups = as.character(res$groups)
+  res$genesetidx = as.numeric(as.character(res$genesetidx))
+  res$genesetidx = sapply(res$genesetidx, function(i){names(genesets)[i]})
+  res$pvalue = as.numeric(as.character(res$pvalue))
+
+  return(res)
+
+}

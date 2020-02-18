@@ -4,12 +4,12 @@
 \alias{findSigGenes}
 \title{findSigGenes}
 \usage{
-findSigGenes(v, method = "mean")
+findSigGenes(v, method = "median")
 }
 \arguments{
-\item{v}{v}
+\item{v}{count data}
 
-\item{method}{mean or median or abs}
+\item{method}{mean or pos}
 }
 \description{
 define significant genes along cell.
