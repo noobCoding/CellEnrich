@@ -14,6 +14,7 @@
 #' @import shinymaterial
 #' @import waiter
 #' @import shinyjs
+#' @import slickR
 #'
 #' @export
 
@@ -23,12 +24,95 @@ CellEnrich = function(scData){
   require(waiter)
   require(Rtsne)
   require(ggplot2)
+  require(DT)
+  require(slickR)
 
   ui = CellEnrichUI()
 
   server = function(input, output, session){
 
+    buildDT = function(pres2){
+      DT::datatable(
+        data.frame(
+          Geneset = names(pres2),
+          Count = as.numeric(pres2)
+        ),
+        options = list(
+          dom = 'ltp'
+        ),
+        rownames = FALSE,
+        selection = 'single'
+      )
+    }
+
+    mapColor = function(v){
+      as.factor(v)
+    }
+
+
+
+
+    # load sample Data
+    # yan = readRDS('yan.rds')
+    # load sample geneset Data
+    # load("c2v7.RData")
+
+    groupTable = function(){
+
+      # for pres2
+      genesetIdx = sapply(names(pres2), function(i){which(i==names(genesets))}, USE.NAMES = FALSE)
+      pres2Idx = pres2
+      names(pres2Idx) = genesetIdx
+
+      groups = as.character(unique(dfobj$col))
+      res = data.frame(stringsAsFactors = FALSE)
+
+      for(i in 1:length(groups)){
+        pathways = rep(0,length(genesets))
+        names(pathways) = 1:length(genesets)
+        tt = table(unlist(pres[which(dfobj$col==groups[i])]))
+        pathways[as.numeric(names(tt))] = unname(tt)
+
+        pathways = pathways[which(pathways!=0)] # remove zero genesets
+
+        # what genesets are enriched per each group.
+        tot = sum(pres2Idx)
+        gt = sort(sapply(1:length(pathways), function(i){
+          q = pathways[i] # selected white ball
+          m = unname(pres2Idx[names(pathways[i])]) # total white ball
+          n = tot-m # total black ball
+          k = sum(pathways)
+          round(phyper(q-1,m,n,k),4)
+        }))
+        gt = gt[which(gt<0.25)] # pvalue 0.25
+        res = rbind(res, cbind(groups[i], names(gt), unname(gt)))
+      }
+      colnames(res) = c('groups',"genesetidx", 'pvalue')
+
+      res$groups = as.character(res$groups)
+      res$genesetidx = as.numeric(as.character(res$genesetidx))
+      res$genesetidx = sapply(res$genesetidx, function(i){names(genesets)[i]})
+      res$pvalue = as.numeric(as.character(res$pvalue))
+
+      return(res)
+
+    }
+
+
+    getHyperPvalue <- function(genes, genesets) {
+      pv = sapply(1:length(genesets),function(i){
+        q <- length(intersect(genesets[[i]], genes))
+        m <- length(genesets[[i]])
+        n <- A - m
+        k <- length(genes)
+        1 - phyper(q - 1, m, n, k)
+      })
+      names(pv) <- names(genesets)
+      return(pv)
+    }
+
     load("c2v7.RData")
+    #load("c2v7idx.RData")
     A <- length(unique(unlist(genesets)))
     myf = function(genesetnames, pres){
       idx = which(names(genesets)== genesetnames)
@@ -110,11 +194,25 @@ CellEnrich = function(scData){
     output$dynamic = renderUI({
       if(input$btn3==0){return(NULL)}
       input$btn3
-      numTabs = length(unique(gt[,1]))
-      lapply(1:numTabs, function(i){
-        DT::dataTableOutput(paste0('dt',i))
-      })
 
+      Tabs = unique(gt[,1])
+      numTabs = length(Tabs)
+
+      tagList(
+        material_row(
+          lapply(1:numTabs, function(i){
+            material_column(
+              material_card(
+                title = Tabs[i],
+                DT::dataTableOutput(paste0('dt',i)),
+                #material_button(paste0('btn4card',i),label = paste0('min',i)),
+                divider = TRUE
+              ),
+              width = 4
+            )
+          })
+        )
+      )
     })
 
     observeEvent(input$btn4, {
@@ -123,7 +221,14 @@ CellEnrich = function(scData){
       #shinyjs::hide('btn3')
       g = unique(gt[,1])
       for(i in 1:length(g)){
-        t = paste0('output$dt',i,' = DT::renderDataTable(DT::datatable(gt[which(gt[,1]==g[',i,']),]))')
+        t = paste0(
+          'output$dt',
+          i,
+          ' = DT::renderDataTable(datatable(gt[which(gt[,1]==g[',i,']),]',
+          ',options = list(dom = ',"'ltp'",', autoWidth = TRUE), rownames = FALSE',
+          ', selection = ',"'single'",
+          '))')
+
         eval( parse( text = t ) )
       }
     })
@@ -177,11 +282,6 @@ CellEnrichUI = function(){
         material_column(
           material_card(
             title = 'card4',
-            fileInput(
-              inputId = 'fileinput',
-              label = 'upload RDS File',
-              accept = c('.RDS','.rds')
-            ),
             div(
               actionButton(
                 'btn',
@@ -250,79 +350,3 @@ CellEnrichUI = function(){
   )
 }
 
-buildDT = function(pres2){
-  DT::datatable(
-    data.frame(
-      Geneset = names(pres2),
-      Count = as.numeric(pres2)
-    ),
-    options = list(
-      dom = 'ltp'
-    ),
-    rownames = FALSE,
-    selection = 'single'
-  )
-}
-
-mapColor = function(v){
-  as.factor(v)
-}
-
-getHyperPvalue <- function(genes, genesets) {
-  pv = sapply(1:length(genesets),function(i){
-    q <- length(intersect(genesets[[i]], genes))
-    m <- length(genesets[[i]])
-    n <- A - m
-    k <- length(genes)
-    1 - phyper(q - 1, m, n, k)
-  })
-  names(pv) <- names(genesets)
-  return(pv)
-}
-
-
-# load sample Data
-# yan = readRDS('yan.rds')
-# load sample geneset Data
-# load("c2v7.RData")
-
-groupTable = function(){
-
-  # for pres2
-  genesetIdx = sapply(names(pres2), function(i){which(i==names(genesets))}, USE.NAMES = FALSE)
-  pres2Idx = pres2
-  names(pres2Idx) = genesetIdx
-
-  groups = as.character(unique(dfobj$col))
-  res = data.frame(stringsAsFactors = FALSE)
-
-  for(i in 1:length(groups)){
-    pathways = rep(0,length(genesets))
-    names(pathways) = 1:length(genesets)
-    tt = table(unlist(pres[which(dfobj$col==groups[i])]))
-    pathways[as.numeric(names(tt))] = unname(tt)
-
-    pathways = pathways[which(pathways!=0)] # remove zero genesets
-
-    # what genesets are enriched per each group.
-    tot = sum(pres2Idx)
-    gt = sort(sapply(1:length(pathways), function(i){
-      q = pathways[i] # selected white ball
-      m = unname(pres2Idx[names(pathways[i])]) # total white ball
-      n = tot-m # total black ball
-      k = sum(pathways)
-      round(phyper(q-1,m,n,k),4)
-    }))
-    gt = gt[which(gt<0.25)] # pvalue 0.25
-    res = rbind(res, cbind(groups[i], names(gt), unname(gt)))
-  }
-  colnames(res) = c('groups',"genesetidx", 'pvalue')
-
-  res$groups = as.character(res$groups)
-  res$genesetidx = as.numeric(as.character(res$genesetidx))
-  res$genesetidx = sapply(res$genesetidx, function(i){names(genesets)[i]})
-  res$pvalue = as.numeric(as.character(res$pvalue))
-
-  return(res)
-
-}
