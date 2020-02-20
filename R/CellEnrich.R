@@ -48,6 +48,16 @@ CellEnrich <- function(scData) {
       as.factor(v)
     }
 
+    changeCol = function(v){
+      cols = briterhex(scales::hue_pal()(length(unique(v))))
+      uv = unique(v)
+      res = c()
+      for(i in 1:length(uv)){
+        res[which(v==uv[i])] = cols[i]
+      }
+      return(res)
+    }
+
     # load sample Data
     # yan = readRDS('yan.rds')
     # load sample geneset Data
@@ -157,19 +167,16 @@ CellEnrich <- function(scData) {
       dfobj <- data.frame(tsneE$Y, col = n)
       colnames(dfobj) <- c("x", "y", "col")
       dfobj <<- dfobj
-
+      # scatter plot
       ggobj2 <<- ggplot(dfobj, aes(x = x, y = y, color = col)) +
-        geom_point() # scatter plot
+        geom_point() +
+        scale_color_manual( values = briterhex(scales::hue_pal()(length(unique(dfobj$col)))))
 
       output$img1 <- shiny::renderPlot(ggobj2)
       output$img2 <- shiny::renderPlot(ggobj)
       output$img3 <- shiny::renderPlot(ggobj2)
       output$tab <- DT::renderDataTable(dtobj)
       gt <<- groupTable()
-
-      # dtobj2 = DT::datatable(gt, options = list(dom = 'ltp'), rownames = FALSE, selection = 'single')
-
-      # output$tab2 = DT::renderDataTable(dtobj2)
     })
 
     observeEvent(input$btn2, {
@@ -178,14 +185,23 @@ CellEnrich <- function(scData) {
       }
       cellValues <- input$tab_cell_clicked
 
+      selectedRow = input$tab_rows_selected # check none selected
+
+      # if not selected : return;
+      if(is.null(selectedRow)){
+        output$img1 <- shiny::renderPlot(ggobj2)
+        return(NULL)
+      }
       cellValues <- cellValues$value
 
-      dfobj_new <- data.frame(dfobj, size = 1)
-      colnames(dfobj_new) <- c("x", "y", "col", "size")
+      dfobj_new <- data.frame(dfobj[order(dfobj$col),])
 
-      dfobj_new$size[myf(cellValues, pres)] <- 2
-      ggobj2 <- ggplot(dfobj_new, aes(x = x, y = y, color = col, size = size)) +
-        geom_point()
+      colV = changeCol(dfobj_new$col)
+      colV[-myf(cellValues, pres)] = '#95a5a6'
+
+      ggobj2 <- ggplot(dfobj_new, aes(x = x, y = y)) +
+        geom_point(colour = colV)
+
       output$img1 <- shiny::renderPlot(ggobj2)
     })
 
@@ -205,8 +221,8 @@ CellEnrich <- function(scData) {
             material_column(
               # solved material card
               shiny::tags$div(
-                class = paste("card", "", ""), # depth = null, color = null ; color will define in style
-                style = paste0("background-color : ", CardColors[i]),
+                class = paste("card", "z-depth-", "5"), # depth = null, color = null ; color will define in style
+                style = paste0("border : ", 'solid 0.5em ',CardColors[i]),
                 shiny::tags$div(
                   class = "card-content",
                   shiny::tags$span(class = "card-title", Tabs[i]), # title
@@ -225,20 +241,13 @@ CellEnrich <- function(scData) {
       if (input$btn4 == 0) {
         return(NULL)
       }
-      # shinyjs::hide('btn4')
-      # shinyjs::hide('btn3')
       g <- sort(unique(gt[, 1]))
 
       for (i in 1:length(g)) {
         t <- paste0(
-          "output$dt",
-          i,
-          " = DT::renderDataTable(datatable(gt[which(gt[,1]==g[", i, "]),2:3]", # removed group column
-          ",options = list(dom = ", "'ltp'", ",scroller = TRUE, scrollX = TRUE, autoWidth = TRUE, lengthChange = FALSE), rownames = FALSE",
-          ", selection = ", "'single'", ", colnames =c(", "'Geneset'", ",'P-value'", ")",
-          "))"
-        )
-
+          "output$dt", i, " = DT::renderDataTable(datatable(gt[which(gt[,1]==g[", i, "]),2:3]", # removed group column
+          ", options = list(dom = ", "'ltp'", ",scroller = TRUE, scrollX = TRUE, autoWidth = TRUE, lengthChange = FALSE), rownames = FALSE",
+          ", selection = ", "'single'", ", colnames =c(", "'Geneset'",",","'P-value'",")))")
         eval(parse(text = t))
       }
     })
@@ -247,37 +256,18 @@ CellEnrich <- function(scData) {
       if (input$btn5 == 0) {
         return(NULL)
       }
+      # modify ggobj2
       output$img3 <- shiny::renderPlot(ggobj2)
     })
   }
-
   shiny::shinyApp(ui, server, options = list(launch.browser = TRUE))
-}
-
-
-findPathway <- function(s, w, genesets) {
-  res <- list()
-  for (i in 1:length(s)) {
-    w$inc(1 / length(s))
-    pvh <- getHyperPvalue(s[[i]], genesets)
-    qvh <- p.adjust(pvh, "fdr")
-    res[[i]] <- unname(which(qvh < 0.1))
-  }
-  w$hide()
-  return(res)
 }
 
 CellEnrichUI <- function() {
   material_page(
     shinyjs::useShinyjs(),
-    tags$head(
-      tags$style(
-        HTML("
-        .display.dataTable.no-footer{
-          width : 100% !important;
-        }")
-      )
-    ),
+    # dynamic datatable full width
+    tags$head(tags$style(HTML(".display.dataTable.no-footer{width : 100% !important;}"))),
     use_waitress(color = "#697682", percent_color = "#333333"),
     title = "CellEnrich",
     nav_bar_fixed = FALSE,
@@ -297,21 +287,14 @@ CellEnrichUI <- function() {
       color = "blue"
     ),
 
-    ## navigator
-
     # Define tab content
     material_tab_content(
       tab_id = "tab_start",
       material_row(
         material_column(
           material_card(
-            title = "card4",
             div(
-              actionButton(
-                "btn",
-                "Submit",
-                style = "color : #e53935"
-              ),
+              actionButton("btn","Start CellEnrich"),
               style = "margin-left : 45%"
             )
           ),
@@ -369,10 +352,9 @@ CellEnrichUI <- function() {
       tab_id = "tab_group",
       material_card(
         plotOutput("img3"),
-        # DT::dataTableOutput('tab2'),
         actionButton("btn3", "Create Table"),
         actionButton("btn4", "Fill Table"),
-        # actionButton('btn5', 'Load Image'),
+        actionButton("btn5", "Colorize"),
         uiOutput("dynamic"),
         depth = 3
       )
@@ -380,10 +362,10 @@ CellEnrichUI <- function() {
   )
 }
 
-briterhex =function(colors){
+briterhex = function(colors){
   res = c()
   for(i in 1:length(colors)){
-    v = as.vector(col2rgb(colors[i])) * 1.2
+    v = as.vector(col2rgb(colors[i])) * 1.3
     v = sapply(v, function(i){min(i,255)})
     res[i] = rgb(v[1],v[2],v[3],max = 255)
   }
