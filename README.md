@@ -23,3 +23,9 @@ Pathway enrichment analysis / visualize for Single Cell Data
 
 <img src='https://user-images.githubusercontent.com/6457691/74725628-8131ba00-5281-11ea-8c29-fd6446681e20.png' width = '400'/>
 <img src='https://user-images.githubusercontent.com/6457691/74725638-83941400-5281-11ea-9a4e-32e7faeec329.png' width = '400'/>
+
+## 0220
+
+- dynamic datatable precisely modified
+
+<img src='https://user-images.githubusercontent.com/6457691/74899286-d257c000-53df-11ea-8d14-34f53d77a812.png' width = '400'/>
