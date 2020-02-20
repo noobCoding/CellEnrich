@@ -28,7 +28,9 @@ Pathway enrichment analysis / visualize for Single Cell Data
 
 - dynamic datatable precisely modified
 - dynamic datatable colored by each's group color in graph
+- gray color feature added
 
 <img src='https://user-images.githubusercontent.com/6457691/74899286-d257c000-53df-11ea-8d14-34f53d77a812.png' width = '400'/>
 <img src='https://user-images.githubusercontent.com/6457691/74907956-dc85b880-53f7-11ea-82c4-ef276fe64fa6.png' width = '400'/>
+<img src='https://user-images.githubusercontent.com/6457691/74936214-19b86d80-542d-11ea-88e8-98e8c067c124.gif' width = '400'/>
 
