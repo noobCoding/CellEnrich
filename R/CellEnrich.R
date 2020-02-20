@@ -204,7 +204,7 @@ CellEnrich = function(scData){
             material_column(
               material_card(
                 title = Tabs[i],
-                DT::dataTableOutput(paste0('dt',i)),
+                DT::dataTableOutput(paste0('dt',i), width = '100%'),
                 #material_button(paste0('btn4card',i),label = paste0('min',i)),
                 divider = TRUE
               ),
@@ -224,8 +224,8 @@ CellEnrich = function(scData){
         t = paste0(
           'output$dt',
           i,
-          ' = DT::renderDataTable(datatable(gt[which(gt[,1]==g[',i,']),]',
-          ',options = list(dom = ',"'ltp'",', autoWidth = TRUE), rownames = FALSE',
+          ' = DT::renderDataTable(datatable(gt[which(gt[,1]==g[',i,']),2:3]', # removed group column
+          ',options = list(dom = ',"'ltp'",',scroller = TRUE, scrollX = TRUE, autoWidth = TRUE, lengthChange = FALSE), rownames = FALSE',
           ', selection = ',"'single'",
           '))')
 
@@ -254,6 +254,14 @@ findPathway = function(s, w, genesets){
 CellEnrichUI = function(){
   material_page(
     shinyjs::useShinyjs(),
+    tags$head(
+      tags$style(
+        HTML("
+        .display.dataTable.no-footer{
+          width : 100% !important;
+        }")
+      )
+    ),
     use_waitress(color = '#697682', percent_color = '#333333'),
     title = "CellEnrich",
     nav_bar_fixed = FALSE,
