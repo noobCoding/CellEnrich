@@ -15,6 +15,7 @@
 #' @import waiter
 #' @import shinyjs
 #' @import scales
+#' @import sortable
 #'
 #' @export
 
@@ -26,8 +27,11 @@ CellEnrich <- function(scData) {
   require(ggplot2)
   require(DT)
   require(scales)
+  require(sortable)
 
   ui <- CellEnrichUI()
+
+  options(useFancyQuotes = FALSE)
 
   server <- function(input, output, session) {
     buildDT <- function(pres2) {
@@ -227,7 +231,8 @@ CellEnrich <- function(scData) {
                   class = "card-content",
                   shiny::tags$span(class = "card-title", Tabs[i]), # title
                   shiny::tags$div(class = "divider"), # divider = TRUE
-                  DT::dataTableOutput(paste0("dt", i), width = "100%")
+                  DT::dataTableOutput(paste0("dt", i), width = "100%"),
+                  actionButton(inputId = paste0('ts',i),label = 'ToSort')
                 )
               ),
               width = 4
@@ -250,6 +255,9 @@ CellEnrich <- function(scData) {
           ", selection = ", "'single'", ", colnames =c(", "'Geneset'",",","'P-value'",")))")
         eval(parse(text = t))
       }
+
+      shinyjs::hide('btn3')
+      shinyjs::hide('btn4')
     })
 
     observeEvent(input$btn5, {
@@ -259,6 +267,15 @@ CellEnrich <- function(scData) {
       # modify ggobj2
       output$img3 <- shiny::renderPlot(ggobj2)
     })
+
+    observeEvent(input$btn6, {
+      g <- sort(unique(gt[, 1]))
+      for(i in 1:length(g)){
+        shinyjs::runjs(code = paste0("$('#ts",i,"').attr(","'onClick'", ',', sortItem(i), ')'))
+      }
+      shinyjs::hide('btn6')
+    })
+
   }
   shiny::shinyApp(ui, server, options = list(launch.browser = TRUE))
 }
@@ -355,6 +372,8 @@ CellEnrichUI <- function() {
         actionButton("btn3", "Create Table"),
         actionButton("btn4", "Fill Table"),
         actionButton("btn5", "Colorize"),
+        actionButton('btn6', 'call SortButtons'),
+        rank_list(text = 'text', labels = '', input_id = 'rlist', css_id = 'mysortable'),
         uiOutput("dynamic"),
         depth = 3
       )
@@ -370,4 +389,22 @@ briterhex = function(colors){
     res[i] = rgb(v[1],v[2],v[3],max = 255)
   }
   return(res)
+}
+
+# actionButton with Onclick Attributes
+myButton = function(inputId, label, width = NULL, onClick = NULL, ...){
+  value <- restoreInput(id = inputId, default = NULL)
+  tags$button(id = inputId, style = if (!is.null(width))
+    paste0("width: ", validateCssUnit(width), ";"),
+    type = "button", class = "btn btn-default action-button",
+    onClick = onClick,
+    `data-val` = value, list(label),
+    ...)
+}
+
+sortItem = function(label){
+  paste0(
+    "$('#mysortable')", '.append(', "`<div class=", "'rank-list-item'", ' draggable=',"'true'",
+    ' style = ', "'transform: translateZ(0px);'", ">", label," </div>`)"
+  )
 }
