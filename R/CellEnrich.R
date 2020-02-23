@@ -52,12 +52,12 @@ CellEnrich <- function(scData) {
       as.factor(v)
     }
 
-    changeCol = function(v){
-      cols = briterhex(scales::hue_pal()(length(unique(v))))
-      uv = unique(v)
-      res = c()
-      for(i in 1:length(uv)){
-        res[which(v==uv[i])] = cols[i]
+    changeCol <- function(v) {
+      cols <- briterhex(scales::hue_pal()(length(unique(v))))
+      uv <- unique(v)
+      res <- c()
+      for (i in 1:length(uv)) {
+        res[which(v == uv[i])] <- cols[i]
       }
       return(res)
     }
@@ -139,6 +139,7 @@ CellEnrich <- function(scData) {
 
     ggobj2 <- ggobj <- dtobj <- dfobj <- pres <- gt <- pres2 <- ""
     observeEvent(input$btn, {
+      shinyjs::hide("btn")
       w <- Waitress$new(selector = NULL, theme = "overlay")$start()
       v <- extractArray(scData)
       n <- cellNames(scData)
@@ -174,7 +175,7 @@ CellEnrich <- function(scData) {
       # scatter plot
       ggobj2 <<- ggplot(dfobj, aes(x = x, y = y, color = col)) +
         geom_point() +
-        scale_color_manual( values = briterhex(scales::hue_pal()(length(unique(dfobj$col)))))
+        scale_color_manual(values = briterhex(scales::hue_pal()(length(unique(dfobj$col)))))
 
       output$img1 <- shiny::renderPlot(ggobj2)
       output$img2 <- shiny::renderPlot(ggobj)
@@ -189,19 +190,19 @@ CellEnrich <- function(scData) {
       }
       cellValues <- input$tab_cell_clicked
 
-      selectedRow = input$tab_rows_selected # check none selected
+      selectedRow <- input$tab_rows_selected # check none selected
 
       # if not selected : return;
-      if(is.null(selectedRow)){
+      if (is.null(selectedRow)) {
         output$img1 <- shiny::renderPlot(ggobj2)
         return(NULL)
       }
       cellValues <- cellValues$value
 
-      dfobj_new <- data.frame(dfobj[order(dfobj$col),])
+      dfobj_new <- data.frame(dfobj[order(dfobj$col), ])
 
-      colV = changeCol(dfobj_new$col)
-      colV[-myf(cellValues, pres)] = '#95a5a6'
+      colV <- changeCol(dfobj_new$col)
+      colV[-myf(cellValues, pres)] <- "#95a5a6"
 
       ggobj2 <- ggplot(dfobj_new, aes(x = x, y = y)) +
         geom_point(colour = colV)
@@ -226,13 +227,13 @@ CellEnrich <- function(scData) {
               # solved material card
               shiny::tags$div(
                 class = paste("card", "z-depth-", "5"), # depth = null, color = null ; color will define in style
-                style = paste0("border : ", 'solid 0.5em ',CardColors[i]),
+                style = paste0("border : ", "solid 0.5em ", CardColors[i]),
                 shiny::tags$div(
                   class = "card-content",
                   shiny::tags$span(class = "card-title", Tabs[i]), # title
                   shiny::tags$div(class = "divider"), # divider = TRUE
                   DT::dataTableOutput(paste0("dt", i), width = "100%"),
-                  actionButton(inputId = paste0('ts',i),label = 'ToSort')
+                  actionButton(inputId = paste0("ts", i), label = "ToSort")
                 )
               ),
               width = 4
@@ -252,30 +253,105 @@ CellEnrich <- function(scData) {
         t <- paste0(
           "output$dt", i, " = DT::renderDataTable(datatable(gt[which(gt[,1]==g[", i, "]),2:3]", # removed group column
           ", options = list(dom = ", "'ltp'", ",scroller = TRUE, scrollX = TRUE, autoWidth = TRUE, lengthChange = FALSE), rownames = FALSE",
-          ", selection = ", "'single'", ", colnames =c(", "'Geneset'",",","'P-value'",")))")
+          ", selection = ", "'single'", ", colnames =c(", "'Geneset'", ",", "'P-value'", ")))"
+        )
         eval(parse(text = t))
       }
 
-      shinyjs::hide('btn3')
-      shinyjs::hide('btn4')
+      shinyjs::hide("btn3")
+      shinyjs::hide("btn4")
     })
 
     observeEvent(input$btn5, {
       if (input$btn5 == 0) {
         return(NULL)
       }
+
+      rlobj = data.frame(stringsAsFactors = FALSE)
+
+      items = input$rlist
+
+      for(i in 1:length(items)){
+        kk = strsplit(items[[i]], ' @')[[1]]
+        name = kk[1]
+        location = kk[2]
+        rlobj = rbind(rlobj, cbind(name, location))
+      }
+      colnames(rlobj) = c('name', 'location')
+      rlobj$name = as.character(rlobj$name)
+      rlobj$location = as.character(rlobj$location)
+
+      #print(rlobj) DONE
+      output$tab2 = DT::renderDataTable(datatable(rlobj, rownames = FALSE))
+
+      getCellValues = function(rlobj){
+        ret = list()
+        for(i in 1:nrow(rlobj)){
+
+          thisGeneset = which(names(genesets)==rlobj[i,1])
+          thisGroup = rlobj[i,2]
+
+          thisCellsIdx = which(dfobj$col==thisGroup)
+          thisCells = dfobj[thisCellsIdx,]
+
+          res = c()
+          for(j in 1:nrow(thisCells)){
+            if( thisGeneset %in% pres[[ rn[j] ]] ){
+              res = c(res,thisCellsIdx[j])
+            }
+          }
+
+          ret[[i]] = res
+        }
+        names(ret) = rlobj$location
+        return(ret)
+      }
+      cellValues <- getCellValues(rlobj)
+
+
+      dfobj_new <- data.frame(dfobj)
+
+      for(i in 1:length(cellValues)){
+        x = mean(as.numeric(dfobj_new$x[cellValues[[i]]]))
+        y = mean(as.numeric(dfobj_new$y[cellValues[[i]]]))
+        dfobj_new = rbind(dfobj_new, c( x, y, rlobj[i,2]))
+      }
+      colnames(dfobj_new) = c('x','y','col')
+
+      cellValues = c(unname(unlist(cellValues)), (nrow(dfobj)+1):nrow(dfobj_new))
+      dfobj_new$x = round(as.numeric(dfobj_new$x), 4)
+      dfobj_new$y = round(as.numeric(dfobj_new$y), 4)
+      colV <- changeCol(dfobj_new$col)
+      colV[-cellValues] <- "#95A5A6" # gray color
+
+      ggobj2 <-
+        ggplot(dfobj_new, aes(x = x, y = y)) +
+        geom_point(colour = colV)
+
+
       # modify ggobj2
       output$img3 <- shiny::renderPlot(ggobj2)
     })
 
     observeEvent(input$btn6, {
+      shinyjs::runjs(code = '$("#mysortable .rank-list-item").remove()')
       g <- sort(unique(gt[, 1]))
-      for(i in 1:length(g)){
-        shinyjs::runjs(code = paste0("$('#ts",i,"').attr(","'onClick'", ',', sortItem(i), ')'))
+      for (i in 1:length(g)) {
+        item <- paste0("$('#dt", i, " .selected td')[0].innerText")
+        shinyjs::runjs(
+          code = paste0(
+            "$('#ts", i, "').attr(", "'onClick'", ",",
+            '"', sortItem(paste0(item, "+ ' @", g[i], "'")),
+            ";$('#ts", i, "').attr('disabled', true);", '")'
+          )
+        )
       }
-      shinyjs::hide('btn6')
+      shinyjs::hide("btn6")
     })
 
+    observeEvent(input$btn7, {
+      shinyjs::runjs(code = '$("#mysortable .rank-list-item").remove(); $("#dynamic button").attr("disabled",false)')
+    })
   }
   shiny::shinyApp(ui, server, options = list(launch.browser = TRUE))
 }
@@ -311,7 +387,7 @@ CellEnrichUI <- function() {
         material_column(
           material_card(
             div(
-              actionButton("btn","Start CellEnrich"),
+              actionButton("btn", "Start CellEnrich"),
               style = "margin-left : 45%"
             )
           ),
@@ -371,9 +447,15 @@ CellEnrichUI <- function() {
         plotOutput("img3"),
         actionButton("btn3", "Create Table"),
         actionButton("btn4", "Fill Table"),
-        actionButton("btn5", "Colorize"),
-        actionButton('btn6', 'call SortButtons'),
-        rank_list(text = 'text', labels = '', input_id = 'rlist', css_id = 'mysortable'),
+        actionButton("btn6", "call SortButtons"),
+        material_card(
+          title = 'TimePlot', divider = TRUE,
+          tags$p('If list not recognized, please re-move their position'),
+          rank_list(text = "List for TimePlot", labels = "", input_id = "rlist", css_id = "mysortable"),
+          actionButton("btn5", "Generate Time Plot"),
+          actionButton("btn7", "Clear List"),
+        ),
+        DT::dataTableOutput('tab2'),
         uiOutput("dynamic"),
         depth = 3
       )
@@ -381,30 +463,36 @@ CellEnrichUI <- function() {
   )
 }
 
-briterhex = function(colors){
-  res = c()
-  for(i in 1:length(colors)){
-    v = as.vector(col2rgb(colors[i])) * 1.3
-    v = sapply(v, function(i){min(i,255)})
-    res[i] = rgb(v[1],v[2],v[3],max = 255)
+briterhex <- function(colors) {
+  res <- c()
+  for (i in 1:length(colors)) {
+    v <- as.vector(col2rgb(colors[i])) * 1.3
+    v <- sapply(v, function(i) {
+      min(i, 255)
+    })
+    res[i] <- rgb(v[1], v[2], v[3], max = 255)
   }
   return(res)
 }
 
 # actionButton with Onclick Attributes
-myButton = function(inputId, label, width = NULL, onClick = NULL, ...){
+myButton <- function(inputId, label, width = NULL, onClick = NULL, ...) {
   value <- restoreInput(id = inputId, default = NULL)
-  tags$button(id = inputId, style = if (!is.null(width))
-    paste0("width: ", validateCssUnit(width), ";"),
+  tags$button(
+    id = inputId, style = if (!is.null(width)) {
+      paste0("width: ", validateCssUnit(width), ";")
+    },
     type = "button", class = "btn btn-default action-button",
     onClick = onClick,
     `data-val` = value, list(label),
-    ...)
+    ...
+  )
 }
 
-sortItem = function(label){
+sortItem <- function(label) {
   paste0(
-    "$('#mysortable')", '.append(', "`<div class=", "'rank-list-item'", ' draggable=',"'true'",
-    ' style = ', "'transform: translateZ(0px);'", ">", label," </div>`)"
+    "$('#mysortable')",
+    ".append(", "`<div class=", "'rank-list-item'", " draggable='true'",
+    " style = 'transform: translateZ(0px);'>` + ", label, " + `</div>`)"
   )
 }
