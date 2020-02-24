@@ -54,7 +54,7 @@ CellEnrich <- function(scData) {
 
     changeCol <- function(v) {
       cols <- briterhex(scales::hue_pal()(length(unique(v))))
-      uv <- unique(v)
+      uv <- sort(unique(v))
       res <- c()
       for (i in 1:length(uv)) {
         res[which(v == uv[i])] <- cols[i]
@@ -76,26 +76,24 @@ CellEnrich <- function(scData) {
       pres2Idx <- pres2
       names(pres2Idx) <- genesetIdx
 
-      groups <- as.character(unique(dfobj$col))
+      groups <- sort(as.character(unique(dfobj$col)))
       res <- data.frame(stringsAsFactors = FALSE)
 
+      tot <- sum(pres2Idx)
+
       for (i in 1:length(groups)) {
-        pathways <- rep(0, length(genesets))
-        names(pathways) <- 1:length(genesets)
-        tt <- table(unlist(pres[which(dfobj$col == groups[i])]))
-        pathways[as.numeric(names(tt))] <- unname(tt)
 
-        pathways <- pathways[which(pathways != 0)] # remove zero genesets
-
+        pathways <- table(unlist(pres[which(dfobj$col == groups[i])]))
         # what genesets are enriched per each group.
-        tot <- sum(pres2Idx)
-        gt <- sort(sapply(1:length(pathways), function(i) {
-          q <- pathways[i] # selected white ball
-          m <- unname(pres2Idx[names(pathways[i])]) # total white ball
+
+        k <- sum(pathways) # selected ball
+
+        gt <- sapply(1:length(pathways), function(j) {
+          q <- pathways[j] # selected white ball, 1
+          m <- unname(pres2Idx[names(pathways[j])]) # total white ball, 28
           n <- tot - m # total black ball
-          k <- sum(pathways)
-          round(phyper(q - 1, m, n, k), 4)
-        }))
+          round(1-phyper(q - 1, m, n, k), 4)
+        })
         gt <- gt[which(gt < 0.25)] # pvalue 0.25
         res <- rbind(res, cbind(groups[i], names(gt), unname(gt)))
       }
@@ -113,10 +111,10 @@ CellEnrich <- function(scData) {
 
     getHyperPvalue <- function(genes, genesets) {
       pv <- sapply(1:length(genesets), function(i) {
-        q <- length(intersect(genesets[[i]], genes))
-        m <- length(genesets[[i]])
-        n <- A - m
-        k <- length(genes)
+        q <- length(intersect(genesets[[i]], genes)) # selected white ball
+        m <- length(genesets[[i]]) # white ball
+        n <- A - m # black ball
+        k <- length(genes) # selected ball
         1 - phyper(q - 1, m, n, k)
       })
       names(pv) <- names(genesets)
@@ -210,6 +208,14 @@ CellEnrich <- function(scData) {
       output$img1 <- shiny::renderPlot(ggobj2)
     })
 
+    observeEvent(input$btn3, {
+      if (input$btn3 == 0) {
+        return(NULL)
+      }
+
+      shinyjs::hide('btn3')
+    })
+
     output$dynamic <- renderUI({
       if (input$btn3 == 0) {
         return(NULL)
@@ -282,7 +288,7 @@ CellEnrich <- function(scData) {
       rlobj$location = as.character(rlobj$location)
 
       #print(rlobj) DONE
-      output$tab2 = DT::renderDataTable(datatable(rlobj, rownames = FALSE))
+      #output$tab2 = DT::renderDataTable(datatable(rlobj, rownames = FALSE))
 
       getCellValues = function(rlobj){
         ret = list()
@@ -294,6 +300,7 @@ CellEnrich <- function(scData) {
           thisCellsIdx = which(dfobj$col==thisGroup)
           thisCells = dfobj[thisCellsIdx,]
 
+          rn = as.numeric(rownames(thisCells))
           res = c()
           for(j in 1:nrow(thisCells)){
             if( thisGeneset %in% pres[[ rn[j] ]] ){
@@ -318,16 +325,24 @@ CellEnrich <- function(scData) {
       }
       colnames(dfobj_new) = c('x','y','col')
 
-      cellValues = c(unname(unlist(cellValues)), (nrow(dfobj)+1):nrow(dfobj_new))
+      newIdx = (nrow(dfobj)+1):nrow(dfobj_new)
+      cellValues = c(unname(unlist(cellValues)), newIdx)
       dfobj_new$x = round(as.numeric(dfobj_new$x), 4)
       dfobj_new$y = round(as.numeric(dfobj_new$y), 4)
       colV <- changeCol(dfobj_new$col)
       colV[-cellValues] <- "#95A5A6" # gray color
 
-      ggobj2 <-
-        ggplot(dfobj_new, aes(x = x, y = y)) +
-        geom_point(colour = colV)
+      # define ggobj2 with curve element
+      graphString = 'ggobj2 <- ggplot(dfobj_new, aes(x = x, y = y)) + geom_point(colour = colV)'
 
+      for(i in 1:(length(newIdx)-1)){
+        newCurve = paste(' + geom_curve( aes(x = ', 'dfobj_new$x[newIdx[',i,
+                         ']], y = dfobj_new$y[newIdx[',i,']], xend = dfobj_new$x[newIdx[',i+1,
+                         ']], yend = dfobj_new$y[newIdx[',i+1,']]), size = 0.5, linetype = "longdash",',
+                         'curvature = 0.1, colour = colV[newIdx[',i,']], arrow = arrow(length = unit(0.1,"inches")))')
+        graphString = paste(graphString, newCurve, sep = '')
+      }
+      eval(parse(text = graphString))
 
       # modify ggobj2
       output$img3 <- shiny::renderPlot(ggobj2)
@@ -444,7 +459,7 @@ CellEnrichUI <- function() {
     material_tab_content(
       tab_id = "tab_group",
       material_card(
-        plotOutput("img3"),
+        plotOutput("img3", height = '700px'),
         actionButton("btn3", "Create Table"),
         actionButton("btn4", "Fill Table"),
         actionButton("btn6", "call SortButtons"),
@@ -455,7 +470,7 @@ CellEnrichUI <- function() {
           actionButton("btn5", "Generate Time Plot"),
           actionButton("btn7", "Clear List"),
         ),
-        DT::dataTableOutput('tab2'),
+        #DT::dataTableOutput('tab2'),
         uiOutput("dynamic"),
         depth = 3
       )
