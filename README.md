@@ -59,3 +59,8 @@ Pathway enrichment analysis / visualize for Single Cell Data
 - built timeplot 
 
 ![image](https://user-images.githubusercontent.com/6457691/75122196-91f98a00-56de-11ea-8a0b-1b95146d6615.png)
+
+- fixed error
+
+![image](https://user-images.githubusercontent.com/6457691/75125148-10622600-56f7-11ea-82e8-8bc2c6ac723b.png)
+
