@@ -64,3 +64,7 @@ Pathway enrichment analysis / visualize for Single Cell Data
 
 ![image](https://user-images.githubusercontent.com/6457691/75125148-10622600-56f7-11ea-82e8-8bc2c6ac723b.png)
 
+- modified term, added UMAP from `uwot` package.
+
+![image](https://user-images.githubusercontent.com/6457691/75138678-29d29480-572e-11ea-96e0-20f7482b97ca.png)
+
