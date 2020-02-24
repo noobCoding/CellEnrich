@@ -8,7 +8,7 @@
 #' @import shinyCyJS
 #' @rawNamespace import(shiny, except = dataTableOutput)
 #' @import ggplot2
-#' @import Seurat
+#' @import uwot
 #' @import htmltools
 #' @import magrittr
 #' @import shinymaterial
@@ -16,6 +16,7 @@
 #' @import shinyjs
 #' @import scales
 #' @import sortable
+#' @import scran
 #'
 #' @export
 
@@ -24,10 +25,12 @@ CellEnrich <- function(scData) {
   require(shiny)
   require(waiter)
   require(Rtsne)
+  require(uwot)
   require(ggplot2)
   require(DT)
   require(scales)
   require(sortable)
+  require(scran)
 
   ui <- CellEnrichUI()
 
@@ -61,11 +64,6 @@ CellEnrich <- function(scData) {
       }
       return(res)
     }
-
-    # load sample Data
-    # yan = readRDS('yan.rds')
-    # load sample geneset Data
-    # load("c2v7.RData")
 
     groupTable <- function() {
 
@@ -141,8 +139,13 @@ CellEnrich <- function(scData) {
       w <- Waitress$new(selector = NULL, theme = "overlay")$start()
       v <- extractArray(scData)
       n <- cellNames(scData)
-      s <- findSigGenes(v)
-      names(s) <- n
+      if(input$dropdowninput != 'GSVA'){
+        s <- findSigGenes(v, input$dropdowninput)
+        names(s) <- n
+      }
+
+      # BUILD GSVA CASE
+
       # for test
       res <- list()
       for (i in 1:length(s)) {
@@ -161,13 +164,19 @@ CellEnrich <- function(scData) {
       pres2 <<- pres2
 
       dtobj <<- buildDT(pres2)
+      if(input$dropdowninput2 == 't-SNE'){
+        tsneE <- Rtsne(t(v), check_duplicates = FALSE, perplexity = 15)
+        dfobj <- data.frame(tsneE$Y, col = n)
+      }
 
-      tsneE <- Rtsne(t(v), check_duplicates = FALSE, perplexity = 15)
+      if(input$dropdowninput2 == 'U-MAP'){
+        umapE = uwot::umap(t(v), fast_sgd = TRUE)
+        dfobj = data.frame(umapE, col = n)
+      }
 
       ggobj <<- ggplot(data.frame(table(n)), aes(x = n, y = Freq, fill = n)) +
         geom_bar(stat = "identity") # cell histogram
 
-      dfobj <- data.frame(tsneE$Y, col = n)
       colnames(dfobj) <- c("x", "y", "col")
       dfobj <<- dfobj
       # scatter plot
@@ -286,9 +295,6 @@ CellEnrich <- function(scData) {
       colnames(rlobj) = c('name', 'location')
       rlobj$name = as.character(rlobj$name)
       rlobj$location = as.character(rlobj$location)
-
-      #print(rlobj) DONE
-      #output$tab2 = DT::renderDataTable(datatable(rlobj, rownames = FALSE))
 
       getCellValues = function(rlobj){
         ret = list()
@@ -410,11 +416,17 @@ CellEnrichUI <- function() {
         ),
         material_column(
           material_card(
-            title = "card5",
+            title = "Options",
             material_dropdown(
               input_id = "dropdowninput",
-              label = "select Method",
-              choices = c("median", "GSVA"),
+              label = "select FC Option",
+              choices = c("median", "mean", "zero", "GSVA"),
+              selected = "median"
+            ),
+            material_dropdown(
+              input_id = "dropdowninput2",
+              label = "select Plot Option",
+              choices = c("t-SNE", "U-MAP"),
               selected = "median"
             )
           ),

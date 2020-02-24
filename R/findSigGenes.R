@@ -25,9 +25,16 @@ findSigGenes = function(v, method = 'median'){
       v[i,idx] = 0
     }
   }
-  if(method == 'pos'){
+  if(method == 'zero'){
     for(i in 1:nrow(v)){
       idx = which(v[i,]<=0)
+      v[i,] = 1
+      v[i,idx] = 0
+    }
+  }
+  if(method == 'mean'){
+    for(i in 1:nrow(v)){
+      idx = which(v[i,]<= mean(v[i,]))
       v[i,] = 1
       v[i,idx] = 0
     }
