@@ -3,37 +3,75 @@
 #'
 #' @importFrom DT dataTableOutput
 #'
-#' @import SingleCellExperiment
+#' @rawNamespace import(SingleCellExperiment, except = show)
 #' @import Rtsne
 #' @import shinyCyJS
 #' @rawNamespace import(shiny, except = dataTableOutput)
 #' @import ggplot2
-#' @import Seurat
+#' @import uwot
 #' @import htmltools
 #' @import magrittr
 #' @import shinymaterial
 #' @import waiter
-#' @import shinyjs
+#' @rawNamespace import(shinyjs, except = runExample)
 #' @import scales
 #' @import sortable
+#' @import scran
 #'
 #' @export
 
-CellEnrich <- function(scData) {
+CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
   require(shinymaterial)
   require(shiny)
   require(waiter)
   require(Rtsne)
+  require(uwot)
   require(ggplot2)
   require(DT)
   require(scales)
   require(sortable)
+  require(scran)
 
   ui <- CellEnrichUI()
 
   options(useFancyQuotes = FALSE)
 
   server <- function(input, output, session) {
+
+    briterhex <- function(colors) {
+      res <- c()
+      for (i in 1:length(colors)) {
+        v <- as.vector(col2rgb(colors[i])) * 1.3
+        v <- sapply(v, function(i) {
+          min(i, 255)
+        })
+        res[i] <- rgb(v[1], v[2], v[3], max = 255)
+      }
+      return(res)
+    }
+
+    # actionButton with Onclick Attributes
+    myButton <- function(inputId, label, width = NULL, onClick = NULL, ...) {
+      value <- restoreInput(id = inputId, default = NULL)
+      tags$button(
+        id = inputId, style = if (!is.null(width)) {
+          paste0("width: ", validateCssUnit(width), ";")
+        },
+        type = "button", class = "btn btn-default action-button",
+        onClick = onClick,
+        `data-val` = value, list(label),
+        ...
+      )
+    }
+
+    sortItem <- function(label) {
+      paste0(
+        "$('#mysortable')",
+        ".append(", "`<div class=", "'rank-list-item'", " draggable='true'",
+        " style = 'transform: translateZ(0px);'>` + ", label, " + `</div>`)"
+      )
+    }
+
     buildDT <- function(pres2) {
       DT::datatable(
         data.frame(
@@ -41,7 +79,8 @@ CellEnrich <- function(scData) {
           Count = as.numeric(pres2)
         ),
         options = list(
-          dom = "ltp"
+          dom = "ltp",
+          lengthChange = FALSE
         ),
         rownames = FALSE,
         selection = "single"
@@ -61,11 +100,6 @@ CellEnrich <- function(scData) {
       }
       return(res)
     }
-
-    # load sample Data
-    # yan = readRDS('yan.rds')
-    # load sample geneset Data
-    # load("c2v7.RData")
 
     groupTable <- function() {
 
@@ -123,7 +157,7 @@ CellEnrich <- function(scData) {
 
     load("c2v7.RData")
     # load("c2v7idx.RData")
-    A <- length(unique(unlist(genesets)))
+    A <- length(unique(unlist(genesets))) # Background genes
     myf <- function(genesetnames, pres) {
       idx <- which(names(genesets) == genesetnames)
       res <- c()
@@ -135,26 +169,63 @@ CellEnrich <- function(scData) {
       return(res)
     }
 
-    ggobj2 <- ggobj <- dtobj <- dfobj <- pres <- gt <- pres2 <- ""
+    ggobj2 <- ggobj <- dtobj <- dfobj <- pres <- CellPathwayDF <- ""
+    gt <- pres2 <- dfobj2 <- ggobj3 <- ggobj4 <- ""
     observeEvent(input$btn, {
       shinyjs::hide("btn")
       w <- Waitress$new(selector = NULL, theme = "overlay")$start()
-      v <- extractArray(scData)
-      n <- cellNames(scData)
-      s <- findSigGenes(v)
-      names(s) <- n
+
+      v <- CountData
+
+      n <- CellInfo
+      if(input$dropdowninput != 'GSVA'){
+        s <- findSigGenes(v, input$dropdowninput)
+        names(s) <- n
+      }
+
+      # TODO BUILD GSVA CASE
+
+      if(!is.null(ClustInfo)){
+        cat('Clust Info found\n')
+        s2 = findSigGenesGroup(v, ClustInfo, q0)
+      }
+
       # for test
       res <- list()
       for (i in 1:length(s)) {
         w$inc(1 / length(s))
         pvh <- getHyperPvalue(s[[i]], genesets)
         qvh <- p.adjust(pvh, "fdr")
-        res[[i]] <- unname(which(qvh < 0.1))
+        res[[i]] <- unname(which(qvh < q0))
       }
 
       w$close()
       pres <<- res
       rm(res)
+
+      # pres : which gene-sets are significant for each cells.
+      # pres2 : for each gene-sets, how many cells are significant that gene-sets.
+
+      CellPathwayDF = data.frame()
+      Cells = unique(n)
+      for(i in 1:length(Cells)){
+        thisCell = Cells[i]
+        tt = table(unlist(pres[which(thisCell==n)]))
+        CellPathwayDF = rbind(CellPathwayDF, cbind(thisCell, names(tt), unname(tt)))
+      }
+
+      colnames(CellPathwayDF) = c('Cell', 'Geneset', 'Count')
+      CellPathwayDF$Geneset = names(genesets)[as.numeric(CellPathwayDF$Geneset)]
+      CellPathwayDF$Count = as.numeric(CellPathwayDF$Count)
+      Length = sapply(CellPathwayDF$Geneset, function(i){length(genesets[[i]])})
+      CellPathwayDF = cbind(CellPathwayDF, Length)
+
+      print("head: ")
+      print(head(CellPathwayDF))
+
+      CellPathwayDF = CellPathwayDF %>% filter(Count > 1) # select genesets with count > 1
+
+      CellPathwayDF <<- CellPathwayDF %>% right_join( CellPathwayDF %>% group_by(Cell) %>% summarize(Count = max(Count)) ) # select genesets with count == max(Count)
 
       pres2 <- sort(table(unlist(pres)), decreasing = T)
       names(pres2) <- names(genesets)[as.numeric(names(pres2))]
@@ -162,23 +233,54 @@ CellEnrich <- function(scData) {
 
       dtobj <<- buildDT(pres2)
 
-      tsneE <- Rtsne(t(v), check_duplicates = FALSE, perplexity = 15)
+      if(input$dropdowninput2 == 't-SNE'){
+        tsneE <- Rtsne(t(v), check_duplicates = FALSE, perplexity = 15)
+        dfobj <- data.frame(tsneE$Y, col = n)
+        if(!is.null(ClustInfo)){
+          dfobj2 <- data.frame(tsneE$Y, col = ClustInfo)
+        }
+      }
+
+      if(input$dropdowninput2 == 'U-MAP'){
+        umapE = uwot::umap(t(v), fast_sgd = TRUE)
+        dfobj = data.frame(umapE, col = n)
+        if(!is.null(ClustInfo)){
+          dfobj2 <- data.frame(umapE, col = ClustInfo)
+        }
+      }
 
       ggobj <<- ggplot(data.frame(table(n)), aes(x = n, y = Freq, fill = n)) +
         geom_bar(stat = "identity") # cell histogram
 
-      dfobj <- data.frame(tsneE$Y, col = n)
-      colnames(dfobj) <- c("x", "y", "col")
+      if(!is.null(ClustInfo)){
+        ggobj3 <<- ggplot(data.frame(table(ClustInfo)), aes(x = ClustInfo, y = Freq, fill = ClustInfo)) +
+          geom_bar(stat = "identity") # cell histogram
+      }
+
+      colnames(dfobj) <- colnames(dfobj2) <- c("x", "y", "col")
       dfobj <<- dfobj
+
+      dfobj2$col = as.character(dfobj2$col)
+      dfobj2 <<- dfobj2
+
       # scatter plot
       ggobj2 <<- ggplot(dfobj, aes(x = x, y = y, color = col)) +
         geom_point() +
         scale_color_manual(values = briterhex(scales::hue_pal()(length(unique(dfobj$col)))))
 
-      output$img1 <- shiny::renderPlot(ggobj2)
-      output$img2 <- shiny::renderPlot(ggobj)
-      output$img3 <- shiny::renderPlot(ggobj2)
-      output$tab <- DT::renderDataTable(dtobj)
+      if(!is.null(ClustInfo)){
+        ggobj4 <<- ggplot(dfobj2, aes(x = x, y = y, color = col) ) +
+          geom_point() +
+          scale_color_manual(values = briterhex(scales::hue_pal()(length(unique(dfobj2$col)))))
+      }
+
+      output$img1 <- shiny::renderPlot(ggobj2) # CELL SCATTERPLOT
+      output$img2 <- shiny::renderPlot(ggobj) # CELL HISTOGRAM
+      output$tab <- DT::renderDataTable(dtobj) # CELL DATATABLE
+
+      output$img3 <- shiny::renderPlot(ggobj4) # GROUP SCATTERPLOT
+      output$img4 <- shiny::renderPlot(ggobj3) # GROUP HISOTRAM
+
       gt <<- groupTable()
     })
 
@@ -216,6 +318,39 @@ CellEnrich <- function(scData) {
       shinyjs::hide('btn3')
     })
 
+    output$dynamicCell <- renderUI({
+      if (input$btn8 == 0) {
+        return(NULL)
+      }
+      input$btn8
+
+      Tabs <- sort(unique(n))
+      numTabs <- length(Tabs)
+      CardColors <- briterhex(scales::hue_pal()(numTabs))
+
+      tagList(
+        material_row(
+          lapply(1:numTabs, function(i) {
+            material_column(
+              # solved material card
+              shiny::tags$div(
+                class = paste("card", "z-depth-", "5"), # depth = null, color = null ; color will define in style
+                style = paste0("border : ", "solid 0.5em ", CardColors[i]),
+                shiny::tags$div(
+                  class = "card-content",
+                  shiny::tags$span(class = "card-title", Tabs[i]), # title
+                  shiny::tags$div(class = "divider"), # divider = TRUE
+                  DT::dataTableOutput(paste0("dtC", i), width = "100%"),
+                  actionButton(inputId = paste0("tsC", i), label = "ToSort")
+                )
+              ),
+              width = 4
+            )
+          })
+        )
+      )
+    })
+
     output$dynamic <- renderUI({
       if (input$btn3 == 0) {
         return(NULL)
@@ -249,6 +384,27 @@ CellEnrich <- function(scData) {
       )
     })
 
+    observeEvent(input$btn9, {
+      if (input$btn9 == 0) {
+        return(NULL)
+      }
+
+      g <- unique(sort(n))
+
+      for (i in 1:length(g)) {
+        t <- paste0(
+          "output$dtC", i, " = DT::renderDataTable(datatable(CellPathwayDF[which(CellPathwayDF[,1]==g[", i, "]),-1]", # removed group column
+          ", options = list(dom = 'ltp',scroller = TRUE, scrollX = TRUE, autoWidth = TRUE, lengthChange = FALSE, order = list(list(2,'asc'))), rownames = FALSE",
+          ", selection = 'single', colnames =c('Geneset','Count','Size')))"
+        )
+        eval(parse(text = t))
+      }
+
+      shinyjs::hide("btn8")
+      shinyjs::hide("btn9")
+    })
+
+
     observeEvent(input$btn4, {
       if (input$btn4 == 0) {
         return(NULL)
@@ -259,7 +415,7 @@ CellEnrich <- function(scData) {
         t <- paste0(
           "output$dt", i, " = DT::renderDataTable(datatable(gt[which(gt[,1]==g[", i, "]),2:3]", # removed group column
           ", options = list(dom = ", "'ltp'", ",scroller = TRUE, scrollX = TRUE, autoWidth = TRUE, lengthChange = FALSE), rownames = FALSE",
-          ", selection = ", "'single'", ", colnames =c(", "'Geneset'", ",", "'P-value'", ")))"
+          ", selection = ", "'single'", ", colnames =c(", "'Geneset',", "'P-value'", ")))"
         )
         eval(parse(text = t))
       }
@@ -272,6 +428,8 @@ CellEnrich <- function(scData) {
       if (input$btn5 == 0) {
         return(NULL)
       }
+
+      # TODO reset image
 
       rlobj = data.frame(stringsAsFactors = FALSE)
 
@@ -286,9 +444,6 @@ CellEnrich <- function(scData) {
       colnames(rlobj) = c('name', 'location')
       rlobj$name = as.character(rlobj$name)
       rlobj$location = as.character(rlobj$location)
-
-      #print(rlobj) DONE
-      #output$tab2 = DT::renderDataTable(datatable(rlobj, rownames = FALSE))
 
       getCellValues = function(rlobj){
         ret = list()
@@ -401,24 +556,22 @@ CellEnrichUI <- function() {
       material_row(
         material_column(
           material_card(
-            div(
-              actionButton("btn", "Start CellEnrich"),
-              style = "margin-left : 45%"
-            )
-          ),
-          width = 6
-        ),
-        material_column(
-          material_card(
-            title = "card5",
+            title = "Options",
             material_dropdown(
               input_id = "dropdowninput",
-              label = "select Method",
-              choices = c("median", "GSVA"),
+              label = "select FC Option",
+              choices = c("median", "mean", "zero", "GSVA"),
               selected = "median"
-            )
+            ),
+            material_dropdown(
+              input_id = "dropdowninput2",
+              label = "select Plot Option",
+              choices = c("t-SNE", "U-MAP"),
+              selected = "median"
+            ),
+            actionButton("btn", "Start CellEnrich")
           ),
-          width = 6
+          width = 12
         ),
         style = "margin : 1em"
       ),
@@ -431,7 +584,6 @@ CellEnrichUI <- function() {
       material_row(
         material_column(
           material_card(
-            title = "card 1",
             depth = 3,
             plotOutput("img1", height = "700px")
           ),
@@ -439,9 +591,8 @@ CellEnrichUI <- function() {
         ),
         material_column(
           material_card(
-            title = "card 2",
             depth = 3,
-            DT::dataTableOutput("tab", height = "600px"),
+            DT::dataTableOutput("tab"), # CELL PATHWAY TABLE
             material_button("btn2", "btn2"),
           ),
           width = 6
@@ -451,7 +602,11 @@ CellEnrichUI <- function() {
       material_row(
         material_card(
           plotOutput("img2"),
-          title = "card 3", depth = 3
+          actionButton('btn8', 'create table'),
+          actionButton('btn9', 'fill table'),
+          actionButton('btn10', 'call sortButtons'),
+          uiOutput("dynamicCell"),
+          depth = 3
         ),
         style = "margin : 1em"
       )
@@ -470,6 +625,7 @@ CellEnrichUI <- function() {
           actionButton("btn5", "Generate Time Plot"),
           actionButton("btn7", "Clear List"),
         ),
+        plotOutput("img4"),
         #DT::dataTableOutput('tab2'),
         uiOutput("dynamic"),
         depth = 3
@@ -478,36 +634,5 @@ CellEnrichUI <- function() {
   )
 }
 
-briterhex <- function(colors) {
-  res <- c()
-  for (i in 1:length(colors)) {
-    v <- as.vector(col2rgb(colors[i])) * 1.3
-    v <- sapply(v, function(i) {
-      min(i, 255)
-    })
-    res[i] <- rgb(v[1], v[2], v[3], max = 255)
-  }
-  return(res)
-}
 
-# actionButton with Onclick Attributes
-myButton <- function(inputId, label, width = NULL, onClick = NULL, ...) {
-  value <- restoreInput(id = inputId, default = NULL)
-  tags$button(
-    id = inputId, style = if (!is.null(width)) {
-      paste0("width: ", validateCssUnit(width), ";")
-    },
-    type = "button", class = "btn btn-default action-button",
-    onClick = onClick,
-    `data-val` = value, list(label),
-    ...
-  )
-}
 
-sortItem <- function(label) {
-  paste0(
-    "$('#mysortable')",
-    ".append(", "`<div class=", "'rank-list-item'", " draggable='true'",
-    " style = 'transform: translateZ(0px);'>` + ", label, " + `</div>`)"
-  )
-}
