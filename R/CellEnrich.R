@@ -157,7 +157,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
 
     load("c2v7.RData")
     # load("c2v7idx.RData")
-    A <- length(unique(unlist(genesets)))
+    A <- length(unique(unlist(genesets))) # Background genes
     myf <- function(genesetnames, pres) {
       idx <- which(names(genesets) == genesetnames)
       res <- c()
@@ -169,7 +169,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
       return(res)
     }
 
-    ggobj2 <- ggobj <- dtobj <- dfobj <- pres <- ""
+    ggobj2 <- ggobj <- dtobj <- dfobj <- pres <- CellPathwayDF <- ""
     gt <- pres2 <- dfobj2 <- ggobj3 <- ggobj4 <- ""
     observeEvent(input$btn, {
       shinyjs::hide("btn")
@@ -203,6 +203,30 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
       pres <<- res
       rm(res)
 
+      # pres : which gene-sets are significant for each cells.
+      # pres2 : for each gene-sets, how many cells are significant that gene-sets.
+
+      CellPathwayDF = data.frame()
+      Cells = unique(n)
+      for(i in 1:length(Cells)){
+        thisCell = Cells[i]
+        tt = table(unlist(pres[which(thisCell==n)]))
+        CellPathwayDF = rbind(CellPathwayDF, cbind(thisCell, names(tt), unname(tt)))
+      }
+
+      colnames(CellPathwayDF) = c('Cell', 'Geneset', 'Count')
+      CellPathwayDF$Geneset = names(genesets)[as.numeric(CellPathwayDF$Geneset)]
+      CellPathwayDF$Count = as.numeric(CellPathwayDF$Count)
+      Length = sapply(CellPathwayDF$Geneset, function(i){length(genesets[[i]])})
+      CellPathwayDF = cbind(CellPathwayDF, Length)
+
+      print("head: ")
+      print(head(CellPathwayDF))
+
+      CellPathwayDF = CellPathwayDF %>% filter(Count > 1) # select genesets with count > 1
+
+      CellPathwayDF <<- CellPathwayDF %>% right_join( CellPathwayDF %>% group_by(Cell) %>% summarize(Count = max(Count)) ) # select genesets with count == max(Count)
+
       pres2 <- sort(table(unlist(pres)), decreasing = T)
       names(pres2) <- names(genesets)[as.numeric(names(pres2))]
       pres2 <<- pres2
@@ -221,7 +245,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
         umapE = uwot::umap(t(v), fast_sgd = TRUE)
         dfobj = data.frame(umapE, col = n)
         if(!is.null(ClustInfo)){
-          dfobj2 <- data.frame(tsneE$Y, col = ClustInfo)
+          dfobj2 <- data.frame(umapE, col = ClustInfo)
         }
       }
 
@@ -294,6 +318,39 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
       shinyjs::hide('btn3')
     })
 
+    output$dynamicCell <- renderUI({
+      if (input$btn8 == 0) {
+        return(NULL)
+      }
+      input$btn8
+
+      Tabs <- sort(unique(n))
+      numTabs <- length(Tabs)
+      CardColors <- briterhex(scales::hue_pal()(numTabs))
+
+      tagList(
+        material_row(
+          lapply(1:numTabs, function(i) {
+            material_column(
+              # solved material card
+              shiny::tags$div(
+                class = paste("card", "z-depth-", "5"), # depth = null, color = null ; color will define in style
+                style = paste0("border : ", "solid 0.5em ", CardColors[i]),
+                shiny::tags$div(
+                  class = "card-content",
+                  shiny::tags$span(class = "card-title", Tabs[i]), # title
+                  shiny::tags$div(class = "divider"), # divider = TRUE
+                  DT::dataTableOutput(paste0("dtC", i), width = "100%"),
+                  actionButton(inputId = paste0("tsC", i), label = "ToSort")
+                )
+              ),
+              width = 4
+            )
+          })
+        )
+      )
+    })
+
     output$dynamic <- renderUI({
       if (input$btn3 == 0) {
         return(NULL)
@@ -327,6 +384,27 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
       )
     })
 
+    observeEvent(input$btn9, {
+      if (input$btn9 == 0) {
+        return(NULL)
+      }
+
+      g <- unique(sort(n))
+
+      for (i in 1:length(g)) {
+        t <- paste0(
+          "output$dtC", i, " = DT::renderDataTable(datatable(CellPathwayDF[which(CellPathwayDF[,1]==g[", i, "]),-1]", # removed group column
+          ", options = list(dom = 'ltp',scroller = TRUE, scrollX = TRUE, autoWidth = TRUE, lengthChange = FALSE, order = list(list(2,'asc'))), rownames = FALSE",
+          ", selection = 'single', colnames =c('Geneset','Count','Size')))"
+        )
+        eval(parse(text = t))
+      }
+
+      shinyjs::hide("btn8")
+      shinyjs::hide("btn9")
+    })
+
+
     observeEvent(input$btn4, {
       if (input$btn4 == 0) {
         return(NULL)
@@ -337,7 +415,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
         t <- paste0(
           "output$dt", i, " = DT::renderDataTable(datatable(gt[which(gt[,1]==g[", i, "]),2:3]", # removed group column
           ", options = list(dom = ", "'ltp'", ",scroller = TRUE, scrollX = TRUE, autoWidth = TRUE, lengthChange = FALSE), rownames = FALSE",
-          ", selection = ", "'single'", ", colnames =c(", "'Geneset'", ",", "'P-value'", ")))"
+          ", selection = ", "'single'", ", colnames =c(", "'Geneset',", "'P-value'", ")))"
         )
         eval(parse(text = t))
       }
@@ -350,6 +428,8 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
       if (input$btn5 == 0) {
         return(NULL)
       }
+
+      # TODO reset image
 
       rlobj = data.frame(stringsAsFactors = FALSE)
 
@@ -490,8 +570,8 @@ CellEnrichUI <- function() {
               selected = "median"
             ),
             actionButton("btn", "Start CellEnrich")
-          )#,
-          #width = 6
+          ),
+          width = 12
         ),
         style = "margin : 1em"
       ),
@@ -522,6 +602,10 @@ CellEnrichUI <- function() {
       material_row(
         material_card(
           plotOutput("img2"),
+          actionButton('btn8', 'create table'),
+          actionButton('btn9', 'fill table'),
+          actionButton('btn10', 'call sortButtons'),
+          uiOutput("dynamicCell"),
           depth = 3
         ),
         style = "margin : 1em"
@@ -549,5 +633,6 @@ CellEnrichUI <- function() {
     ),
   )
 }
+
 
 
