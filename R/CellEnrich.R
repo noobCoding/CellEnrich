@@ -101,8 +101,38 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
       return(res)
     }
 
-    groupTable <- function() {
+    pathwayPvalue = function(q0 = 0.1){
+      res = c()
+      gs = sapply(names(pres2),function(i){ which(names(genesets)== i )})
+      Cells = sort(unique(n))
 
+      for(i in 1:length(Cells)){
+        thisCell = Cells[i]
+        thisCellIdx = which(n == thisCell)
+        total = length(n)
+        k = length(thisCellIdx)
+        thisCellPathways = table(unlist(pres[thisCellIdx]))
+        pv = c()
+
+        for(j in 1:length(thisCellPathways)){
+          thisPathway = names(thisCellPathways)[j]
+
+          q = unname(thisCellPathways[j]) # selected white ball
+          m = pres2[names(genesets)[as.numeric(thisPathway)]] # total white ball
+          pv[j] = round(1-phyper(q - 1, m, total - m, k), 4)
+        }
+        names(pv) = names(genesets)[as.numeric(names(thisCellPathways))]
+
+        res = rbind(res, cbind(thisCell, names(pv), unname(pv)))
+      }
+      res = data.frame(res, stringsAsFactors = FALSE)
+      colnames(res) = c('Cell', 'Geneset', 'Qvalue')
+      res$Qvalue = round(p.adjust(as.numeric(res$Qvalue),'fdr'),4)
+      res = res %>% filter(Qvalue < q0)
+      return(res)
+    }
+
+    groupTable <- function() {
       # for pres2
       genesetIdx <- sapply(names(pres2), function(i) {
         which(i == names(genesets))
@@ -125,8 +155,8 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
         gt <- sapply(1:length(pathways), function(j) {
           q <- pathways[j] # selected white ball, 1
           m <- unname(pres2Idx[names(pathways[j])]) # total white ball, 28
-          n <- tot - m # total black ball
-          round(1-phyper(q - 1, m, n, k), 4)
+          # n <- tot - m # total black ball
+          round(1-phyper(q - 1, m, tot - m, k), 4)
         })
         gt <- gt[which(gt < 0.25)] # pvalue 0.25
         res <- rbind(res, cbind(groups[i], names(gt), unname(gt)))
@@ -217,19 +247,26 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
       colnames(CellPathwayDF) = c('Cell', 'Geneset', 'Count')
       CellPathwayDF$Geneset = names(genesets)[as.numeric(CellPathwayDF$Geneset)]
       CellPathwayDF$Count = as.numeric(CellPathwayDF$Count)
+      CellPathwayDF$Cell = as.character(CellPathwayDF$Cell)
       Length = sapply(CellPathwayDF$Geneset, function(i){length(genesets[[i]])})
       CellPathwayDF = cbind(CellPathwayDF, Length)
 
-      print("head: ")
-      print(head(CellPathwayDF))
+      # select genesets with count > 1
+      CellPathwayDF = CellPathwayDF %>%
+        filter(Count > 1)
 
-      CellPathwayDF = CellPathwayDF %>% filter(Count > 1) # select genesets with count > 1
+      # select genesets with count == max(Count)
+      CellPathwayDF = CellPathwayDF %>%
+        right_join( CellPathwayDF %>% group_by(Cell) %>% summarize(Count = max(Count)) )
 
-      CellPathwayDF <<- CellPathwayDF %>% right_join( CellPathwayDF %>% group_by(Cell) %>% summarize(Count = max(Count)) ) # select genesets with count == max(Count)
 
       pres2 <- sort(table(unlist(pres)), decreasing = T)
       names(pres2) <- names(genesets)[as.numeric(names(pres2))]
       pres2 <<- pres2
+
+      CellPathwayDF <<- CellPathwayDF %>%
+        inner_join( pathwayPvalue() )
+
 
       dtobj <<- buildDT(pres2)
 
@@ -282,6 +319,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
       output$img4 <- shiny::renderPlot(ggobj3) # GROUP HISOTRAM
 
       gt <<- groupTable()
+
     })
 
     observeEvent(input$btn2, {
@@ -395,7 +433,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
         t <- paste0(
           "output$dtC", i, " = DT::renderDataTable(datatable(CellPathwayDF[which(CellPathwayDF[,1]==g[", i, "]),-1]", # removed group column
           ", options = list(dom = 'ltp',scroller = TRUE, scrollX = TRUE, autoWidth = TRUE, lengthChange = FALSE, order = list(list(2,'asc'))), rownames = FALSE",
-          ", selection = 'single', colnames =c('Geneset','Count','Size')))"
+          ", selection = 'single'))"
         )
         eval(parse(text = t))
       }
