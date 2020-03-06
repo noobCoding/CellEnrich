@@ -96,3 +96,10 @@ Pathway enrichment analysis / visualize for Single Cell Data
 
 ![image](https://user-images.githubusercontent.com/6457691/76057497-0d9be680-5fbd-11ea-9648-a5824c1127d1.png)
 
+- disable options after run
+
+![image](https://user-images.githubusercontent.com/6457691/76078314-c1b16780-5fe5-11ea-8165-68388c5e14a0.png)
+
+- built freq, sig. (has bug yet)
+
+![image](https://user-images.githubusercontent.com/6457691/76078341-cf66ed00-5fe5-11ea-8613-cd7425cff4be.png)
