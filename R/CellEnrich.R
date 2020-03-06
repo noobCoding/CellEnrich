@@ -298,7 +298,10 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
     observeEvent(input$btn, {
       shinyjs::hide("btn")
 
-      shinyjs::runjs("$('input.select-dropdown.dropdown-trigger').prop('disabled', true);");
+      shinyjs::runjs('$("form p label input").attr("disabled",true)'); # radio button disable
+      shinyjs::runjs("$('.shinymaterial-slider-sliderinput1').attr('disabled',true)")
+      shinyjs::runjs("$('.shinymaterial-slider-sliderinput2').attr('disabled',true)")
+      #shinyjs::runjs("$('#sliderinput1, #sliderinput2').prop('disabled', true);");
 
       w <- Waitress$new(selector = NULL, theme = "overlay")$start()
 
@@ -464,6 +467,56 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
 
     })
 
+    observeEvent(input$freqbtn, {
+      if(input$freqbtn == 0 ){
+        return(NULL)
+      }
+
+      Cells = sort(unique(CellInfo))
+      res = c()
+      for(i in 1:length(Cells)){
+        thisCell = Cells[i]
+
+        thisCellData = CellPathwayDF %>% dplyr::filter(Cell==thisCell)
+
+        if(nrow(thisCellData) > 1){
+          thisCellData = thisCellData  %>% top_n(-1, wt = Length)
+        }
+        res = c(res, paste0(thisCellData$Geneset, ' @', thisCellData$Cell))
+
+      }
+
+      ggobj2 = emphasize(FALSE, res)
+
+      output$img1 <- shiny::renderPlot(ggobj2)
+
+    })
+
+
+    observeEvent(input$sigbtn, {
+      if(input$sigbtn == 0){
+        return(NULL)
+      }
+
+      Cells = sort(unique(CellInfo))
+      res = c()
+      for(i in 1:length(Cells)){
+        thisCell = Cells[i]
+
+        thisCellData = CellPathwayDF %>% dplyr::filter(Cell==thisCell)
+        if(nrow(thisCellData) > 0){
+          if(nrow(thisCellData) > 1){
+            thisCellData = thisCellData  %>% top_n(-1, wt = Qvalue)
+          }
+          res = c(res, paste0(thisCellData$Geneset, ' @', thisCellData$Cell))
+        }
+      }
+
+      ggobj2 = emphasize(FALSE, res)
+
+      output$img1 <- shiny::renderPlot(ggobj2)
+
+    })
 
     # draw gray color images
     observeEvent(input$graybtn, {
@@ -659,17 +712,33 @@ CellEnrichUI <- function() {
     material_side_nav(
       material_card(
         title = "Options",
-        material_dropdown(
+        material_radio_button(
           input_id = "dropdowninput",
           label = "select FC Option",
           choices = c("median", "mean", "zero", "GSVA"),
           selected = "median"
         ),
-        material_dropdown(
+        material_radio_button(
           input_id = "dropdowninput2",
           label = "select Plot Option",
           choices = c("t-SNE", "U-MAP"),
-          selected = "median"
+          selected = "t-SNE"
+        ),
+        material_slider(
+          input_id = 'sliderinput1',
+          label = 'Minimum gene-set size',
+          min_value = 10,
+          max_value = 30,
+          initial_value = 15,
+          step_size = 5
+        ),
+        material_slider(
+          input_id = 'sliderinput2',
+          label = 'Maximum gene-set size',
+          min_value = 250,
+          max_value = 750,
+          initial_value = 500,
+          step_size = 5
         ),
         actionButton("btn", "Start CellEnrich")
       )
