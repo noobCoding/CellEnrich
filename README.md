@@ -91,3 +91,8 @@ Pathway enrichment analysis / visualize for Single Cell Data
 ![image](https://user-images.githubusercontent.com/6457691/76047868-6a8ca200-5fa7-11ea-87cf-fa56b8a90b76.png)
 
 ![image](https://user-images.githubusercontent.com/6457691/76047874-711b1980-5fa7-11ea-9442-b543f3f37d43.png)
+
+- working with pathway emphasize
+
+![image](https://user-images.githubusercontent.com/6457691/76057497-0d9be680-5fbd-11ea-9648-a5824c1127d1.png)
+
