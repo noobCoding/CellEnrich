@@ -80,3 +80,19 @@ Pathway enrichment analysis / visualize for Single Cell Data
 - working with cellpathway vis, added qvalue.(default <= 0.1)
 
 ![image](https://user-images.githubusercontent.com/6457691/75752606-6b85bf80-5d6c-11ea-8792-e52f50900289.png)
+
+
+## 0306
+
+- working with ui/ux
+- start / options moved to navigator
+- added github link in header (info icon)
+
+![image](https://user-images.githubusercontent.com/6457691/76047868-6a8ca200-5fa7-11ea-87cf-fa56b8a90b76.png)
+
+![image](https://user-images.githubusercontent.com/6457691/76047874-711b1980-5fa7-11ea-9442-b543f3f37d43.png)
+
+- working with pathway emphasize
+
+![image](https://user-images.githubusercontent.com/6457691/76057497-0d9be680-5fbd-11ea-9648-a5824c1127d1.png)
+

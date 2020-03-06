@@ -40,6 +40,8 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
 
   server <- function(input, output, session) {
 
+    ## FUNCTIONS
+
     briterhex <- function(colors) {
       res <- c()
       for (i in 1:length(colors)) {
@@ -188,7 +190,90 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
       return(pv)
     }
 
+
+    buildRlobj = function(items){
+      rlobj = data.frame(stringsAsFactors = FALSE)
+
+      for(i in 1:length(items)){
+        kk = strsplit(items[[i]], ' @')[[1]]
+        name = kk[1]
+        location = kk[2]
+        rlobj = rbind(rlobj, cbind(name, location))
+      }
+
+      colnames(rlobj) = c('name', 'location')
+      rlobj$name = as.character(rlobj$name)
+      rlobj$location = as.character(rlobj$location)
+
+      return(rlobj)
+    }
+
+    getCellValues = function(rlobj){
+      ret = list()
+      for(i in 1:nrow(rlobj)){
+
+        thisGeneset = which(names(genesets)==rlobj[i,1])
+        thisGroup = rlobj[i,2]
+
+        thisCellsIdx = which(dfobj$col==thisGroup)
+        thisCells = dfobj[thisCellsIdx,]
+
+        rn = as.numeric(rownames(thisCells))
+        res = c()
+        for(j in 1:nrow(thisCells)){
+          if( thisGeneset %in% pres[[ rn[j] ]] ){
+            res = c(res,thisCellsIdx[j])
+          }
+        }
+
+        ret[[i]] = res
+      }
+      names(ret) = rlobj$location
+      return(ret)
+    }
+
+    emphasize = function(path = FALSE, inputObj){
+      rlobj = buildRlobj(inputObj)
+
+      cellValues <- getCellValues(rlobj)
+
+      dfobj_new <- data.frame(dfobj)
+
+      for(i in 1:length(cellValues)){
+        x = mean(as.numeric(dfobj_new$x[cellValues[[i]]]))
+        y = mean(as.numeric(dfobj_new$y[cellValues[[i]]]))
+        dfobj_new = rbind(dfobj_new, c( x, y, rlobj[i,2]))
+      }
+      colnames(dfobj_new) = c('x','y','col')
+
+      newIdx = (nrow(dfobj)+1):nrow(dfobj_new)
+      cellValues = c(unname(unlist(cellValues)), newIdx)
+      dfobj_new$x = round(as.numeric(dfobj_new$x), 4)
+      dfobj_new$y = round(as.numeric(dfobj_new$y), 4)
+      colV <- changeCol(dfobj_new$col)
+      colV[-cellValues] <- "#95A5A6" # gray color
+
+      # define ggobj2 with curve element
+      graphString = 'ggobj2 <- ggplot(dfobj_new, aes(x = x, y = y)) + geom_point(colour = colV)'
+      if(path){
+        for(i in 1:(length(newIdx)-1)){
+          newCurve = paste(' + geom_curve( aes(x = ', 'dfobj_new$x[newIdx[',i,
+                           ']], y = dfobj_new$y[newIdx[',i,']], xend = dfobj_new$x[newIdx[',i+1,
+                           ']], yend = dfobj_new$y[newIdx[',i+1,']]), size = 0.5, linetype = "longdash",',
+                           'curvature = 0.1, colour = colV[newIdx[',i,']], arrow = arrow(length = unit(0.1,"inches")))')
+          graphString = paste(graphString, newCurve, sep = '')
+        }
+      }
+      eval(parse(text = graphString))
+      return(ggobj2)
+    }
+
+    ### CODES
+
     load("c2v7.RData")
+
+    shinyjs::runjs(code = '$("#btn5Cell, #btn6Cell, #btn7Cell").prop("disabled",true)')
+
     # load("c2v7idx.RData")
     A <- length(unique(unlist(genesets))) # Background genes
     myf <- function(genesetnames, pres) {
@@ -212,6 +297,9 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
 
     observeEvent(input$btn, {
       shinyjs::hide("btn")
+
+      shinyjs::runjs("$('input.select-dropdown.dropdown-trigger').prop('disabled', true);");
+
       w <- Waitress$new(selector = NULL, theme = "overlay")$start()
 
       v <- CountData
@@ -372,7 +460,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
       }
 
 
-
+      shinyjs::hide('message')
 
     })
 
@@ -463,6 +551,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
           )
         )
       }
+      shinyjs::runjs(code = ' $("#btn5Cell, #btn6Cell, #btn7Cell").prop("disabled",false)')
 
       shinyjs::runjs(code = '$("#callSortFunction").hide();')
     })
@@ -486,91 +575,36 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
       shinyjs::hide("btn4")
     })
 
+    # draw time plot in Cell tab
+    observeEvent(input$btn5Cell, {
+      if (input$btn5Cell == 0) {
+        return(NULL)
+      }
+
+      ggobj2 = emphasize(TRUE, input$rlistCell)
+
+      # modify ggobj2
+      output$img1 <- shiny::renderPlot(ggobj2)
+    })
+
+    observeEvent(input$btn6Cell, {
+      if(input$btn6Cell == 0){
+        return(NULL)
+      }
+      ggobj2 = emphasize(FALSE, input$rlistCell)
+
+      output$img1 <- shiny::renderPlot(ggobj2)
+    })
 
     # draw time plot in Group tab
     observeEvent(input$btn5, {
       if (input$btn5 == 0) {
         return(NULL)
       }
+      ggobj2 = emphasize(TRUE, input$rlist)
 
-      rlobj = data.frame(stringsAsFactors = FALSE)
-
-      items = input$rlist
-
-      for(i in 1:length(items)){
-        kk = strsplit(items[[i]], ' @')[[1]]
-        name = kk[1]
-        location = kk[2]
-        rlobj = rbind(rlobj, cbind(name, location))
-      }
-      colnames(rlobj) = c('name', 'location')
-      rlobj$name = as.character(rlobj$name)
-      rlobj$location = as.character(rlobj$location)
-
-      getCellValues = function(rlobj){
-        ret = list()
-        for(i in 1:nrow(rlobj)){
-
-          thisGeneset = which(names(genesets)==rlobj[i,1])
-          thisGroup = rlobj[i,2]
-
-          thisCellsIdx = which(dfobj$col==thisGroup)
-          thisCells = dfobj[thisCellsIdx,]
-
-          rn = as.numeric(rownames(thisCells))
-          res = c()
-          for(j in 1:nrow(thisCells)){
-            if( thisGeneset %in% pres[[ rn[j] ]] ){
-              res = c(res,thisCellsIdx[j])
-            }
-          }
-
-          ret[[i]] = res
-        }
-        names(ret) = rlobj$location
-        return(ret)
-      }
-      cellValues <- getCellValues(rlobj)
-
-
-      dfobj_new <- data.frame(dfobj)
-
-      for(i in 1:length(cellValues)){
-        x = mean(as.numeric(dfobj_new$x[cellValues[[i]]]))
-        y = mean(as.numeric(dfobj_new$y[cellValues[[i]]]))
-        dfobj_new = rbind(dfobj_new, c( x, y, rlobj[i,2]))
-      }
-      colnames(dfobj_new) = c('x','y','col')
-
-      newIdx = (nrow(dfobj)+1):nrow(dfobj_new)
-      cellValues = c(unname(unlist(cellValues)), newIdx)
-      dfobj_new$x = round(as.numeric(dfobj_new$x), 4)
-      dfobj_new$y = round(as.numeric(dfobj_new$y), 4)
-      colV <- changeCol(dfobj_new$col)
-      colV[-cellValues] <- "#95A5A6" # gray color
-
-      # define ggobj2 with curve element
-      graphString = 'ggobj2 <- ggplot(dfobj_new, aes(x = x, y = y)) + geom_point(colour = colV)'
-
-      for(i in 1:(length(newIdx)-1)){
-        newCurve = paste(' + geom_curve( aes(x = ', 'dfobj_new$x[newIdx[',i,
-                         ']], y = dfobj_new$y[newIdx[',i,']], xend = dfobj_new$x[newIdx[',i+1,
-                         ']], yend = dfobj_new$y[newIdx[',i+1,']]), size = 0.5, linetype = "longdash",',
-                         'curvature = 0.1, colour = colV[newIdx[',i,']], arrow = arrow(length = unit(0.1,"inches")))')
-        graphString = paste(graphString, newCurve, sep = '')
-      }
-      eval(parse(text = graphString))
-
-      # modify ggobj2
       output$img3 <- shiny::renderPlot(ggobj2)
     })
-
-    # TODO BUILD Btn5 Cell;
-    # btn5 cell : generate time plot
-
-    # TODO BUILD btn6 cell:
-    # btn6 cell : generate color plot
-
 
 
     # call sort button in group tab
@@ -597,6 +631,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
 
     # clear timelist in Cell tab
     observeEvent(input$btn7Cell, {
+      if(input$btn7Cell == 0){return(NULL)}
       shinyjs::runjs(code = '$("#mysortableCell .rank-list-item").remove(); $("#dynamicCell button").attr("disabled",false)')
     })
 
@@ -611,7 +646,7 @@ CellEnrichUI <- function() {
     # dynamic datatable full width
     tags$head(tags$style(HTML(".display.dataTable.no-footer{width : 100% !important;}"))),
     use_waitress(color = "#697682", percent_color = "#333333"),
-    title = "CellEnrich",
+    title = "CellEnrich <a href = 'https://github.com/jhk0530/cellenrich' target = '_blank'> <i class='material-icons' style = 'font-size:1.3em;'>info</i> </a>",
     nav_bar_fixed = FALSE,
     nav_bar_color = "light-blue darken-1",
     font_color = "#ffffff",
@@ -619,42 +654,34 @@ CellEnrichUI <- function() {
     include_nav_bar = TRUE,
     include_icons = FALSE,
 
+
+    # options in navigator.
+    material_side_nav(
+      material_card(
+        title = "Options",
+        material_dropdown(
+          input_id = "dropdowninput",
+          label = "select FC Option",
+          choices = c("median", "mean", "zero", "GSVA"),
+          selected = "median"
+        ),
+        material_dropdown(
+          input_id = "dropdowninput2",
+          label = "select Plot Option",
+          choices = c("t-SNE", "U-MAP"),
+          selected = "median"
+        ),
+        actionButton("btn", "Start CellEnrich")
+      )
+    ),
+
     ## Tabs
     material_tabs(
       tabs = c(
-        "Start" = "tab_start",
         "Cell" = "tab_cell",
         "Group" = "tab_group"
       ),
       color = "blue"
-    ),
-
-    # Define tab content
-    material_tab_content(
-      tab_id = "tab_start",
-      material_row(
-        material_column(
-          material_card(
-            title = "Options",
-            material_dropdown(
-              input_id = "dropdowninput",
-              label = "select FC Option",
-              choices = c("median", "mean", "zero", "GSVA"),
-              selected = "median"
-            ),
-            material_dropdown(
-              input_id = "dropdowninput2",
-              label = "select Plot Option",
-              choices = c("t-SNE", "U-MAP"),
-              selected = "median"
-            ),
-            actionButton("btn", "Start CellEnrich")
-          ),
-          width = 12
-        ),
-        style = "margin : 1em"
-      ),
-      textOutput("txt1")
     ),
 
     material_tab_content(
@@ -664,12 +691,15 @@ CellEnrichUI <- function() {
         material_column(
           material_card(
             depth = 3,
+            p('Run cellenrich from left navigator', id = 'message'),
             plotOutput("img1", height = "700px"),
             material_card(
               title='',
-              material_button('colorbtn', 'toColor', icon = 'brush', color = 'blue lighten-1'),
-              material_button('graybtn', 'toGray', color = 'grey darken-1'), # to gray color
-              material_button('timeplot', 'timeplot', icon = 'timeline'),
+              material_button('colorbtn', 'toColor', icon = 'color_lens', color = 'blue lighten-1'),
+              material_button('graybtn', 'toGray', icon = 'clear', color = 'blue lighten-1'), # to gray color
+              material_button('freqbtn', 'Frequent', icon = 'grain', color = 'blue lighten-1'), # to gray color
+              material_button('sigbtn', 'Significant', icon = 'grade', color = 'blue lighten-1'), # to gray color
+              #material_button('timeplot', 'timeplot', icon = 'timeline'),
               depth = 2
             )
           ),
@@ -687,9 +717,9 @@ CellEnrichUI <- function() {
             title = 'Pathway Emphasize', divider = TRUE,
             tags$p('If list not recognized, please re-move their position'),
             rank_list(text = "Pathways", labels = "Please Activate First", input_id = "rlistCell", css_id = "mysortableCell"),
-            actionButton("btn5Cell", "Emphasize with Order"),
-            actionButton("btn6Cell", "Emphasize without Order"),
-            actionButton("btn7Cell", "Clear List"),
+            material_button("btn5Cell", "Emphasize with Order", icon = 'timeline'),
+            material_button("btn6Cell", "Emphasize without Order", icon = 'bubble_chart'),
+            material_button("btn7Cell", "Clear List", icon = 'clear_all'),
           ),
           uiOutput("dynamicCell"),
           depth = 3
