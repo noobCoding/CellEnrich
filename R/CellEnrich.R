@@ -71,7 +71,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
     sortItem <- function(label, tableName) {
       options(useFancyQuotes = FALSE)
       paste0(
-        "$('#" ,tableName,  "')",
+        "$('#", tableName, "')",
         ".append(", "`<div class=", "'rank-list-item'", " draggable='true'",
         " style = 'transform: translateZ(0px);'>` + ", label, " + `</div>`)"
       )
@@ -106,34 +106,36 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
       return(res)
     }
 
-    pathwayPvalue = function(q0 = 0.1){
-      res = c()
-      gs = sapply(names(pres2),function(i){ which(names(genesets)== i )})
-      Cells = sort(unique(CellInfo))
+    pathwayPvalue <- function(q0 = 0.1) {
+      res <- c()
+      gs <- sapply(names(pres2), function(i) {
+        which(names(genesets) == i)
+      })
+      Cells <- sort(unique(CellInfo))
 
-      for(i in 1:length(Cells)){
-        thisCell = Cells[i]
-        thisCellIdx = which(CellInfo == thisCell)
-        total = length(CellInfo)
-        k = length(thisCellIdx)
-        thisCellPathways = table(unlist(pres[thisCellIdx]))
-        pv = c()
+      for (i in 1:length(Cells)) {
+        thisCell <- Cells[i]
+        thisCellIdx <- which(CellInfo == thisCell)
+        total <- length(CellInfo)
+        k <- length(thisCellIdx)
+        thisCellPathways <- table(unlist(pres[thisCellIdx]))
+        pv <- c()
 
-        for(j in 1:length(thisCellPathways)){
-          thisPathway = names(thisCellPathways)[j]
+        for (j in 1:length(thisCellPathways)) {
+          thisPathway <- names(thisCellPathways)[j]
 
-          q = unname(thisCellPathways[j]) # selected white ball
-          m = pres2[names(genesets)[as.numeric(thisPathway)]] # total white ball
-          pv[j] = round(1-phyper(q - 1, m, total - m, k), 4)
+          q <- unname(thisCellPathways[j]) # selected white ball
+          m <- pres2[names(genesets)[as.numeric(thisPathway)]] # total white ball
+          pv[j] <- round(1 - phyper(q - 1, m, total - m, k), 4)
         }
-        names(pv) = names(genesets)[as.numeric(names(thisCellPathways))]
+        names(pv) <- names(genesets)[as.numeric(names(thisCellPathways))]
 
-        res = rbind(res, cbind(thisCell, names(pv), unname(pv)))
+        res <- rbind(res, cbind(thisCell, names(pv), unname(pv)))
       }
-      res = data.frame(res, stringsAsFactors = FALSE)
-      colnames(res) = c('Cell', 'Geneset', 'Qvalue')
-      res$Qvalue = round(p.adjust(as.numeric(res$Qvalue),'fdr'),4)
-      res = res %>% dplyr::filter(Qvalue < q0)
+      res <- data.frame(res, stringsAsFactors = FALSE)
+      colnames(res) <- c("Cell", "Geneset", "Qvalue")
+      res$Qvalue <- round(p.adjust(as.numeric(res$Qvalue), "fdr"), 4)
+      res <- res %>% dplyr::filter(Qvalue < q0)
       return(res)
     }
 
@@ -151,7 +153,6 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
       tot <- sum(pres2Idx)
 
       for (i in 1:length(groups)) {
-
         pathways <- table(unlist(pres[which(dfobj$col == groups[i])]))
         # what genesets are enriched per each group.
 
@@ -161,7 +162,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
           q <- pathways[j] # selected white ball, 1
           m <- unname(pres2Idx[names(pathways[j])]) # total white ball, 28
           # n <- tot - m # total black ball
-          round(1-phyper(q - 1, m, tot - m, k), 4)
+          round(1 - phyper(q - 1, m, tot - m, k), 4)
         })
         gt <- gt[which(gt < 0.25)] # pvalue 0.25
         res <- rbind(res, cbind(groups[i], names(gt), unname(gt)))
@@ -191,79 +192,84 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
     }
 
 
-    buildRlobj = function(items){
-      rlobj = data.frame(stringsAsFactors = FALSE)
+    buildRlobj <- function(items) {
+      rlobj <- data.frame(stringsAsFactors = FALSE)
 
-      for(i in 1:length(items)){
-        kk = strsplit(items[[i]], ' @')[[1]]
-        name = kk[1]
-        location = kk[2]
-        rlobj = rbind(rlobj, cbind(name, location))
+      for (i in 1:length(items)) {
+        kk <- strsplit(items[[i]], " @")[[1]]
+        name <- kk[1]
+        location <- kk[2]
+        rlobj <- rbind(rlobj, cbind(name, location))
       }
 
-      colnames(rlobj) = c('name', 'location')
-      rlobj$name = as.character(rlobj$name)
-      rlobj$location = as.character(rlobj$location)
+      colnames(rlobj) <- c("name", "location")
+      rlobj$name <- as.character(rlobj$name)
+      rlobj$location <- as.character(rlobj$location)
 
       return(rlobj)
     }
 
-    getCellValues = function(rlobj){
-      ret = list()
-      for(i in 1:nrow(rlobj)){
+    getCellValues <- function(rlobj) {
+      ret <- list()
+      for (i in 1:nrow(rlobj)) {
+        thisGeneset <- which(names(genesets) == rlobj[i, 1]) # index
+        thisGroup <- rlobj[i, 2]
 
-        thisGeneset = which(names(genesets)==rlobj[i,1])
-        thisGroup = rlobj[i,2]
+        thisCellsIdx <- which(dfobj$col == thisGroup)
 
-        thisCellsIdx = which(dfobj$col==thisGroup)
-        thisCells = dfobj[thisCellsIdx,]
-
-        rn = as.numeric(rownames(thisCells))
-        res = c()
-        for(j in 1:nrow(thisCells)){
-          if( thisGeneset %in% pres[[ rn[j] ]] ){
-            res = c(res,thisCellsIdx[j])
+        rn <- thisCellsIdx
+        res <- c()
+        for (j in 1:length(thisCellsIdx)) {
+          if (thisGeneset %in% pres[[rn[j]]]) {
+            res <- c(res, thisCellsIdx[j])
           }
         }
 
-        ret[[i]] = res
+        ret[[i]] <- res
       }
-      names(ret) = rlobj$location
+      names(ret) <- rlobj$location
       return(ret)
     }
 
-    emphasize = function(path = FALSE, inputObj){
-      rlobj = buildRlobj(inputObj)
+    emphasize <- function(path = FALSE, inputObj) {
+      rlobj <- buildRlobj(inputObj) # name, location dataframe
 
       cellValues <- getCellValues(rlobj)
 
       dfobj_new <- data.frame(dfobj)
 
-      for(i in 1:length(cellValues)){
-        x = mean(as.numeric(dfobj_new$x[cellValues[[i]]]))
-        y = mean(as.numeric(dfobj_new$y[cellValues[[i]]]))
-        dfobj_new = rbind(dfobj_new, c( x, y, rlobj[i,2]))
-      }
-      colnames(dfobj_new) = c('x','y','col')
+      colnames(dfobj_new) <- c("x", "y", "col")
 
-      newIdx = (nrow(dfobj)+1):nrow(dfobj_new)
-      cellValues = c(unname(unlist(cellValues)), newIdx)
-      dfobj_new$x = round(as.numeric(dfobj_new$x), 4)
-      dfobj_new$y = round(as.numeric(dfobj_new$y), 4)
+      # define ggobj2 element
+
       colV <- changeCol(dfobj_new$col)
-      colV[-cellValues] <- "#95A5A6" # gray color
+      colV[-unlist(cellValues)] <- "#95A5A6" # gray color
 
-      # define ggobj2 with curve element
-      graphString = 'ggobj2 <- ggplot(dfobj_new, aes(x = x, y = y)) + geom_point(colour = colV)'
-      if(path){
-        for(i in 1:(length(newIdx)-1)){
-          newCurve = paste(' + geom_curve( aes(x = ', 'dfobj_new$x[newIdx[',i,
-                           ']], y = dfobj_new$y[newIdx[',i,']], xend = dfobj_new$x[newIdx[',i+1,
-                           ']], yend = dfobj_new$y[newIdx[',i+1,']]), size = 0.5, linetype = "longdash",',
-                           'curvature = 0.1, colour = colV[newIdx[',i,']], arrow = arrow(length = unit(0.1,"inches")))')
-          graphString = paste(graphString, newCurve, sep = '')
+      graphString <- "ggobj2 <- ggplot(dfobj_new, aes(x = x, y = y)) + geom_point(colour = colV)"
+
+      if (path) { # add mean point to path
+        for (i in 1:length(cellValues)) {
+          x <- mean(as.numeric(dfobj_new$x[cellValues[[i]]]))
+          y <- mean(as.numeric(dfobj_new$y[cellValues[[i]]]))
+          dfobj_new <- rbind(dfobj_new, c(x, y, rlobj[i, 2]))
+        }
+        newIdx <- (nrow(dfobj) + 1):nrow(dfobj_new)
+        cellValues <- c(unname(unlist(cellValues)), newIdx)
+
+        dfobj_new$x <- round(as.numeric(dfobj_new$x), 4)
+        dfobj_new$y <- round(as.numeric(dfobj_new$y), 4)
+
+        for (i in 1:(length(newIdx) - 1)) { # add curve
+          newCurve <- paste(
+            " + geom_curve( aes(x = ", "dfobj_new$x[newIdx[", i,
+            "]], y = dfobj_new$y[newIdx[", i, "]], xend = dfobj_new$x[newIdx[", i + 1,
+            "]], yend = dfobj_new$y[newIdx[", i + 1, ']]), size = 0.5, linetype = "longdash",',
+            "curvature = 0.1, colour = colV[newIdx[", i, ']], arrow = arrow(length = unit(0.1,"inches")))'
+          )
+          graphString <- paste(graphString, newCurve, sep = "")
         }
       }
+
       eval(parse(text = graphString))
       return(ggobj2)
     }
@@ -298,25 +304,40 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
     observeEvent(input$btn, {
       shinyjs::hide("btn")
 
-      shinyjs::runjs('$("form p label input").attr("disabled",true)'); # radio button disable
+      lgs <- sapply(1:length(genesets), function(i) {
+        length(genesets[[i]])
+      })
+
+      # lgs = lgs[intersect(which(lgs >= 15), which(lgs <= 500))]
+      # cat('minimum gene-set size :', input$sliderinput1, '\n')
+      # cat('maximum gene-set size :', input$sliderinput2, '\n')
+
+      lgs <- lgs[intersect(which(lgs >= input$sliderinput1), which(lgs <= input$sliderinput2))]
+      cat("minimum gene-set size :", input$sliderinput1, "\n")
+      cat("maximum gene-set size :", input$sliderinput2, "\n")
+
+      cat(length(genesets), " genesets\n")
+
+      shinyjs::runjs('$("form p label input").attr("disabled",true)') # radio button disable
       shinyjs::runjs("$('.shinymaterial-slider-sliderinput1').attr('disabled',true)")
       shinyjs::runjs("$('.shinymaterial-slider-sliderinput2').attr('disabled',true)")
-      #shinyjs::runjs("$('#sliderinput1, #sliderinput2').prop('disabled', true);");
+      # shinyjs::runjs("$('#sliderinput1, #sliderinput2').prop('disabled', true);");
 
       w <- Waitress$new(selector = NULL, theme = "overlay")$start()
 
       v <- CountData
 
-      if(input$dropdowninput != 'GSVA'){
+      if (input$dropdowninput != "GSVA") {
+        # s <- findSigGenes(v, 'median')
         s <- findSigGenes(v, input$dropdowninput)
         names(s) <- CellInfo
       }
 
       # TODO BUILD GSVA CASE
 
-      if(!is.null(ClustInfo)){
-        cat('Clust Info found\n')
-        s2 = findSigGenesGroup(v, ClustInfo, q0)
+      if (!is.null(ClustInfo)) {
+        cat("Clust Info found\n")
+        s2 <- findSigGenesGroup(v, ClustInfo, q0)
       }
 
       # for test
@@ -335,53 +356,55 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
       # pres : which gene-sets are significant for each cells.
       # pres2 : for each gene-sets, how many cells are significant that gene-sets.
 
-      CellPathwayDF = data.frame()
-      Cells = unique(CellInfo)
-      for(i in 1:length(Cells)){
-        thisCell = Cells[i]
-        tt = table(unlist(pres[which(thisCell==CellInfo)]))
-        CellPathwayDF = rbind(CellPathwayDF, cbind(thisCell, names(tt), unname(tt)))
+      CellPathwayDF <- data.frame(stringsAsFactors = FALSE)
+      Cells <- sort(unique(CellInfo))
+      for (i in 1:length(Cells)) {
+        thisCell <- Cells[i]
+        tt <- table(unlist(pres[which(thisCell == CellInfo)]))
+        CellPathwayDF <- rbind(CellPathwayDF, cbind(thisCell, names(tt), unname(tt)))
       }
 
-      colnames(CellPathwayDF) = c('Cell', 'Geneset', 'Count')
-      CellPathwayDF$Geneset = names(genesets)[as.numeric(CellPathwayDF$Geneset)]
-      CellPathwayDF$Count = as.numeric(CellPathwayDF$Count)
-      CellPathwayDF$Cell = as.character(CellPathwayDF$Cell)
-      Length = sapply(CellPathwayDF$Geneset, function(i){length(genesets[[i]])})
-      CellPathwayDF = cbind(CellPathwayDF, Length)
+      colnames(CellPathwayDF) <- c("Cell", "Geneset", "Count")
+      CellPathwayDF$Geneset <- names(genesets)[as.numeric(as.character(CellPathwayDF$Geneset))]
+      CellPathwayDF$Count <- as.numeric(as.character(CellPathwayDF$Count))
+      CellPathwayDF$Cell <- as.character(CellPathwayDF$Cell)
+      Length <- sapply(CellPathwayDF$Geneset, function(i) {
+        length(genesets[[i]])
+      })
+      CellPathwayDF <- cbind(CellPathwayDF, Length)
 
       # select genesets with count > 1
-      CellPathwayDF = CellPathwayDF %>%
+      CellPathwayDF <- CellPathwayDF %>%
         dplyr::filter(Count > 1)
 
       # select genesets with count == max(Count)
-      CellPathwayDF = CellPathwayDF %>%
-        right_join( CellPathwayDF %>% group_by(Cell) %>% summarize(Count = max(Count)) )
+      CellPathwayDF <- CellPathwayDF %>%
+        right_join(CellPathwayDF %>% group_by(Cell) %>% summarize(Count = max(Count)))
 
 
       pres2 <- sort(table(unlist(pres)), decreasing = T)
       names(pres2) <- names(genesets)[as.numeric(names(pres2))]
       pres2 <<- pres2
 
-      CellPathwayDF = CellPathwayDF %>%
-        inner_join( pathwayPvalue() )
+      CellPathwayDF <- CellPathwayDF %>%
+        inner_join(pathwayPvalue())
 
       CellPathwayDF <<- CellPathwayDF
 
       dtobj <<- buildDT(pres2)
 
-      if(input$dropdowninput2 == 't-SNE'){
+      if (input$dropdowninput2 == "t-SNE") {
         tsneE <- Rtsne(t(v), check_duplicates = FALSE, perplexity = 15)
         dfobj <- data.frame(tsneE$Y, col = CellInfo)
-        if(!is.null(ClustInfo)){
+        if (!is.null(ClustInfo)) {
           dfobj2 <- data.frame(tsneE$Y, col = ClustInfo)
         }
       }
 
-      if(input$dropdowninput2 == 'U-MAP'){
-        umapE = uwot::umap(t(v), fast_sgd = TRUE)
-        dfobj = data.frame(umapE, col = CellInfo)
-        if(!is.null(ClustInfo)){
+      if (input$dropdowninput2 == "U-MAP") {
+        umapE <- uwot::umap(t(v), fast_sgd = TRUE)
+        dfobj <- data.frame(umapE, col = CellInfo)
+        if (!is.null(ClustInfo)) {
           dfobj2 <- data.frame(umapE, col = ClustInfo)
         }
       }
@@ -389,24 +412,27 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
       ggobj <<- ggplot(data.frame(table(CellInfo)), aes(x = CellInfo, y = Freq, fill = CellInfo)) +
         geom_bar(stat = "identity") # cell histogram
 
-      if(!is.null(ClustInfo)){
+      if (!is.null(ClustInfo)) {
         ggobj3 <<- ggplot(data.frame(table(ClustInfo)), aes(x = ClustInfo, y = Freq, fill = ClustInfo)) +
           geom_bar(stat = "identity") # cell histogram
       }
 
-      colnames(dfobj) <- colnames(dfobj2) <- c("x", "y", "col")
+      colnames(dfobj) <- c("x", "y", "col")
       dfobj <<- dfobj
 
-      dfobj2$col = as.character(dfobj2$col)
-      dfobj2 <<- dfobj2
+      if (nrow(dfobj2)) {
+        colnames(dfobj2) <- c("x", "y", "col")
+        dfobj2$col <- as.character(dfobj2$col)
+        dfobj2 <<- dfobj2
+      }
 
       # scatter plot
       ggobj2 <<- ggplot(dfobj, aes(x = x, y = y, color = col)) +
         geom_point() +
         scale_color_manual(values = briterhex(scales::hue_pal()(length(unique(dfobj$col)))))
 
-      if(!is.null(ClustInfo)){
-        ggobj4 <<- ggplot(dfobj2, aes(x = x, y = y, color = col) ) +
+      if (!is.null(ClustInfo)) {
+        ggobj4 <<- ggplot(dfobj2, aes(x = x, y = y, color = col)) +
           geom_point() +
           scale_color_manual(values = briterhex(scales::hue_pal()(length(unique(dfobj2$col)))))
       }
@@ -420,10 +446,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
 
       gt <<- groupTable()
 
-
-
       output$dynamicCell <- renderUI({
-
         Tabs <- sort(unique(CellInfo))
         numTabs <- length(Tabs)
         CardColors <- briterhex(scales::hue_pal()(numTabs))
@@ -440,7 +463,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
                     class = "card-content",
                     shiny::tags$span(class = "card-title", Tabs[i]), # title
                     shiny::tags$div(class = "divider"), # divider = TRUE
-                    DT::dataTableOutput(paste0("dtC", i), width = "100%", height = '500px'),
+                    DT::dataTableOutput(paste0("dtC", i), width = "100%", height = "500px"),
                     actionButton(inputId = paste0("tsC", i), label = "Select")
                   )
                 ),
@@ -463,59 +486,58 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
       }
 
 
-      shinyjs::hide('message')
-
+      shinyjs::hide("message")
     })
 
     observeEvent(input$freqbtn, {
-      if(input$freqbtn == 0 ){
+      if (input$freqbtn == 0) {
         return(NULL)
       }
 
-      Cells = sort(unique(CellInfo))
-      res = c()
-      for(i in 1:length(Cells)){
-        thisCell = Cells[i]
+      Cells <- sort(unique(CellInfo))
+      res <- c()
+      for (i in 1:length(Cells)) {
+        thisCell <- Cells[i]
 
-        thisCellData = CellPathwayDF %>% dplyr::filter(Cell==thisCell)
+        thisCellData <- CellPathwayDF %>% dplyr::filter(Cell == thisCell)
 
-        if(nrow(thisCellData) > 1){
-          thisCellData = thisCellData  %>% top_n(-1, wt = Length)
+        if (nrow(thisCellData) > 1) {
+          thisCellData <- thisCellData %>% top_n(-1, wt = Length)
         }
-        res = c(res, paste0(thisCellData$Geneset, ' @', thisCellData$Cell))
-
+        res <- c(res, paste0(thisCellData$Geneset, " @", thisCellData$Cell))
       }
 
-      ggobj2 = emphasize(FALSE, res)
+      ggobj2 <- emphasize(FALSE, res)
 
       output$img1 <- shiny::renderPlot(ggobj2)
-
     })
 
-
     observeEvent(input$sigbtn, {
-      if(input$sigbtn == 0){
+      if (input$sigbtn == 0) {
         return(NULL)
       }
 
-      Cells = sort(unique(CellInfo))
-      res = c()
-      for(i in 1:length(Cells)){
-        thisCell = Cells[i]
+      Cells <- sort(unique(CellInfo))
+      res <- c()
+      for (i in 1:length(Cells)) {
+        thisCell <- Cells[i]
 
-        thisCellData = CellPathwayDF %>% dplyr::filter(Cell==thisCell)
-        if(nrow(thisCellData) > 0){
-          if(nrow(thisCellData) > 1){
-            thisCellData = thisCellData  %>% top_n(-1, wt = Qvalue)
+        thisCellData <- CellPathwayDF %>% dplyr::filter(Cell == thisCell)
+        if (nrow(thisCellData) > 0) {
+          if (nrow(thisCellData) > 1) {
+            thisCellData <- thisCellData %>% top_n(-1, wt = Qvalue)
           }
-          res = c(res, paste0(thisCellData$Geneset, ' @', thisCellData$Cell))
+          if (nrow(thisCellData) > 1) {
+            thisCellData <- thisCellData %>% top_n(-1, wt = Length)
+          }
+
+          res <- c(res, paste0(thisCellData$Geneset, " @", thisCellData$Cell))
         }
       }
 
-      ggobj2 = emphasize(FALSE, res)
+      ggobj2 <- emphasize(FALSE, res)
 
       output$img1 <- shiny::renderPlot(ggobj2)
-
     })
 
     # draw gray color images
@@ -524,14 +546,14 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
         return(NULL)
       }
 
-      ggobj2 <- ggplot(dfobj, aes(x= x, y = y)) +
-        geom_point(colour = 'gray')
+      ggobj2 <- ggplot(dfobj, aes(x = x, y = y)) +
+        geom_point(colour = "gray")
 
       output$img1 <- shiny::renderPlot(ggobj2)
     })
 
     observeEvent(input$colorbtn, {
-      if(input$colorbtn ==0){
+      if (input$colorbtn == 0) {
         return(NULL)
       }
 
@@ -547,7 +569,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
         return(NULL)
       }
 
-      shinyjs::hide('btn3')
+      shinyjs::hide("btn3")
     })
 
     output$dynamic <- renderUI({
@@ -586,7 +608,9 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
     # call sort button in cell tab
 
     observeEvent(input$callSortFunction, {
-      if(input$callSortFunction ==0 ){return(NULL)}
+      if (input$callSortFunction == 0) {
+        return(NULL)
+      }
       shinyjs::runjs(code = '$("#mysortableCell .rank-list-item").remove()')
 
       g <- sort(unique(gt[, 1]))
@@ -594,12 +618,11 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
       options(useFancyQuotes = FALSE)
 
       for (i in 1:length(g)) {
-
         item <- paste0("$('#dtC", i, " .selected td')[0].innerText")
 
         shinyjs::runjs(
           code = paste0(
-            "$('#tsC", i, "').attr('onClick',",'"', sortItem(paste0(item, " + ' @", g[i], "'"), 'mysortableCell'),"; ",
+            "$('#tsC", i, "').attr('onClick',", '"', sortItem(paste0(item, " + ' @", g[i], "'"), "mysortableCell"), "; ",
             "$('#tsC", i, "').attr('disabled', true);", '")'
           )
         )
@@ -634,17 +657,17 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
         return(NULL)
       }
 
-      ggobj2 = emphasize(TRUE, input$rlistCell)
+      ggobj2 <- emphasize(TRUE, input$rlistCell)
 
       # modify ggobj2
       output$img1 <- shiny::renderPlot(ggobj2)
     })
 
     observeEvent(input$btn6Cell, {
-      if(input$btn6Cell == 0){
+      if (input$btn6Cell == 0) {
         return(NULL)
       }
-      ggobj2 = emphasize(FALSE, input$rlistCell)
+      ggobj2 <- emphasize(FALSE, input$rlistCell)
 
       output$img1 <- shiny::renderPlot(ggobj2)
     })
@@ -654,7 +677,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
       if (input$btn5 == 0) {
         return(NULL)
       }
-      ggobj2 = emphasize(TRUE, input$rlist)
+      ggobj2 <- emphasize(TRUE, input$rlist)
 
       output$img3 <- shiny::renderPlot(ggobj2)
     })
@@ -669,7 +692,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
         shinyjs::runjs(
           code = paste0(
             "$('#ts", i, "').attr(", "'onClick'", ",",
-            '"', sortItem(paste0(item, " + ' @", g[i], "'"), 'mysortable'),
+            '"', sortItem(paste0(item, " + ' @", g[i], "'"), "mysortable"),
             ";$('#ts", i, "').attr('disabled', true);", '")'
           )
         )
@@ -684,11 +707,11 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
 
     # clear timelist in Cell tab
     observeEvent(input$btn7Cell, {
-      if(input$btn7Cell == 0){return(NULL)}
+      if (input$btn7Cell == 0) {
+        return(NULL)
+      }
       shinyjs::runjs(code = '$("#mysortableCell .rank-list-item").remove(); $("#dynamicCell button").attr("disabled",false)')
     })
-
-
   }
   shiny::shinyApp(ui, server, options = list(launch.browser = TRUE))
 }
@@ -725,16 +748,16 @@ CellEnrichUI <- function() {
           selected = "t-SNE"
         ),
         material_slider(
-          input_id = 'sliderinput1',
-          label = 'Minimum gene-set size',
+          input_id = "sliderinput1",
+          label = "Minimum gene-set size",
           min_value = 10,
           max_value = 30,
           initial_value = 15,
           step_size = 5
         ),
         material_slider(
-          input_id = 'sliderinput2',
-          label = 'Maximum gene-set size',
+          input_id = "sliderinput2",
+          label = "Maximum gene-set size",
           min_value = 250,
           max_value = 750,
           initial_value = 500,
@@ -760,15 +783,15 @@ CellEnrichUI <- function() {
         material_column(
           material_card(
             depth = 3,
-            p('Run cellenrich from left navigator', id = 'message'),
+            p("Run cellenrich from left navigator", id = "message"),
             plotOutput("img1", height = "700px"),
             material_card(
-              title='',
-              material_button('colorbtn', 'toColor', icon = 'color_lens', color = 'blue lighten-1'),
-              material_button('graybtn', 'toGray', icon = 'clear', color = 'blue lighten-1'), # to gray color
-              material_button('freqbtn', 'Frequent', icon = 'grain', color = 'blue lighten-1'), # to gray color
-              material_button('sigbtn', 'Significant', icon = 'grade', color = 'blue lighten-1'), # to gray color
-              #material_button('timeplot', 'timeplot', icon = 'timeline'),
+              title = "",
+              material_button("colorbtn", "toColor", icon = "color_lens", color = "blue lighten-1"),
+              material_button("graybtn", "toGray", icon = "clear", color = "blue lighten-1"), # to gray color
+              material_button("freqbtn", "Frequent", icon = "grain", color = "blue lighten-1"), # to gray color
+              material_button("sigbtn", "Significant", icon = "grade", color = "blue lighten-1"), # to gray color
+              # material_button('timeplot', 'timeplot', icon = 'timeline'),
               depth = 2
             )
           ),
@@ -780,15 +803,15 @@ CellEnrichUI <- function() {
 
         material_card(
           # plotOutput("img2"), # cell distribution
-          title = '',
-          material_button('callSortFunction', 'activate', icon = 'play_arrow', color = 'pink'),
+          title = "",
+          material_button("callSortFunction", "activate", icon = "play_arrow", color = "pink"),
           material_card(
-            title = 'Pathway Emphasize', divider = TRUE,
-            tags$p('If list not recognized, please re-move their position'),
+            title = "Pathway Emphasize", divider = TRUE,
+            tags$p("If list not recognized, please re-move their position"),
             rank_list(text = "Pathways", labels = "Please Activate First", input_id = "rlistCell", css_id = "mysortableCell"),
-            material_button("btn5Cell", "Emphasize with Order", icon = 'timeline'),
-            material_button("btn6Cell", "Emphasize without Order", icon = 'bubble_chart'),
-            material_button("btn7Cell", "Clear List", icon = 'clear_all'),
+            material_button("btn5Cell", "Emphasize with Order", icon = "timeline"),
+            material_button("btn6Cell", "Emphasize without Order", icon = "bubble_chart"),
+            material_button("btn7Cell", "Clear List", icon = "clear_all"),
           ),
           uiOutput("dynamicCell"),
           depth = 3
@@ -799,25 +822,22 @@ CellEnrichUI <- function() {
     material_tab_content(
       tab_id = "tab_group",
       material_card(
-        plotOutput("img3", height = '700px'),
+        plotOutput("img3", height = "700px"),
         actionButton("btn3", "Create Table"),
         actionButton("btn4", "Fill Table"),
         actionButton("btn6", "call SortButtons"),
         material_card(
-          title = 'TimePlot', divider = TRUE,
-          tags$p('If list not recognized, please re-move their position'),
+          title = "TimePlot", divider = TRUE,
+          tags$p("If list not recognized, please re-move their position"),
           rank_list(text = "List for TimePlot", labels = "", input_id = "rlist", css_id = "mysortable"),
           actionButton("btn5", "Generate Time Plot"),
           actionButton("btn7", "Clear List"),
         ),
         plotOutput("img4"),
-        #DT::dataTableOutput('tab2'),
+        # DT::dataTableOutput('tab2'),
         uiOutput("dynamic"),
         depth = 3
       )
     ),
   )
 }
-
-
-
