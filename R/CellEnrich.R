@@ -21,7 +21,7 @@
 #'
 #' @export
 
-CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
+CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
   require(shinymaterial)
   require(shiny)
   require(waiter)
@@ -39,6 +39,8 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
   options(useFancyQuotes = FALSE)
 
   server <- function(input, output, session) {
+
+    A <- ''
 
     ## FUNCTIONS
 
@@ -179,7 +181,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
       return(res)
     }
 
-    getHyperPvalue <- function(genes, genesets) {
+    getHyperPvalue <- function(genes, genesets, A) {
       pv <- sapply(1:length(genesets), function(i) {
         q <- length(intersect(genesets[[i]], genes)) # selected white ball
         m <- length(genesets[[i]]) # white ball
@@ -281,7 +283,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
     shinyjs::runjs(code = '$("#btn5Cell, #btn6Cell, #btn7Cell").prop("disabled",true)')
 
     # load("c2v7idx.RData")
-    A <- length(unique(unlist(genesets))) # Background genes
+
     myf <- function(genesetnames, pres) {
       idx <- which(names(genesets) == genesetnames)
       res <- c()
@@ -298,32 +300,42 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
     ggobj2 <- ggobj <- dtobj <- dfobj <- pres <- CellPathwayDF <- ""
     gt <- pres2 <- dfobj2 <- ggobj3 <- ggobj4 <- ""
 
-
     # start
 
     observeEvent(input$btn, {
       shinyjs::hide("btn")
 
+      q0 = input$sliderinput3
+
+      w <- Waitress$new(selector = NULL, theme = "overlay")$start()
+
+      # geneset background flushing
+      genes = sort(rownames(CountData))
+      for(i in 1:length(genesets)){
+        genesets[[i]] = intersect(genesets[[i]], genes)
+      }
+      rm(genes)
+
       lgs <- sapply(1:length(genesets), function(i) {
         length(genesets[[i]])
       })
 
-      # lgs = lgs[intersect(which(lgs >= 15), which(lgs <= 500))]
+      # genesets = genesets[intersect(which(lgs >= 15), which(lgs <= 500))]
       # cat('minimum gene-set size :', input$sliderinput1, '\n')
       # cat('maximum gene-set size :', input$sliderinput2, '\n')
 
-      lgs <- lgs[intersect(which(lgs >= input$sliderinput1), which(lgs <= input$sliderinput2))]
+      genesets <- genesets[intersect(which(lgs >= input$sliderinput1), which(lgs <= input$sliderinput2))]
       cat("minimum gene-set size :", input$sliderinput1, "\n")
       cat("maximum gene-set size :", input$sliderinput2, "\n")
 
-      cat(length(genesets), " genesets\n")
+      cat(length(genesets), "genesets\n")
+
+      A <<- length(unique(unlist(genesets))) # Background genes
 
       shinyjs::runjs('$("form p label input").attr("disabled",true)') # radio button disable
       shinyjs::runjs("$('.shinymaterial-slider-sliderinput1').attr('disabled',true)")
       shinyjs::runjs("$('.shinymaterial-slider-sliderinput2').attr('disabled',true)")
       # shinyjs::runjs("$('#sliderinput1, #sliderinput2').prop('disabled', true);");
-
-      w <- Waitress$new(selector = NULL, theme = "overlay")$start()
 
       v <- CountData
 
@@ -344,7 +356,8 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
       res <- list()
       for (i in 1:length(s)) {
         w$inc(1 / length(s))
-        pvh <- getHyperPvalue(s[[i]], genesets)
+        pvh <- getHyperPvalue(s[[i]], genesets, A)
+
         qvh <- p.adjust(pvh, "fdr")
         res[[i]] <- unname(which(qvh < q0))
       }
@@ -377,19 +390,16 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
       CellPathwayDF <- CellPathwayDF %>%
         dplyr::filter(Count > 1)
 
-      # select genesets with count == max(Count)
-      CellPathwayDF <- CellPathwayDF %>%
-        right_join(CellPathwayDF %>% group_by(Cell) %>% summarize(Count = max(Count)))
-
 
       pres2 <- sort(table(unlist(pres)), decreasing = T)
       names(pres2) <- names(genesets)[as.numeric(names(pres2))]
       pres2 <<- pres2
 
       CellPathwayDF <- CellPathwayDF %>%
-        inner_join(pathwayPvalue())
+        inner_join(pathwayPvalue(q0))
 
       CellPathwayDF <<- CellPathwayDF
+
 
       dtobj <<- buildDT(pres2)
 
@@ -502,9 +512,21 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
         thisCellData <- CellPathwayDF %>% dplyr::filter(Cell == thisCell)
 
         if (nrow(thisCellData) > 1) {
-          thisCellData <- thisCellData %>% top_n(-1, wt = Length)
+          thisCellData <- thisCellData %>% top_n(1, wt = Count)
+          if(nrow(thisCellData) > 1){
+            thisCellData <- thisCellData %>% top_n(-1, wt = Length)
+            if(nrow(thisCellData) > 1){
+              thisCellData <- thisCellData %>% top_n(-1, wt = Qvalue)
+              if(nrow(thisCellData)>1){
+                thisCellData <- thisCellData %>% top_n(1)
+              }
+            }
+          }
+
+          print(thisCellData)
+          res <- c(res, paste0(thisCellData$Geneset, " @", thisCellData$Cell))
         }
-        res <- c(res, paste0(thisCellData$Geneset, " @", thisCellData$Cell))
+
       }
 
       ggobj2 <- emphasize(FALSE, res)
@@ -523,16 +545,25 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1) {
         thisCell <- Cells[i]
 
         thisCellData <- CellPathwayDF %>% dplyr::filter(Cell == thisCell)
-        if (nrow(thisCellData) > 0) {
+
           if (nrow(thisCellData) > 1) {
             thisCellData <- thisCellData %>% top_n(-1, wt = Qvalue)
-          }
-          if (nrow(thisCellData) > 1) {
-            thisCellData <- thisCellData %>% top_n(-1, wt = Length)
+
+            if (nrow(thisCellData) > 1) {
+              thisCellData <- thisCellData %>% top_n(-1, wt = Length)
+
+              if(nrow(thisCellData)>1){
+                thisCellData <- thisCellData %>% top_n(1, wt = Count)
+                if(nrow(thisCellData)>1){
+                  thisCellData <- thisCellData %>% top_n(1)
+                }
+              }
+            }
+
+            print(thisCellData)
+            res <- c(res, paste0(thisCellData$Geneset, " @", thisCellData$Cell))
           }
 
-          res <- c(res, paste0(thisCellData$Geneset, " @", thisCellData$Cell))
-        }
       }
 
       ggobj2 <- emphasize(FALSE, res)
@@ -762,6 +793,14 @@ CellEnrichUI <- function() {
           max_value = 750,
           initial_value = 500,
           step_size = 5
+        ),
+        material_slider(
+          input_id = 'sliderinput3',
+          label = 'q-value threshold',
+          min_value = 0,
+          max_value = 0.25,
+          initial_value = 0.25,
+          step_size = 0.05
         ),
         actionButton("btn", "Start CellEnrich")
       )
