@@ -39,8 +39,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
   options(useFancyQuotes = FALSE)
 
   server <- function(input, output, session) {
-
-    A <- ''
+    A <- ""
 
     ## FUNCTIONS
 
@@ -100,7 +99,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
 
     changeCol <- function(v) {
       cols <- briterhex(scales::hue_pal()(length(unique(v))))
-      uv <- sort(unique(v))
+      uv <- unique(v)
       res <- c()
       for (i in 1:length(uv)) {
         res[which(v == uv[i])] <- cols[i]
@@ -110,23 +109,23 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
 
     pathwayPvalue <- function(q0 = 0.1) {
       res <- c()
-      gs <- sapply(names(pres2), function(i) {
-        which(names(genesets) == i)
-      })
-      Cells <- sort(unique(CellInfo))
+      # gs <- sapply(names(pres2), function(i) { which(names(genesets) == i) })
+      Cells <- unique(CellInfo)
+
+      total <- length(CellInfo)
 
       for (i in 1:length(Cells)) {
         thisCell <- Cells[i]
         thisCellIdx <- which(CellInfo == thisCell)
-        total <- length(CellInfo)
+
         k <- length(thisCellIdx)
+
         thisCellPathways <- table(unlist(pres[thisCellIdx]))
         pv <- c()
 
         for (j in 1:length(thisCellPathways)) {
           thisPathway <- names(thisCellPathways)[j]
-
-          q <- unname(thisCellPathways[j]) # selected white ball
+          q <- unname(thisCellPathways)[j] # selected white ball
           m <- pres2[names(genesets)[as.numeric(thisPathway)]] # total white ball
           pv[j] <- round(1 - phyper(q - 1, m, total - m, k), 4)
         }
@@ -136,8 +135,15 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
       }
       res <- data.frame(res, stringsAsFactors = FALSE)
       colnames(res) <- c("Cell", "Geneset", "Qvalue")
-      res$Qvalue <- round(p.adjust(as.numeric(res$Qvalue), "fdr"), 4)
-      res <- res %>% dplyr::filter(Qvalue < q0)
+
+      res$Cell <- as.character(res$Cell)
+      res$Geneset <- as.character(res$Geneset)
+
+      res$Qvalue <- round(p.adjust(as.numeric(as.character(res$Qvalue)), "fdr"), 4)
+
+
+      res <- res %>% dplyr::filter(Qvalue <= q0) # 1237 * 3
+
       return(res)
     }
 
@@ -234,18 +240,27 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
     }
 
     emphasize <- function(path = FALSE, inputObj) {
-      rlobj <- buildRlobj(inputObj) # name, location dataframe
+      rlobj <- buildRlobj(inputObj) # split into name, location dataframe
 
-      cellValues <- getCellValues(rlobj)
+      cellValues <- getCellValues(rlobj) # get cell index for each cell
 
-      dfobj_new <- data.frame(dfobj)
+      dfobj_new <- data.frame(dfobj, stringsAsFactors = FALSE)
 
       colnames(dfobj_new) <- c("x", "y", "col")
 
       # define ggobj2 element
 
-      colV <- changeCol(dfobj_new$col)
-      colV[-unlist(cellValues)] <- "#95A5A6" # gray color
+      # dfobj -> oocyte1, oocyte2
+
+      UniqueCol <- briterhex(scales::hue_pal()(length(unique(CellInfo))))
+      names(UniqueCol) <- unique(CellInfo)
+
+      colV <- unname(UniqueCol[dfobj$col])
+
+
+      colV[-unlist(cellValues, use.names = FALSE)] <- "#95A5A6" # gray color
+
+      # colV <- changeCol(dfobj_new$col)
 
       graphString <- "ggobj2 <- ggplot(dfobj_new, aes(x = x, y = y)) + geom_point(colour = colV)"
 
@@ -253,7 +268,8 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
         for (i in 1:length(cellValues)) {
           x <- mean(as.numeric(dfobj_new$x[cellValues[[i]]]))
           y <- mean(as.numeric(dfobj_new$y[cellValues[[i]]]))
-          dfobj_new <- rbind(dfobj_new, c(x, y, rlobj[i, 2]))
+          dfobj_new <- rbind(dfobj_new, c(x, y, "meanPoint"))
+          colV <- c(colV, "#000")
         }
         newIdx <- (nrow(dfobj) + 1):nrow(dfobj_new)
         cellValues <- c(unname(unlist(cellValues)), newIdx)
@@ -266,7 +282,8 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
             " + geom_curve( aes(x = ", "dfobj_new$x[newIdx[", i,
             "]], y = dfobj_new$y[newIdx[", i, "]], xend = dfobj_new$x[newIdx[", i + 1,
             "]], yend = dfobj_new$y[newIdx[", i + 1, ']]), size = 0.5, linetype = "longdash",',
-            "curvature = 0.1, colour = colV[newIdx[", i, ']], arrow = arrow(length = unit(0.1,"inches")))'
+            "curvature = 0.1, colour = '#000', ", 'arrow = arrow(length = unit(0.1,"inches")))'
+            # "curvature = 0.1, colour = colV[newIdx[", i, ']], arrow = arrow(length = unit(0.1,"inches")))'
           )
           graphString <- paste(graphString, newCurve, sep = "")
         }
@@ -305,14 +322,14 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
     observeEvent(input$btn, {
       shinyjs::hide("btn")
 
-      q0 = input$sliderinput3
+      q0 <- input$sliderinput3
 
       w <- Waitress$new(selector = NULL, theme = "overlay")$start()
 
       # geneset background flushing
-      genes = sort(rownames(CountData))
-      for(i in 1:length(genesets)){
-        genesets[[i]] = intersect(genesets[[i]], genes)
+      genes <- sort(rownames(CountData))
+      for (i in 1:length(genesets)) {
+        genesets[[i]] <- intersect(genesets[[i]], genes)
       }
       rm(genes)
 
@@ -325,6 +342,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
       # cat('maximum gene-set size :', input$sliderinput2, '\n')
 
       genesets <- genesets[intersect(which(lgs >= input$sliderinput1), which(lgs <= input$sliderinput2))]
+      genesets <<- genesets
       cat("minimum gene-set size :", input$sliderinput1, "\n")
       cat("maximum gene-set size :", input$sliderinput2, "\n")
 
@@ -337,15 +355,13 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
       shinyjs::runjs("$('.shinymaterial-slider-sliderinput2').attr('disabled',true)")
       # shinyjs::runjs("$('#sliderinput1, #sliderinput2').prop('disabled', true);");
 
-      v <- CountData
+      v <- CountData # oocyte 1, oocyte 2, .
 
       if (input$dropdowninput != "GSVA") {
         # s <- findSigGenes(v, 'median')
         s <- findSigGenes(v, input$dropdowninput)
-        names(s) <- CellInfo
+        names(s) <- CellInfo # oocyte 1, oocyte 2
       }
-
-      # TODO BUILD GSVA CASE
 
       if (!is.null(ClustInfo)) {
         cat("Clust Info found\n")
@@ -367,10 +383,10 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
       rm(res)
 
       # pres : which gene-sets are significant for each cells.
-      # pres2 : for each gene-sets, how many cells are significant that gene-sets.
+
 
       CellPathwayDF <- data.frame(stringsAsFactors = FALSE)
-      Cells <- sort(unique(CellInfo))
+      Cells <- unique(CellInfo) # 16cell1, 16cell2,
       for (i in 1:length(Cells)) {
         thisCell <- Cells[i]
         tt <- table(unlist(pres[which(thisCell == CellInfo)]))
@@ -378,44 +394,54 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
       }
 
       colnames(CellPathwayDF) <- c("Cell", "Geneset", "Count")
+
+      CellPathwayDF$Cell <- as.character(CellPathwayDF$Cell)
       CellPathwayDF$Geneset <- names(genesets)[as.numeric(as.character(CellPathwayDF$Geneset))]
       CellPathwayDF$Count <- as.numeric(as.character(CellPathwayDF$Count))
-      CellPathwayDF$Cell <- as.character(CellPathwayDF$Cell)
-      Length <- sapply(CellPathwayDF$Geneset, function(i) {
-        length(genesets[[i]])
-      })
-      CellPathwayDF <- cbind(CellPathwayDF, Length)
+
 
       # select genesets with count > 1
       CellPathwayDF <- CellPathwayDF %>%
         dplyr::filter(Count > 1)
 
+      Length <- sapply(CellPathwayDF$Geneset, function(i) {
+        length(genesets[[i]])
+      })
+      CellPathwayDF <- cbind(CellPathwayDF, Length)
 
+
+      # pres2 : for each gene-sets, how many cells are significant that gene-sets.
       pres2 <- sort(table(unlist(pres)), decreasing = T)
       names(pres2) <- names(genesets)[as.numeric(names(pres2))]
       pres2 <<- pres2
 
+
+      # 2625*4
+      PP <- pathwayPvalue(q0)
+
+
       CellPathwayDF <- CellPathwayDF %>%
-        inner_join(pathwayPvalue(q0))
+        inner_join(PP) # 1232 * 5
 
       CellPathwayDF <<- CellPathwayDF
 
 
       dtobj <<- buildDT(pres2)
+      # cellinfo -> oocyte1, oocyte2, ...
 
       if (input$dropdowninput2 == "t-SNE") {
         tsneE <- Rtsne(t(v), check_duplicates = FALSE, perplexity = 15)
-        dfobj <- data.frame(tsneE$Y, col = CellInfo)
+        dfobj <- data.frame(tsneE$Y, col = CellInfo, stringsAsFactors = FALSE)
         if (!is.null(ClustInfo)) {
-          dfobj2 <- data.frame(tsneE$Y, col = ClustInfo)
+          dfobj2 <- data.frame(tsneE$Y, col = ClustInfo, stringsAsFactors = FALSE)
         }
       }
 
       if (input$dropdowninput2 == "U-MAP") {
         umapE <- uwot::umap(t(v), fast_sgd = TRUE)
-        dfobj <- data.frame(umapE, col = CellInfo)
+        dfobj <- data.frame(umapE, col = CellInfo, stringsAsFactors = FALSE)
         if (!is.null(ClustInfo)) {
-          dfobj2 <- data.frame(umapE, col = ClustInfo)
+          dfobj2 <- data.frame(umapE, col = ClustInfo, stringsAsFactors = FALSE)
         }
       }
 
@@ -436,10 +462,15 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
         dfobj2 <<- dfobj2
       }
 
+      UniqueCol <- briterhex(scales::hue_pal()(length(unique(CellInfo))))
+      names(UniqueCol) <- unique(CellInfo)
+
+      colV <- unname(UniqueCol[dfobj$col])
+
       # scatter plot
-      ggobj2 <<- ggplot(dfobj, aes(x = x, y = y, color = col)) +
-        geom_point() +
-        scale_color_manual(values = briterhex(scales::hue_pal()(length(unique(dfobj$col)))))
+      ggobj2 <<- ggplot(dfobj, aes(x = x, y = y)) +
+        geom_point(colour = colV) # +
+      # scale_color_manual(values = briterhex(scales::hue_pal()(length(unique(dfobj$col)))))
 
       if (!is.null(ClustInfo)) {
         ggobj4 <<- ggplot(dfobj2, aes(x = x, y = y, color = col)) +
@@ -454,12 +485,13 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
       output$img3 <- shiny::renderPlot(ggobj4) # GROUP SCATTERPLOT
       output$img4 <- shiny::renderPlot(ggobj3) # GROUP HISOTRAM
 
-      gt <<- groupTable()
+      gt <<- groupTable() # 16cell, 16cell
 
+      # create table
       output$dynamicCell <- renderUI({
-        Tabs <- sort(unique(CellInfo))
+        Tabs <- unique(CellInfo)
         numTabs <- length(Tabs)
-        CardColors <- briterhex(scales::hue_pal()(numTabs))
+        CardColors <- briterhex(scales::hue_pal()(length(Tabs)))
 
         tagList(
           material_row(
@@ -484,7 +516,9 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
         )
       })
 
-      g <- unique(sort(CellInfo))
+
+      # fill table
+      g <- unique(CellInfo)
 
       for (i in 1:length(g)) {
         t <- paste0(
@@ -504,7 +538,8 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
         return(NULL)
       }
 
-      Cells <- sort(unique(CellInfo))
+      Cells <- unique(CellInfo)
+
       res <- c()
       for (i in 1:length(Cells)) {
         thisCell <- Cells[i]
@@ -513,20 +548,18 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
 
         if (nrow(thisCellData) > 1) {
           thisCellData <- thisCellData %>% top_n(1, wt = Count)
-          if(nrow(thisCellData) > 1){
+          if (nrow(thisCellData) > 1) {
             thisCellData <- thisCellData %>% top_n(-1, wt = Length)
-            if(nrow(thisCellData) > 1){
+            if (nrow(thisCellData) > 1) {
               thisCellData <- thisCellData %>% top_n(-1, wt = Qvalue)
-              if(nrow(thisCellData)>1){
+              if (nrow(thisCellData) > 1) {
                 thisCellData <- thisCellData %>% top_n(1)
               }
             }
           }
 
-          print(thisCellData)
           res <- c(res, paste0(thisCellData$Geneset, " @", thisCellData$Cell))
         }
-
       }
 
       ggobj2 <- emphasize(FALSE, res)
@@ -546,25 +579,24 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
 
         thisCellData <- CellPathwayDF %>% dplyr::filter(Cell == thisCell)
 
+        if (nrow(thisCellData) > 1) {
+          thisCellData <- thisCellData %>% top_n(-1, wt = Qvalue)
+
           if (nrow(thisCellData) > 1) {
-            thisCellData <- thisCellData %>% top_n(-1, wt = Qvalue)
+            thisCellData <- thisCellData %>% top_n(-1, wt = Length)
 
             if (nrow(thisCellData) > 1) {
-              thisCellData <- thisCellData %>% top_n(-1, wt = Length)
-
-              if(nrow(thisCellData)>1){
-                thisCellData <- thisCellData %>% top_n(1, wt = Count)
-                if(nrow(thisCellData)>1){
-                  thisCellData <- thisCellData %>% top_n(1)
-                }
+              thisCellData <- thisCellData %>% top_n(1, wt = Count)
+              if (nrow(thisCellData) > 1) {
+                thisCellData <- thisCellData %>% top_n(1)
               }
             }
-
-            print(thisCellData)
-            res <- c(res, paste0(thisCellData$Geneset, " @", thisCellData$Cell))
           }
 
+          res <- c(res, paste0(thisCellData$Geneset, " @", thisCellData$Cell))
+        }
       }
+
 
       ggobj2 <- emphasize(FALSE, res)
 
@@ -588,9 +620,14 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
         return(NULL)
       }
 
-      ggobj2 <<- ggplot(dfobj, aes(x = x, y = y, color = col)) +
-        geom_point() +
-        scale_color_manual(values = briterhex(scales::hue_pal()(length(unique(dfobj$col)))))
+      UniqueCol <- briterhex(scales::hue_pal()(length(unique(CellInfo))))
+      names(UniqueCol) <- unique(CellInfo)
+
+      colV <- unname(UniqueCol[dfobj$col])
+
+      # scatter plot
+      ggobj2 <- ggplot(dfobj, aes(x = x, y = y)) +
+        geom_point(colour = colV)
 
       output$img1 <- shiny::renderPlot(ggobj2)
     })
@@ -795,11 +832,11 @@ CellEnrichUI <- function() {
           step_size = 5
         ),
         material_slider(
-          input_id = 'sliderinput3',
-          label = 'q-value threshold',
+          input_id = "sliderinput3",
+          label = "q-value threshold",
           min_value = 0,
           max_value = 0.25,
-          initial_value = 0.25,
+          initial_value = 0.1,
           step_size = 0.05
         ),
         actionButton("btn", "Start CellEnrich")
