@@ -109,3 +109,20 @@ Pathway enrichment analysis / visualize for Single Cell Data
 - built freq, sig ( has cell coloring but index yet)
 
 ![image](https://user-images.githubusercontent.com/6457691/76144425-8a18ed00-60c3-11ea-8ded-21121b438484.png)
+
+## 0310
+
+- built freq, sig bug fixed.
+
+- Tocolor
+![image](https://user-images.githubusercontent.com/6457691/76292668-f594d180-62f2-11ea-9895-82f08b5a78da.png)
+
+- Togray
+![image](https://user-images.githubusercontent.com/6457691/76292683-fe85a300-62f2-11ea-9043-b027e7044bba.png)
+
+- Frequent
+![image](https://user-images.githubusercontent.com/6457691/76292709-08a7a180-62f3-11ea-8b96-29f076621dc5.png)
+
+- Significant
+![image](https://user-images.githubusercontent.com/6457691/76292726-13facd00-62f3-11ea-8bf3-953ad524c3eb.png)
+
