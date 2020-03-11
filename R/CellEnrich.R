@@ -70,12 +70,14 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
     }
 
     # actionButton with style Attributes, width = NULL
-    solvedButton = function (inputId, label, style = NULL, ...) {
+    solvedButton <- function(inputId, label, style = NULL, ...) {
       value <- restoreInput(id = inputId, default = NULL)
-      tags$button(id = inputId, style = style,
+      tags$button(
+        id = inputId, style = style,
         type = "button", class = "btn btn-default action-button",
         `data-val` = value, list(label),
-        ...)
+        ...
+      )
     }
 
     sortItem <- function(label, tableName) {
@@ -304,7 +306,9 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
 
     ### CODES
 
-    load("c2v7.RData")
+
+
+
 
     shinyjs::runjs(code = '$("#btn5Cell, #btn6Cell, #btn7Cell").prop("disabled",true)')
 
@@ -330,6 +334,10 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
 
     observeEvent(input$btn, {
       shinyjs::hide("btn")
+
+      if (input$dropdowninput3 == "Curated") load("c2v7.RData")
+
+      if (input$dropdowninput3 == "GeneOntology") load("c5v7.RData")
 
       q0 <- input$sliderinput3
 
@@ -362,6 +370,10 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
       shinyjs::runjs('$("form p label input").attr("disabled",true)') # radio button disable
       shinyjs::runjs("$('.shinymaterial-slider-sliderinput1').attr('disabled',true)")
       shinyjs::runjs("$('.shinymaterial-slider-sliderinput2').attr('disabled',true)")
+      shinyjs::runjs("$('.shinymaterial-slider-sliderinput3').attr('disabled',true)")
+
+
+
       # shinyjs::runjs("$('#sliderinput1, #sliderinput2').prop('disabled', true);");
 
       v <- CountData # oocyte 1, oocyte 2, .
@@ -459,22 +471,22 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
 
       colV <- unname(UniqueCol[x])
 
-      ggobjdf = data.frame(x,y,stringsAsFactors = FALSE)
-      colnames(ggobjdf) = c('x','y')
+      ggobjdf <- data.frame(x, y, stringsAsFactors = FALSE)
+      colnames(ggobjdf) <- c("x", "y")
 
-      Cells = unique(CellInfo)
-      names(colV) = Cells
-      x = c()
-      y = c()
-      for(i in 1:length(Cells)){
-        x[i] = Cells[i]
-        y[i] = length(which(CellInfo == Cells[i]))
+      Cells <- unique(CellInfo)
+      names(colV) <- Cells
+      x <- c()
+      y <- c()
+      for (i in 1:length(Cells)) {
+        x[i] <- Cells[i]
+        y[i] <- length(which(CellInfo == Cells[i]))
       }
 
       ggobj <<- ggplot(ggobjdf, aes(x = x, y = y)) +
         geom_bar(stat = "identity", fill = colV) # cell histogram
 
-      rm(x,y)
+      rm(x, y)
 
       if (!is.null(ClustInfo)) {
         ggobj3 <<- ggplot(data.frame(table(ClustInfo)), aes(x = ClustInfo, y = Freq, fill = ClustInfo)) +
@@ -535,7 +547,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
                     shiny::tags$div(class = "divider"), # divider = TRUE
                     DT::dataTableOutput(paste0("dtC", i), width = "100%", height = "500px"),
 
-                    solvedButton(inputId = paste0("tsC", i), label = "Select", style = 'position:absolute; top:1em; right:1em;')
+                    solvedButton(inputId = paste0("tsC", i), label = "Select", style = "position:absolute; top:1em; right:1em;")
                   )
                 ),
                 width = 4
@@ -844,6 +856,12 @@ CellEnrichUI <- function() {
           choices = c("t-SNE", "U-MAP"),
           selected = "t-SNE"
         ),
+        material_radio_button(
+          input_id = "dropdowninput3",
+          label = "select Gene-set",
+          choices = c("Curated", "GeneOntology"),
+          selected = "Curated"
+        ),
         material_slider(
           input_id = "sliderinput1",
           label = "Minimum gene-set size",
@@ -887,7 +905,7 @@ CellEnrichUI <- function() {
       material_row(
         material_column(
           material_card(
-            title = 'tSNE/UMAP Plot',
+            title = "tSNE/UMAP Plot",
             depth = 3,
             p("Run cellenrich from left navigator", id = "message"),
             material_column(
@@ -895,7 +913,7 @@ CellEnrichUI <- function() {
               width = 6
             ),
             material_column(
-              plotOutput("img2", height = '700px'), # cell distribution
+              plotOutput("img2", height = "700px"), # cell distribution
               width = 6
             ),
             material_button("colorbtn", "toColor", icon = "color_lens", color = "blue lighten-1"),
@@ -903,7 +921,6 @@ CellEnrichUI <- function() {
             material_button("freqbtn", "Frequent", icon = "grain", color = "blue lighten-1"),
             material_button("sigbtn", "Significant", icon = "grade", color = "blue lighten-1")
             # material_button('timeplot', 'timeplot', icon = 'timeline'),
-
           ),
           width = 12
         ),
