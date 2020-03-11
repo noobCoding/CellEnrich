@@ -69,6 +69,15 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
       )
     }
 
+    # actionButton with style Attributes, width = NULL
+    solvedButton = function (inputId, label, style = NULL, ...) {
+      value <- restoreInput(id = inputId, default = NULL)
+      tags$button(id = inputId, style = style,
+        type = "button", class = "btn btn-default action-button",
+        `data-val` = value, list(label),
+        ...)
+    }
+
     sortItem <- function(label, tableName) {
       options(useFancyQuotes = FALSE)
       paste0(
@@ -419,7 +428,6 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
       # 2625*4
       PP <- pathwayPvalue(q0)
 
-
       CellPathwayDF <- CellPathwayDF %>%
         inner_join(PP) # 1232 * 5
 
@@ -445,8 +453,28 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
         }
       }
 
-      ggobj <<- ggplot(data.frame(table(CellInfo)), aes(x = CellInfo, y = Freq, fill = CellInfo)) +
-        geom_bar(stat = "identity") # cell histogram
+
+      UniqueCol <- briterhex(scales::hue_pal()(length(unique(CellInfo))))
+      names(UniqueCol) <- unique(CellInfo)
+
+      colV <- unname(UniqueCol[x])
+
+      ggobjdf = data.frame(x,y,stringsAsFactors = FALSE)
+      colnames(ggobjdf) = c('x','y')
+
+      Cells = unique(CellInfo)
+      names(colV) = Cells
+      x = c()
+      y = c()
+      for(i in 1:length(Cells)){
+        x[i] = Cells[i]
+        y[i] = length(which(CellInfo == Cells[i]))
+      }
+
+      ggobj <<- ggplot(ggobjdf, aes(x = x, y = y)) +
+        geom_bar(stat = "identity", fill = colV) # cell histogram
+
+      rm(x,y)
 
       if (!is.null(ClustInfo)) {
         ggobj3 <<- ggplot(data.frame(table(ClustInfo)), aes(x = ClustInfo, y = Freq, fill = ClustInfo)) +
@@ -506,7 +534,8 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
                     shiny::tags$span(class = "card-title", Tabs[i]), # title
                     shiny::tags$div(class = "divider"), # divider = TRUE
                     DT::dataTableOutput(paste0("dtC", i), width = "100%", height = "500px"),
-                    actionButton(inputId = paste0("tsC", i), label = "Select")
+
+                    solvedButton(inputId = paste0("tsC", i), label = "Select", style = 'position:absolute; top:1em; right:1em;')
                   )
                 ),
                 width = 4
@@ -520,16 +549,16 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
       # fill table
       g <- unique(CellInfo)
 
+      # ordered by Count , not length;
+
       for (i in 1:length(g)) {
         t <- paste0(
           "output$dtC", i, " = DT::renderDataTable(datatable(CellPathwayDF[which(CellPathwayDF[,1]==g[", i, "]),-1]", # removed group column
-          ", options = list(dom = 'ltp',scroller = TRUE, scrollX = TRUE, autoWidth = TRUE, lengthChange = FALSE, order = list(list(2,'asc'))), rownames = FALSE",
+          ", options = list(dom = 'ltp',scroller = TRUE, scrollX = TRUE, autoWidth = TRUE, lengthChange = FALSE, order = list(list(1,'desc'))), rownames = FALSE",
           ", selection = 'single'))"
         )
         eval(parse(text = t))
       }
-
-
       shinyjs::hide("message")
     })
 
@@ -691,7 +720,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
         shinyjs::runjs(
           code = paste0(
             "$('#tsC", i, "').attr('onClick',", '"', sortItem(paste0(item, " + ' @", g[i], "'"), "mysortableCell"), "; ",
-            "$('#tsC", i, "').attr('disabled', true);", '")'
+            "$('#tsC", i, "').attr('disabled', true);", '");'
           )
         )
       }
@@ -858,18 +887,23 @@ CellEnrichUI <- function() {
       material_row(
         material_column(
           material_card(
+            title = 'tSNE/UMAP Plot',
             depth = 3,
             p("Run cellenrich from left navigator", id = "message"),
-            plotOutput("img1", height = "700px"),
-            material_card(
-              title = "",
-              material_button("colorbtn", "toColor", icon = "color_lens", color = "blue lighten-1"),
-              material_button("graybtn", "toGray", icon = "clear", color = "blue lighten-1"), # to gray color
-              material_button("freqbtn", "Frequent", icon = "grain", color = "blue lighten-1"), # to gray color
-              material_button("sigbtn", "Significant", icon = "grade", color = "blue lighten-1"), # to gray color
-              # material_button('timeplot', 'timeplot', icon = 'timeline'),
-              depth = 2
-            )
+            material_column(
+              plotOutput("img1", height = "700px"),
+              width = 6
+            ),
+            material_column(
+              plotOutput("img2", height = '700px'), # cell distribution
+              width = 6
+            ),
+            material_button("colorbtn", "toColor", icon = "color_lens", color = "blue lighten-1"),
+            material_button("graybtn", "toGray", icon = "clear", color = "blue lighten-1"),
+            material_button("freqbtn", "Frequent", icon = "grain", color = "blue lighten-1"),
+            material_button("sigbtn", "Significant", icon = "grade", color = "blue lighten-1")
+            # material_button('timeplot', 'timeplot', icon = 'timeline'),
+
           ),
           width = 12
         ),
@@ -878,7 +912,6 @@ CellEnrichUI <- function() {
       material_row(
 
         material_card(
-          # plotOutput("img2"), # cell distribution
           title = "",
           material_button("callSortFunction", "activate", icon = "play_arrow", color = "pink"),
           material_card(
