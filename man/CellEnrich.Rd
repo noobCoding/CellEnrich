@@ -4,7 +4,7 @@
 \alias{CellEnrich}
 \title{CellEnrich}
 \usage{
-CellEnrich(CountData, CellInfo, ClustInfo = NULL, q0 = 0.1)
+CellEnrich(CountData, CellInfo, ClustInfo = NULL)
 }
 \description{
 CellEnrich

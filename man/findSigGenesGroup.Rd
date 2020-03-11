@@ -4,14 +4,15 @@
 \alias{findSigGenesGroup}
 \title{findSigGenesGroup}
 \usage{
-findSigGenesGroup(Count = NULL, ClustInfo = NULL, q0 = 0.1)
+findSigGenesGroup(Count = NULL, ClustInfo = NULL, q0 = 0.1, TopCutoff = 5)
 }
 \arguments{
-\item{Count}{Count data}
-
-\item{ClustInfo}{}
+\item{Count}{Count data
+#' @param ClustInfo Group information}
 
 \item{q0}{qvalue cutoff, default is 0.1}
+
+\item{TopCutoff}{cutoff for Top in findMarkers, default is 5.}
 }
 \description{
 define significant genes along Group.
