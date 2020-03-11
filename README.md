@@ -130,6 +130,7 @@ Pathway enrichment analysis / visualize for Single Cell Data
 
 - geneset option added
 - ui fixed
+- marker gene L1 added
 
 ![image](https://user-images.githubusercontent.com/6457691/76387818-10c31800-63ab-11ea-93e7-9d788786db3d.png)
 
@@ -137,3 +138,4 @@ Pathway enrichment analysis / visualize for Single Cell Data
 
 ![image](https://user-images.githubusercontent.com/6457691/76387865-259fab80-63ab-11ea-9741-46fdb87c0bec.png)
 
+![image](https://user-images.githubusercontent.com/6457691/76413232-695cda00-63d8-11ea-9a96-e49a039ee749.png)
