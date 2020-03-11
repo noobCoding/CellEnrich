@@ -126,3 +126,14 @@ Pathway enrichment analysis / visualize for Single Cell Data
 - Significant
 ![image](https://user-images.githubusercontent.com/6457691/76292726-13facd00-62f3-11ea-8bf3-953ad524c3eb.png)
 
+## 0311
+
+- geneset option added
+- ui fixed
+
+![image](https://user-images.githubusercontent.com/6457691/76387818-10c31800-63ab-11ea-93e7-9d788786db3d.png)
+
+![image](https://user-images.githubusercontent.com/6457691/76387841-1caeda00-63ab-11ea-88eb-042e8ea71221.png)
+
+![image](https://user-images.githubusercontent.com/6457691/76387865-259fab80-63ab-11ea-9741-46fdb87c0bec.png)
+
