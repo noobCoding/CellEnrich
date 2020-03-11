@@ -372,11 +372,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
       shinyjs::runjs("$('.shinymaterial-slider-sliderinput2').attr('disabled',true)")
       shinyjs::runjs("$('.shinymaterial-slider-sliderinput3').attr('disabled',true)")
 
-
-
-      # shinyjs::runjs("$('#sliderinput1, #sliderinput2').prop('disabled', true);");
-
-      v <- CountData # oocyte 1, oocyte 2, .
+      v <- CountData
 
       if (input$dropdowninput != "GSVA") {
         # s <- findSigGenes(v, 'median')
@@ -386,15 +382,29 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
 
       if (!is.null(ClustInfo)) {
         cat("Clust Info found\n")
-        s2 <- findSigGenesGroup(v, ClustInfo, q0)
+        s2 <- findSigGenesGroup(v, ClustInfo, q0, TopCutoff = 5)
+        s2$FDR = round(as.numeric(s2$FDR),6)
       }
+
+
+      # marker L1
+      output$markerL1 = DT::renderDataTable(
+        DT::datatable(s2,
+          rownames = FALSE,
+          filter = 'top',
+          options = list(
+            autoWidth = TRUE,
+            dom = 'ltp'
+          ),
+          selection = 'none',
+        )
+      )
 
       # for test
       res <- list()
       for (i in 1:length(s)) {
         w$inc(1 / length(s))
         pvh <- getHyperPvalue(s[[i]], genesets, A)
-
         qvh <- p.adjust(pvh, "fdr")
         res[[i]] <- unname(which(qvh < q0))
       }
@@ -404,7 +414,6 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
       rm(res)
 
       # pres : which gene-sets are significant for each cells.
-
 
       CellPathwayDF <- data.frame(stringsAsFactors = FALSE)
       Cells <- unique(CellInfo) # 16cell1, 16cell2,
@@ -445,7 +454,6 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
 
       CellPathwayDF <<- CellPathwayDF
 
-
       dtobj <<- buildDT(pres2)
       # cellinfo -> oocyte1, oocyte2, ...
 
@@ -465,17 +473,11 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
         }
       }
 
-
       UniqueCol <- briterhex(scales::hue_pal()(length(unique(CellInfo))))
       names(UniqueCol) <- unique(CellInfo)
 
-      colV <- unname(UniqueCol[x])
-
-      ggobjdf <- data.frame(x, y, stringsAsFactors = FALSE)
-      colnames(ggobjdf) <- c("x", "y")
-
       Cells <- unique(CellInfo)
-      names(colV) <- Cells
+
       x <- c()
       y <- c()
       for (i in 1:length(Cells)) {
@@ -483,10 +485,14 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
         y[i] <- length(which(CellInfo == Cells[i]))
       }
 
+      colV <- unname(UniqueCol[x])
+      names(colV) <- Cells
+
+      ggobjdf <- data.frame(x, y, stringsAsFactors = FALSE)
+      colnames(ggobjdf) <- c("x", "y")
+
       ggobj <<- ggplot(ggobjdf, aes(x = x, y = y)) +
         geom_bar(stat = "identity", fill = colV) # cell histogram
-
-      rm(x, y)
 
       if (!is.null(ClustInfo)) {
         ggobj3 <<- ggplot(data.frame(table(ClustInfo)), aes(x = ClustInfo, y = Freq, fill = ClustInfo)) +
@@ -546,7 +552,6 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
                     shiny::tags$span(class = "card-title", Tabs[i]), # title
                     shiny::tags$div(class = "divider"), # divider = TRUE
                     DT::dataTableOutput(paste0("dtC", i), width = "100%", height = "500px"),
-
                     solvedButton(inputId = paste0("tsC", i), label = "Select", style = "position:absolute; top:1em; right:1em;")
                   )
                 ),
@@ -828,6 +833,7 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
 CellEnrichUI <- function() {
   material_page(
     shinyjs::useShinyjs(),
+
     # dynamic datatable full width
     tags$head(tags$style(HTML(".display.dataTable.no-footer{width : 100% !important;}"))),
     use_waitress(color = "#697682", percent_color = "#333333"),
@@ -838,7 +844,6 @@ CellEnrichUI <- function() {
     include_fonts = FALSE,
     include_nav_bar = TRUE,
     include_icons = FALSE,
-
 
     # options in navigator.
     material_side_nav(
@@ -927,7 +932,13 @@ CellEnrichUI <- function() {
         style = "margin : 1em"
       ),
       material_row(
-
+        material_card(
+          title = 'MarkerGenes',
+          DT::dataTableOutput('markerL1')
+        ),
+        style = "margin : 1em"
+      ),
+      material_row(
         material_card(
           title = "",
           material_button("callSortFunction", "activate", icon = "play_arrow", color = "pink"),
