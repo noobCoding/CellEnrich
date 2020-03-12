@@ -21,7 +21,7 @@
 #'
 #' @export
 
-CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
+CellEnrich <- function(CountData, CellInfo) {
   require(shinymaterial)
   require(shiny)
   require(waiter)
@@ -33,6 +33,32 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
   require(sortable)
   require(scran)
   require(dplyr)
+
+  # actionButton with style Attributes, width = NULL
+  solvedButton <- function(inputId, label, style = NULL, ...) {
+    value <- restoreInput(id = inputId, default = NULL)
+    tags$button(
+      id = inputId, style = style,
+      type = "button", class = "btn btn-default action-button",
+      `data-val` = value, list(label),
+      ...
+    )
+  }
+
+  # actionButton with Onclick Attributes
+  myButton <- function(inputId, label, width = NULL, onClick = NULL, ...) {
+    value <- restoreInput(id = inputId, default = NULL)
+    tags$button(
+      id = inputId, style = if (!is.null(width)) {
+        paste0("width: ", validateCssUnit(width), ";")
+      },
+      type = "button", class = "btn btn-default action-button",
+      onClick = onClick,
+      `data-val` = value, list(label),
+      ...
+    )
+  }
+
 
   ui <- CellEnrichUI()
 
@@ -55,30 +81,8 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
       return(res)
     }
 
-    # actionButton with Onclick Attributes
-    myButton <- function(inputId, label, width = NULL, onClick = NULL, ...) {
-      value <- restoreInput(id = inputId, default = NULL)
-      tags$button(
-        id = inputId, style = if (!is.null(width)) {
-          paste0("width: ", validateCssUnit(width), ";")
-        },
-        type = "button", class = "btn btn-default action-button",
-        onClick = onClick,
-        `data-val` = value, list(label),
-        ...
-      )
-    }
 
-    # actionButton with style Attributes, width = NULL
-    solvedButton <- function(inputId, label, style = NULL, ...) {
-      value <- restoreInput(id = inputId, default = NULL)
-      tags$button(
-        id = inputId, style = style,
-        type = "button", class = "btn btn-default action-button",
-        `data-val` = value, list(label),
-        ...
-      )
-    }
+
 
     sortItem <- function(label, tableName) {
       options(useFancyQuotes = FALSE)
@@ -199,11 +203,16 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
     }
 
     getHyperPvalue <- function(genes, genesets, A) {
+
+      lgs <- sapply(1:length(genesets), function(i) {
+        length(genesets[[i]])
+      })
+      lg = length(genes)
       pv <- sapply(1:length(genesets), function(i) {
         q <- length(intersect(genesets[[i]], genes)) # selected white ball
-        m <- length(genesets[[i]]) # white ball
+        m <- lgs[i] # white ball
         n <- A - m # black ball
-        k <- length(genes) # selected ball
+        k <- lg # selected ball
         1 - phyper(q - 1, m, n, k)
       })
       names(pv) <- names(genesets)
@@ -238,14 +247,19 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
 
         rn <- thisCellsIdx
         res <- c()
-        for (j in 1:length(thisCellsIdx)) {
+        for (j in 1:length(rn)) {
           if (thisGeneset %in% pres[[rn[j]]]) {
-            res <- c(res, thisCellsIdx[j])
+            res <- c(res, rn[j])
           }
         }
-
+        if(length(res)==0){
+          rlobj = rlobj[-i,]
+          next
+        }
         ret[[i]] <- res
       }
+
+
       names(ret) <- rlobj$location
       return(ret)
     }
@@ -266,6 +280,8 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
       UniqueCol <- briterhex(scales::hue_pal()(length(unique(CellInfo))))
       names(UniqueCol) <- unique(CellInfo)
 
+
+
       colV <- unname(UniqueCol[dfobj$col])
 
 
@@ -275,12 +291,15 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
 
       graphString <- "ggobj2 <- ggplot(dfobj_new, aes(x = x, y = y)) + geom_point(colour = colV)"
 
+
+
       if (path) { # add mean point to path
+
         for (i in 1:length(cellValues)) {
           x <- mean(as.numeric(dfobj_new$x[cellValues[[i]]]))
           y <- mean(as.numeric(dfobj_new$y[cellValues[[i]]]))
           dfobj_new <- rbind(dfobj_new, c(x, y, "meanPoint"))
-          colV <- c(colV, "#000")
+          colV <- c(colV, "#000000")
         }
         newIdx <- (nrow(dfobj) + 1):nrow(dfobj_new)
         cellValues <- c(unname(unlist(cellValues)), newIdx)
@@ -290,10 +309,10 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
 
         for (i in 1:(length(newIdx) - 1)) { # add curve
           newCurve <- paste(
-            " + geom_curve( aes(x = ", "dfobj_new$x[newIdx[", i,
-            "]], y = dfobj_new$y[newIdx[", i, "]], xend = dfobj_new$x[newIdx[", i + 1,
-            "]], yend = dfobj_new$y[newIdx[", i + 1, ']]), size = 0.5, linetype = "longdash",',
-            "curvature = 0.1, colour = '#000', ", 'arrow = arrow(length = unit(0.1,"inches")))'
+            " + geom_curve( aes(x = ", "x[newIdx[", i,
+            "]], y = y[newIdx[", i, "]], xend = x[newIdx[", i + 1,
+            "]], yend = y[newIdx[", i + 1, ']]), size = 0.5, linetype = "longdash",',
+            "curvature = 0.1, colour = '#000000', ", 'arrow = arrow(length = unit(0.1,"inches")))'
             # "curvature = 0.1, colour = colV[newIdx[", i, ']], arrow = arrow(length = unit(0.1,"inches")))'
           )
           graphString <- paste(graphString, newCurve, sep = "")
@@ -380,21 +399,21 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
         names(s) <- CellInfo # oocyte 1, oocyte 2
       }
 
-      if (!is.null(ClustInfo)) {
-        cat("Clust Info found\n")
-        s2 <- findSigGenesGroup(v, ClustInfo, q0, TopCutoff = 5)
-        s2$FDR = round(as.numeric(s2$FDR),6)
-      }
+      s2 <- findSigGenesGroup(v, CellInfo, q0, TopCutoff = 5)
+      s2$FDR = round(as.numeric(s2$FDR),6)
 
+      markerl1 = s2 %>% filter(Top<10)
+      markerl1$Group = as.factor(markerl1$Group)
 
       # marker L1
       output$markerL1 = DT::renderDataTable(
-        DT::datatable(s2,
+        DT::datatable(markerl1,
           rownames = FALSE,
           filter = 'top',
           options = list(
             autoWidth = TRUE,
-            dom = 'ltp'
+            dom = 'ltp',
+            lengthChange = FALSE
           ),
           selection = 'none',
         )
@@ -445,7 +464,6 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
       names(pres2) <- names(genesets)[as.numeric(names(pres2))]
       pres2 <<- pres2
 
-
       # 2625*4
       PP <- pathwayPvalue(q0)
 
@@ -454,23 +472,64 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
 
       CellPathwayDF <<- CellPathwayDF
 
+      # l2
+      CellMarkers = data.frame()
+
+      for(i in 1:length(Cells)){
+        thisCell = Cells[i]
+        thisCellPathways = CellPathwayDF %>% filter(Cell==thisCell) %>% select(Geneset)
+
+        thisCellDEs = s2 %>% filter(Group==thisCell) %>% select(genes)
+
+        tcd = thisCellDEs[,1]
+        tcp = thisCellPathways[,1]
+        tcp = sapply(tcp, function(i){which(names(genesets)==i)}, USE.NAMES = FALSE)
+        if(length(tcp)<1){next}
+        if(length(tcd)<1){next}
+        tcp = table(unlist(genesets[tcp], use.names = FALSE))
+        tcd = intersect(names(tcp),tcd)
+        tcp = tcp[tcd]
+
+        genes = names(tcp)
+        Count = unname(tcp)
+        CellMarkers = rbind(CellMarkers, data.frame(cbind(genes, Count, Group = thisCell), stringsAsFactors = FALSE))
+      }
+
+      CellMarkers = CellMarkers %>% inner_join(s2) %>% filter( Top < 10 )
+      CellMarkers$Group = as.factor(CellMarkers$Group)
+      CellMarkers$Count = as.numeric(CellMarkers$Count)
+      CellMarkers$Group = as.factor(CellMarkers$Group)
+
+      output$markerL2 = DT::renderDataTable(
+        DT::datatable(CellMarkers,
+                      rownames = FALSE,
+                      filter = 'top',
+                      options = list(
+                        autoWidth = TRUE,
+                        dom = 'ltp',
+                        lengthChange = FALSE
+                      ),
+                      selection = 'none',
+        )
+      )
+
+      # group 별 significant pathways
+      # group 별 DE Genes
+
+      # is counted
+
+
       dtobj <<- buildDT(pres2)
       # cellinfo -> oocyte1, oocyte2, ...
 
       if (input$dropdowninput2 == "t-SNE") {
         tsneE <- Rtsne(t(v), check_duplicates = FALSE, perplexity = 15)
         dfobj <- data.frame(tsneE$Y, col = CellInfo, stringsAsFactors = FALSE)
-        if (!is.null(ClustInfo)) {
-          dfobj2 <- data.frame(tsneE$Y, col = ClustInfo, stringsAsFactors = FALSE)
-        }
       }
 
       if (input$dropdowninput2 == "U-MAP") {
         umapE <- uwot::umap(t(v), fast_sgd = TRUE)
         dfobj <- data.frame(umapE, col = CellInfo, stringsAsFactors = FALSE)
-        if (!is.null(ClustInfo)) {
-          dfobj2 <- data.frame(umapE, col = ClustInfo, stringsAsFactors = FALSE)
-        }
       }
 
       UniqueCol <- briterhex(scales::hue_pal()(length(unique(CellInfo))))
@@ -488,25 +547,27 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
       colV <- unname(UniqueCol[x])
       names(colV) <- Cells
 
+
+
       ggobjdf <- data.frame(x, y, stringsAsFactors = FALSE)
       colnames(ggobjdf) <- c("x", "y")
 
       ggobj <<- ggplot(ggobjdf, aes(x = x, y = y)) +
         geom_bar(stat = "identity", fill = colV) # cell histogram
 
-      if (!is.null(ClustInfo)) {
-        ggobj3 <<- ggplot(data.frame(table(ClustInfo)), aes(x = ClustInfo, y = Freq, fill = ClustInfo)) +
-          geom_bar(stat = "identity") # cell histogram
-      }
+      #if (!is.null(ClustInfo)) {
+        #ggobj3 <<- ggplot(data.frame(table(ClustInfo)), aes(x = ClustInfo, y = Freq, fill = ClustInfo)) +
+          #geom_bar(stat = "identity") # cell histogram
+      #}
 
       colnames(dfobj) <- c("x", "y", "col")
       dfobj <<- dfobj
 
-      if (nrow(dfobj2)) {
-        colnames(dfobj2) <- c("x", "y", "col")
-        dfobj2$col <- as.character(dfobj2$col)
-        dfobj2 <<- dfobj2
-      }
+      #if (nrow(dfobj2)) {
+        #colnames(dfobj2) <- c("x", "y", "col")
+        #dfobj2$col <- as.character(dfobj2$col)
+        #dfobj2 <<- dfobj2
+      #}
 
       UniqueCol <- briterhex(scales::hue_pal()(length(unique(CellInfo))))
       names(UniqueCol) <- unique(CellInfo)
@@ -518,11 +579,11 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
         geom_point(colour = colV) # +
       # scale_color_manual(values = briterhex(scales::hue_pal()(length(unique(dfobj$col)))))
 
-      if (!is.null(ClustInfo)) {
-        ggobj4 <<- ggplot(dfobj2, aes(x = x, y = y, color = col)) +
-          geom_point() +
-          scale_color_manual(values = briterhex(scales::hue_pal()(length(unique(dfobj2$col)))))
-      }
+      #if (!is.null(ClustInfo)) {
+        #ggobj4 <<- ggplot(dfobj2, aes(x = x, y = y, color = col)) +
+          #geom_point() +
+          #scale_color_manual(values = briterhex(scales::hue_pal()(length(unique(dfobj2$col)))))
+      #}
 
       output$img1 <- shiny::renderPlot(ggobj2) # CELL SCATTERPLOT
       output$img2 <- shiny::renderPlot(ggobj) # CELL HISTOGRAM
@@ -576,7 +637,6 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
         )
         eval(parse(text = t))
       }
-      shinyjs::hide("message")
     })
 
     observeEvent(input$freqbtn, {
@@ -831,6 +891,18 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
 }
 
 CellEnrichUI <- function() {
+
+  # actionButton with style Attributes, width = NULL
+  solvedButton <- function(inputId, label, style = NULL, ...) {
+    value <- restoreInput(id = inputId, default = NULL)
+    tags$button(
+      id = inputId, style = style,
+      type = "button", class = "btn btn-default action-button",
+      `data-val` = value, list(label),
+      ...
+    )
+  }
+
   material_page(
     shinyjs::useShinyjs(),
 
@@ -846,73 +918,80 @@ CellEnrichUI <- function() {
     include_icons = FALSE,
 
     # options in navigator.
-    material_side_nav(
-      material_card(
-        title = "Options",
-        material_radio_button(
-          input_id = "dropdowninput",
-          label = "select FC Option",
-          choices = c("median", "mean", "zero", "GSVA"),
-          selected = "median"
-        ),
-        material_radio_button(
-          input_id = "dropdowninput2",
-          label = "select Plot Option",
-          choices = c("t-SNE", "U-MAP"),
-          selected = "t-SNE"
-        ),
-        material_radio_button(
-          input_id = "dropdowninput3",
-          label = "select Gene-set",
-          choices = c("Curated", "GeneOntology"),
-          selected = "Curated"
-        ),
-        material_slider(
-          input_id = "sliderinput1",
-          label = "Minimum gene-set size",
-          min_value = 10,
-          max_value = 30,
-          initial_value = 15,
-          step_size = 5
-        ),
-        material_slider(
-          input_id = "sliderinput2",
-          label = "Maximum gene-set size",
-          min_value = 250,
-          max_value = 750,
-          initial_value = 500,
-          step_size = 5
-        ),
-        material_slider(
-          input_id = "sliderinput3",
-          label = "q-value threshold",
-          min_value = 0,
-          max_value = 0.25,
-          initial_value = 0.1,
-          step_size = 0.05
-        ),
-        actionButton("btn", "Start CellEnrich")
+    #material_side_nav(
+    material_row(
+      material_column(
+        material_card(
+          title = "Options",
+          divider = TRUE,
+          material_radio_button(
+            input_id = "dropdowninput",
+            label = "select FC Option",
+            choices = c("median", "mean", "zero", "GSVA"),
+            selected = "median"
+          ),
+          material_radio_button(
+            input_id = "dropdowninput2",
+            label = "select Plot Option",
+            choices = c("t-SNE", "U-MAP"),
+            selected = "t-SNE"
+          ),
+          material_radio_button(
+            input_id = "dropdowninput3",
+            label = "select Gene-set",
+            choices = c("Curated", "GeneOntology"),
+            selected = "Curated"
+          ),
+          material_slider(
+            input_id = "sliderinput1",
+            label = "Minimum gene-set size",
+            min_value = 10,
+            max_value = 30,
+            initial_value = 15,
+            step_size = 5
+          ),
+          material_slider(
+            input_id = "sliderinput2",
+            label = "Maximum gene-set size",
+            min_value = 250,
+            max_value = 750,
+            initial_value = 500,
+            step_size = 5
+          ),
+          material_slider(
+            input_id = "sliderinput3",
+            label = "q-value threshold",
+            min_value = 0,
+            max_value = 0.25,
+            initial_value = 0.1,
+            step_size = 0.05
+          ),
+          solvedButton(inputId = "btn", label = "Start CellEnrich", style = 'margin-left:45%;'),
+          depth = 3
+        ),width = 6, offset = 3
       )
-    ),
+    )
+    ,
+
+
+    #),
 
     ## Tabs
-    material_tabs(
-      tabs = c(
-        "Cell" = "tab_cell",
-        "Group" = "tab_group"
-      ),
-      color = "blue"
-    ),
+    #material_tabs(
+      #tabs = c(
+        #"Cell" = "tab_cell"
+      #),
+      #color = "blue"
+    #),
 
-    material_tab_content(
-      tab_id = "tab_cell",
+    #material_tab_content(
+      #tab_id = "tab_cell",
       textOutput(outputId = "txtbox"),
       material_row(
         material_column(
           material_card(
             title = "tSNE/UMAP Plot",
             depth = 3,
-            p("Run cellenrich from left navigator", id = "message"),
             material_column(
               plotOutput("img1", height = "700px"),
               width = 6
@@ -934,7 +1013,10 @@ CellEnrichUI <- function() {
       material_row(
         material_card(
           title = 'MarkerGenes',
-          DT::dataTableOutput('markerL1')
+          p('DE from each Cell specific'),
+          DT::dataTableOutput('markerL1'),
+          p('DE - Pathway from each Cell specific'),
+          DT::dataTableOutput('markerL2')
         ),
         style = "margin : 1em"
       ),
@@ -955,26 +1037,27 @@ CellEnrichUI <- function() {
         ),
         style = "margin : 1em"
       )
-    ),
-    material_tab_content(
-      tab_id = "tab_group",
-      material_card(
-        plotOutput("img3", height = "700px"),
-        actionButton("btn3", "Create Table"),
-        actionButton("btn4", "Fill Table"),
-        actionButton("btn6", "call SortButtons"),
-        material_card(
-          title = "TimePlot", divider = TRUE,
-          tags$p("If list not recognized, please re-move their position"),
-          rank_list(text = "List for TimePlot", labels = "", input_id = "rlist", css_id = "mysortable"),
-          actionButton("btn5", "Generate Time Plot"),
-          actionButton("btn7", "Clear List"),
-        ),
-        plotOutput("img4"),
+    #)
+    #,
+    #material_tab_content(
+      #tab_id = "tab_group",
+      #material_card(
+        #plotOutput("img3", height = "700px"),
+        #actionButton("btn3", "Create Table"),
+        #actionButton("btn4", "Fill Table"),
+        #actionButton("btn6", "call SortButtons"),
+        #material_card(
+          #title = "TimePlot", divider = TRUE,
+          #tags$p("If list not recognized, please re-move their position"),
+          #rank_list(text = "List for TimePlot", labels = "", input_id = "rlist", css_id = "mysortable"),
+          #actionButton("btn5", "Generate Time Plot"),
+          #actionButton("btn7", "Clear List"),
+        #),
+        #plotOutput("img4"),
         # DT::dataTableOutput('tab2'),
-        uiOutput("dynamic"),
-        depth = 3
-      )
-    ),
+        #uiOutput("dynamic"),
+        #depth = 3
+      #)
+    #),
   )
 }

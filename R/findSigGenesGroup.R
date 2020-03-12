@@ -33,7 +33,7 @@ findSigGenesGroup = function(Count = NULL, ClustInfo = NULL, q0 = 0.1, TopCutoff
         ) %>%
         select(Group, Top, genes, FDR) %>%
         filter(FDR <= q0) %>%
-        filter(Top <= TopCutoff) %>%
+        # filter(Top <= TopCutoff) %>%
         arrange(FDR)
 
     res = rbind(res, G)
