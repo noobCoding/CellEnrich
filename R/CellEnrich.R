@@ -380,11 +380,11 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
         names(s) <- CellInfo # oocyte 1, oocyte 2
       }
 
-      if (!is.null(ClustInfo)) {
-        cat("Clust Info found\n")
-        s2 <- findSigGenesGroup(v, ClustInfo, q0, TopCutoff = 5)
-        s2$FDR = round(as.numeric(s2$FDR),6)
-      }
+      #if (!is.null(ClustInfo)) {
+        #cat("Clust Info found\n")
+      s2 <- findSigGenesGroup(v, CellInfo, q0, TopCutoff = 5)
+      s2$FDR = round(as.numeric(s2$FDR),6)
+      #}
 
 
       # marker L1
@@ -394,11 +394,14 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
           filter = 'top',
           options = list(
             autoWidth = TRUE,
-            dom = 'ltp'
+            dom = 'ltp',
+            lengthChange = FALSE
           ),
           selection = 'none',
         )
       )
+
+
 
       # for test
       res <- list()
@@ -445,7 +448,6 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
       names(pres2) <- names(genesets)[as.numeric(names(pres2))]
       pres2 <<- pres2
 
-
       # 2625*4
       PP <- pathwayPvalue(q0)
 
@@ -453,6 +455,54 @@ CellEnrich <- function(CountData, CellInfo, ClustInfo = NULL) {
         inner_join(PP) # 1232 * 5
 
       CellPathwayDF <<- CellPathwayDF
+
+      # l2
+      CellMarkers = data.frame()
+
+      for(i in 1:length(Cells)){
+        thisCell = Cells[i]
+        thisCellPathways = CellPathwayDF %>% filter(Cell==thisCell) %>% select(Geneset)
+
+        thisCellDEs = s2 %>% filter(Group==thisCell) %>% select(genes)
+
+        tcd = thisCellDEs[,1]
+        tcp = thisCellPathways[,1]
+        tcp = sapply(tcp, function(i){which(names(genesets)==i)}, USE.NAMES = FALSE)
+        if(length(tcp)<1){next}
+        if(length(tcd)<1){next}
+        tcp = table(unlist(genesets[tcp], use.names = FALSE))
+        tcd = intersect(names(tcp),tcd)
+        tcp = tcp[tcd]
+
+        genes = names(tcp)
+        Count = unname(tcp)
+        CellMarkers = rbind(CellMarkers, data.frame(cbind(genes, Count, Group = thisCell), stringsAsFactors = FALSE))
+      }
+
+      CellMarkers = CellMarkers %>% inner_join(s2) %>% filter( Top < 10 )
+      CellMarkers$Group = as.factor(CellMarkers$Group)
+      CellMarkers$Count = as.numeric(CellMarkers$Count)
+      CellMarkers$Group = as.factor(CellMarkers$Group)
+
+      output$markerL2 = DT::renderDataTable(
+        DT::datatable(CellMarkers,
+                      rownames = FALSE,
+                      filter = 'top',
+                      options = list(
+                        autoWidth = TRUE,
+                        dom = 'ltp',
+                        lengthChange = FALSE
+                      ),
+                      selection = 'none',
+        )
+      )
+
+      # group 별 significant pathways
+      # group 별 DE Genes
+
+      # is counted
+
+
 
       dtobj <<- buildDT(pres2)
       # cellinfo -> oocyte1, oocyte2, ...
@@ -934,7 +984,10 @@ CellEnrichUI <- function() {
       material_row(
         material_card(
           title = 'MarkerGenes',
-          DT::dataTableOutput('markerL1')
+          p('DE from each Cell specific'),
+          DT::dataTableOutput('markerL1'),
+          p('DE - Pathway from each Cell specific'),
+          DT::dataTableOutput('markerL2')
         ),
         style = "margin : 1em"
       ),
