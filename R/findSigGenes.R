@@ -41,7 +41,7 @@ findSigGenes = function(v, method = 'median'){
   }
 
   for(i in 1:ncol(v)){
-    res[[i]] = sort(names(which(v[,i] > 0)))
+    res[[i]] = unname(which(v[,i] > 0)) # removed named form
   }
 
   return(res)
