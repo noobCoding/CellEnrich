@@ -146,3 +146,9 @@ Pathway enrichment analysis / visualize for Single Cell Data
 - marker gene L2 added
 
 ![image](https://user-images.githubusercontent.com/6457691/76487309-63610a80-6465-11ea-9bdc-ee6226538acf.png)
+
+## 0313
+
+- optimize for calculating cell specific genes with hypergeometric. (X3)
+
+

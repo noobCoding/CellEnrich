@@ -202,11 +202,8 @@ CellEnrich <- function(CountData, CellInfo) {
       return(res)
     }
 
-    getHyperPvalue <- function(genes, genesets, A) {
+    getHyperPvalue <- function(genes, genesets, A, lgs) {
 
-      lgs <- sapply(1:length(genesets), function(i) {
-        length(genesets[[i]])
-      })
       lg = length(genes)
       pv <- sapply(1:length(genesets), function(i) {
         q <- length(intersect(genesets[[i]], genes)) # selected white ball
@@ -218,6 +215,7 @@ CellEnrich <- function(CountData, CellInfo) {
       names(pv) <- names(genesets)
       return(pv)
     }
+
 
 
     buildRlobj <- function(items) {
@@ -363,15 +361,57 @@ CellEnrich <- function(CountData, CellInfo) {
       w <- Waitress$new(selector = NULL, theme = "overlay")$start()
 
       # geneset background flushing
-      genes <- sort(rownames(CountData))
+      genes <- rownames(CountData)
       for (i in 1:length(genesets)) {
         genesets[[i]] <- intersect(genesets[[i]], genes)
       }
-      rm(genes)
+
 
       lgs <- sapply(1:length(genesets), function(i) {
         length(genesets[[i]])
       })
+
+      # gene geneset flushing
+      gsgenes = unique(unlist(genesets))
+      remgenes = sapply(setdiff(genes, gsgenes), function(i){which(i==rownames(CountData))}, USE.NAMES = FALSE)
+      genes <- rownames(CountData)
+
+      CountData = CountData[-remgenes,]
+
+
+
+      gidx = 1:length(genes)
+      names(gidx) = genes
+
+      # calculate background intersection object
+      getbiobj = function(genes, genesets){
+        res = matrix(0,length(genes), length(genesets))
+        for(i in 1:length(genesets)){
+          res[unname(gidx[genesets[[i]]]),i] = 1
+        }
+        rownames(res) = genes
+        colnames(res) = names(genesets)
+        return(res)
+      }
+
+      biobj = getbiobj(genes, genesets)
+
+      getHyperPvalue2 = function(genes, genesets, A, lgs, q0 ){
+
+        lg = length(genes)
+        biobj = unname(colSums(biobj[genes,]))
+
+        pv = sapply(1:length(genesets), function(i){
+          q = biobj[i] # selected white ball
+          m <- lgs[i] # white ball
+          n <- A - m # black ball
+          k <- lg # selected ball
+          1 - phyper(q - 1, m, n, k)
+        })
+        # names(pv) <- names(genesets)
+        pv = p.adjust(pv, 'fdr')
+        return(which(pv<q0))
+      }
 
       # genesets = genesets[intersect(which(lgs >= 15), which(lgs <= 500))]
       # cat('minimum gene-set size :', input$sliderinput1, '\n')
@@ -419,14 +459,31 @@ CellEnrich <- function(CountData, CellInfo) {
         )
       )
 
+      lgs <- sapply(1:length(genesets), function(i) {
+        length(genesets[[i]])
+      })
+
       # for test
-      res <- list()
-      for (i in 1:length(s)) {
+      pt = proc.time()
+      #res <- list()
+      #for (i in 1:length(s)) {
+        #w$inc(1 / length(s))
+        #pvh <- getHyperPvalue(s[[i]], genesets, A, lgs)
+        #qvh <- p.adjust(pvh, "fdr")
+        #res[[i]] <- unname(which(qvh < q0))
+      #}
+      #proc.time() - pt
+
+      pt = proc.time()
+      res = list()
+      for(i in 1:length(s)){
         w$inc(1 / length(s))
-        pvh <- getHyperPvalue(s[[i]], genesets, A)
-        qvh <- p.adjust(pvh, "fdr")
-        res[[i]] <- unname(which(qvh < q0))
+        res[[i]] <- getHyperPvalue2(s[[i]], genesets, A, lgs, q0)
       }
+      proc.time() - pt
+
+      # 10.5 seconds with 90 cells. 0.12 seconds per cell.
+
 
       w$close()
       pres <<- res
@@ -457,7 +514,6 @@ CellEnrich <- function(CountData, CellInfo) {
         length(genesets[[i]])
       })
       CellPathwayDF <- cbind(CellPathwayDF, Length)
-
 
       # pres2 : for each gene-sets, how many cells are significant that gene-sets.
       pres2 <- sort(table(unlist(pres)), decreasing = T)
