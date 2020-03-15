@@ -151,4 +151,8 @@ Pathway enrichment analysis / visualize for Single Cell Data
 
 - optimize for calculating cell specific genes with hypergeometric. (X3)
 
+## 0314 
+
+- sort button activation optimized.
+- code organize include code split, variable naming.
 
