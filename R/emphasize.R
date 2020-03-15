@@ -1,5 +1,6 @@
 emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres) {
-
+  #print('emphasize : ')
+  #print(inputObj)
 
   buildRlobj <- function(items) {
 
