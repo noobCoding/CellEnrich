@@ -138,7 +138,6 @@ CellEnrich <- function(CountData, GroupInfo) {
 
       res$Qvalue <- round(p.adjust(as.numeric(as.character(res$Qvalue)), "fdr"), 4)
 
-
       res <- res %>% dplyr::filter(Qvalue <= q0) # 1237 * 3
 
       return(res)
@@ -190,6 +189,9 @@ CellEnrich <- function(CountData, GroupInfo) {
       gidx <- 1:length(genes)
       names(gidx) <- genes
 
+      genesets <- genesets[intersect(which(lgs >= input$minGenesetSize), which(lgs <= input$maxGenesetSize))]
+      genesets <<- genesets
+
       # calculate background intersection object
       getbiobj <- function(genes, genesets) {
         res <- matrix(0, length(genes), length(genesets))
@@ -205,12 +207,11 @@ CellEnrich <- function(CountData, GroupInfo) {
 
       # genesets = genesets[intersect(which(lgs >= 15), which(lgs <= 500))]
 
-      genesets <- genesets[intersect(which(lgs >= input$minGenesetSize), which(lgs <= input$maxGenesetSize))]
-      genesets <<- genesets
-      cat("minimum gene-set size :", input$minGenesetSize, "\n")
-      cat("maximum gene-set size :", input$maxGenesetSize, "\n")
 
-      cat(length(genesets), "genesets\n")
+      #cat("minimum gene-set size :", input$minGenesetSize, "\n")
+      #cat("maximum gene-set size :", input$maxGenesetSize, "\n")
+
+      #cat(length(genesets), "genesets\n")
 
       A <<- length(unique(unlist(genesets))) # Background genes
 
@@ -218,8 +219,6 @@ CellEnrich <- function(CountData, GroupInfo) {
       shinyjs::runjs("$('.shinymaterial-slider-minGenesetSize').attr('disabled',true)")
       shinyjs::runjs("$('.shinymaterial-slider-maxGenesetSize').attr('disabled',true)")
       shinyjs::runjs("$('.shinymaterial-slider-qvalueCutoff').attr('disabled',true)")
-
-
 
       v <- CountData
 
@@ -497,19 +496,18 @@ CellEnrich <- function(CountData, GroupInfo) {
 
       res <- c()
 
-
       # select each cell's frequent pathway
       for (i in 1:length(Cells)) {
 
         thisCellData <- CellPathwayDF %>% dplyr::filter(Cell == Cells[i])
 
-        if (nrow(thisCellData) > 1) {
+        if (nrow(thisCellData) >= 1) {
           thisCellData <- thisCellData %>% top_n(1, wt = Count)
-          if (nrow(thisCellData) > 1) {
+          if (nrow(thisCellData) >= 1) {
             thisCellData <- thisCellData %>% top_n(-1, wt = Length)
-            if (nrow(thisCellData) > 1) {
+            if (nrow(thisCellData) >= 1) {
               thisCellData <- thisCellData %>% top_n(-1, wt = Qvalue)
-              if (nrow(thisCellData) > 1) {
+              if (nrow(thisCellData) >= 1) {
                 thisCellData <- thisCellData %>% top_n(1)
               }
             }
@@ -534,15 +532,15 @@ CellEnrich <- function(CountData, GroupInfo) {
         thisCell <- Cells[i]
 
         thisCellData <- CellPathwayDF %>% dplyr::filter(Cell == thisCell)
-        if (nrow(thisCellData) > 1) {
+        if (nrow(thisCellData) >= 1) {
           thisCellData <- thisCellData %>% top_n(-1, wt = Qvalue)
 
-          if (nrow(thisCellData) > 1) {
+          if (nrow(thisCellData) >= 1) {
             thisCellData <- thisCellData %>% top_n(-1, wt = Length)
 
-            if (nrow(thisCellData) > 1) {
+            if (nrow(thisCellData) >= 1) {
               thisCellData <- thisCellData %>% top_n(1, wt = Count)
-              if (nrow(thisCellData) > 1) {
+              if (nrow(thisCellData) >= 1) {
                 thisCellData <- thisCellData %>% top_n(1)
               }
             }

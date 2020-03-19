@@ -10,21 +10,24 @@
 findSigGenes = function(v, method = 'median'){
   if(!method %in% c('median', 'pos')) stop('wrong method')
 
+  v = as.matrix(v)
+  rownames(v) = colnames(v) = NULL
   Additive = 1
+  v = v + Additive
+  meds = apply(v, 1, median)
 
-  for(i in 1:nrow(v)){
-    v[i,] = log( ( v[i,] + Additive ) / median( v[i,] ) )
-  }
+  v = log(sweep(v, 1, meds, '/'))
 
   res = list()
 
+  meds = apply(v, 1, median)
+
   if(method=='median'){
     for(i in 1:nrow(v)){
-      idx = which(v[i,]<=median(v[i,]))
-      v[i,] = 1
-      v[i,idx] = 0
+      res[[i]] = which(v[i,] > median(v[i,]))
     }
   }
+
   if(method == 'zero'){
     for(i in 1:nrow(v)){
       idx = which(v[i,]<=0)
@@ -38,10 +41,6 @@ findSigGenes = function(v, method = 'median'){
       v[i,] = 1
       v[i,idx] = 0
     }
-  }
-
-  for(i in 1:ncol(v)){
-    res[[i]] = unname(which(v[,i] > 0)) # removed named form
   }
 
   return(res)
