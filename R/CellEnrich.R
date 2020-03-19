@@ -189,6 +189,9 @@ CellEnrich <- function(CountData, GroupInfo) {
       gidx <- 1:length(genes)
       names(gidx) <- genes
 
+      genesets <- genesets[intersect(which(lgs >= input$minGenesetSize), which(lgs <= input$maxGenesetSize))]
+      genesets <<- genesets
+
       # calculate background intersection object
       getbiobj <- function(genes, genesets) {
         res <- matrix(0, length(genes), length(genesets))
@@ -204,8 +207,7 @@ CellEnrich <- function(CountData, GroupInfo) {
 
       # genesets = genesets[intersect(which(lgs >= 15), which(lgs <= 500))]
 
-      genesets <- genesets[intersect(which(lgs >= input$minGenesetSize), which(lgs <= input$maxGenesetSize))]
-      genesets <<- genesets
+
       #cat("minimum gene-set size :", input$minGenesetSize, "\n")
       #cat("maximum gene-set size :", input$maxGenesetSize, "\n")
 
@@ -217,8 +219,6 @@ CellEnrich <- function(CountData, GroupInfo) {
       shinyjs::runjs("$('.shinymaterial-slider-minGenesetSize').attr('disabled',true)")
       shinyjs::runjs("$('.shinymaterial-slider-maxGenesetSize').attr('disabled',true)")
       shinyjs::runjs("$('.shinymaterial-slider-qvalueCutoff').attr('disabled',true)")
-
-
 
       v <- CountData
 
