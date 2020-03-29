@@ -1,3 +1,5 @@
+#' @export
+
 # actionButton with style and onClick Attributes, width = NULL
 solvedButton <- function(inputId, label, style = NULL, onClick = NULL, ...) {
   value <- restoreInput(id = inputId, default = NULL)

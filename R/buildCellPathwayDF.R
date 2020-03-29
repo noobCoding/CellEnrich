@@ -1,0 +1,29 @@
+buildCellPathwayDF <- function(GroupInfo, pres){
+  Cells <- unique(GroupInfo)
+  CellPathwayDF <- data.frame(stringsAsFactors = FALSE)
+
+  for (i in 1:length(Cells)) {
+    thisCell <- Cells[i]
+    tt <- table(unlist(pres[which(thisCell == GroupInfo)]))
+
+    if(nrow(tt)) { CellPathwayDF <- rbind(CellPathwayDF, cbind(thisCell, names(tt), unname(tt))) }
+  }
+
+  colnames(CellPathwayDF) <- c("Cell", "Geneset", "Count")
+
+  CellPathwayDF$Cell <- as.character(CellPathwayDF$Cell)
+  CellPathwayDF$Geneset <- names(genesets)[as.numeric(as.character(CellPathwayDF$Geneset))]
+  CellPathwayDF$Count <- as.numeric(as.character(CellPathwayDF$Count))
+
+  # ------ select genesets with count > 1
+
+  CellPathwayDF <- CellPathwayDF %>%
+    dplyr::filter(Count > 1)
+
+  # ------ add length column
+
+  Length <- getlgs(CellPathwayDF$Geneset)
+  CellPathwayDF <- cbind(CellPathwayDF, Length)
+
+  return(CellPathwayDF)
+}
