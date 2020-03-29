@@ -4,7 +4,7 @@
 \alias{findSigGenes}
 \title{findSigGenes}
 \usage{
-findSigGenes(v, method = "median")
+findSigGenes(v, method = "median", Name)
 }
 \arguments{
 \item{v}{count data}

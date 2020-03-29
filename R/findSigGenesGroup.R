@@ -39,5 +39,7 @@ findSigGenesGroup = function(Count = NULL, ClustInfo = NULL, q0 = 0.1, TopCutoff
     res = rbind(res, G)
   }
   res$genes = as.character(res$genes)
+  res$Group = as.character(res$Group)
+  res$FDR <- round(as.numeric(res$FDR), 6)
   return(res)
 }

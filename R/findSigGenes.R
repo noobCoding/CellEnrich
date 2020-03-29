@@ -7,7 +7,7 @@
 #'
 #' @export
 #'
-findSigGenes = function(v, method = 'median'){
+findSigGenes = function(v, method = 'median', Name){
   if(!method %in% c('median', 'pos')) stop('wrong method')
 
   v = as.matrix(v)
@@ -42,6 +42,6 @@ findSigGenes = function(v, method = 'median'){
       v[i,idx] = 0
     }
   }
-
+  names(res) <- Name
   return(res)
 }

@@ -1,6 +1,11 @@
 getHyperPvalue <- function(genes, genesets, A, lgs, q0, biobj) {
   lg <- length(genes)
-  biobj <- unname(colSums(biobj[genes, ]))
+  if(length(genes)==1){
+    biobj <- biobj[genes,]
+  }
+  else{
+    biobj <- unname(colSums(biobj[genes, ]))
+  }
 
   pv <- sapply(1:length(genesets), function(i) {
     q <- biobj[i] # selected white ball
