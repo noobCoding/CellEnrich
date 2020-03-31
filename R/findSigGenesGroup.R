@@ -18,7 +18,7 @@ findSigGenesGroup = function(Count = NULL, ClustInfo = NULL, q0 = 0.1, TopCutoff
   if(is.null(Count)) stop('Count must given')
   if(is.null(ClustInfo)) stop('ClustInfo must given')
 
-  GrpRes = scran::findMarkers(x = Count, ClustInfo, test = 'wilcox', direction = 'up')
+  GrpRes = scran::findMarkers(x = as.matrix(Count), ClustInfo, test = 'wilcox', direction = 'up')
   Grp = unique(ClustInfo)
 
   res = data.frame(stringsAsFactors = FALSE)

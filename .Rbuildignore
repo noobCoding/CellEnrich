@@ -4,3 +4,12 @@
 ^c2v7\.RData$
 ^yan\.rds$
 ^README\.md$
+^k\.RData$
+^k_cellinfo\.RData$
+^k_clustinfo\.RData$
+^pbmc_hclust\.RData\.RData$
+^pbmcClustinfo\.RData$
+^pbmcData\.RData$
+^keggv7\.RData$
+^c5v7\.RData$
+^mousegeneset\.RData$

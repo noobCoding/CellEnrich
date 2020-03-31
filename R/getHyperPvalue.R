@@ -1,11 +1,29 @@
-getHyperPvalue <- function(genes, genesets, A, lgs, q0, biobj) {
+getHyperPvalue <- function(genes, genesets, A, lgs, q0) {
+
   lg <- length(genes)
+
+  if(lg == 0){return(integer(0))}
+  gidx <- 1:length(genes)
+  names(gidx) <- genes
+
+  # ------ define smaller biobj
+
+  biobj <- matrix(0,length(genes), length(genesets))
+  for (i in 1:length(genesets)) {
+    biobj[unname(gidx[genesets[[i]]]), i] <- 1
+  }
+
+  rownames(biobj) <- genes
+  colnames(biobj) <- names(genesets)
+
   if(length(genes)==1){
     biobj <- biobj[genes,]
   }
   else{
-    biobj <- unname(colSums(biobj[genes, ]))
+    biobj <- unname(colSums(biobj))
   }
+
+  # ------
 
   pv <- sapply(1:length(genesets), function(i) {
     q <- biobj[i] # selected white ball
