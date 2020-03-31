@@ -15,15 +15,18 @@ buildCellPathwayDF <- function(GroupInfo, pres){
   CellPathwayDF$Geneset <- names(genesets)[as.numeric(as.character(CellPathwayDF$Geneset))]
   CellPathwayDF$Count <- as.numeric(as.character(CellPathwayDF$Count))
 
+  # ------ add length column
+
+  Length <- getlgs(CellPathwayDF$Geneset)
+  CellPathwayDF <- cbind(CellPathwayDF, Length)
+
   # ------ select genesets with count > 1
 
   CellPathwayDF <- CellPathwayDF %>%
     dplyr::filter(Count > 1)
 
-  # ------ add length column
 
-  Length <- getlgs(CellPathwayDF$Geneset)
-  CellPathwayDF <- cbind(CellPathwayDF, Length)
+
 
   return(CellPathwayDF)
 }

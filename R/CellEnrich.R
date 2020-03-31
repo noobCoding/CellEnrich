@@ -32,6 +32,7 @@ CellEnrich <- function(CountData, GroupInfo) {
 
     ### CODES
 
+
     # variable initialize
 
     dtobj <- dfobj <- pres <- pres2 <- ""
@@ -42,6 +43,8 @@ CellEnrich <- function(CountData, GroupInfo) {
 
     observeEvent(input$StartCellEnrich, {
 
+      pt <- proc.time()
+
       # ------ Hide Start Button
 
       shinyjs::hide("StartCellEnrich")
@@ -51,6 +54,7 @@ CellEnrich <- function(CountData, GroupInfo) {
       if (input$genesetOption == "Curated") load("c2v7.RData")
       if (input$genesetOption == "GeneOntology") load("c5v7.RData")
       if (input$genesetOption == "KEGG") load("keggv7.RData")
+      if (input$genesetOption == "Mouse") load("mousegeneset.RData")
 
       # ------ for test
       # q0 <- 0.1
@@ -82,10 +86,10 @@ CellEnrich <- function(CountData, GroupInfo) {
 
       genesets <<- genesets
 
-      source('R/getbiobj.R')
+      # source('R/getbiobj.R')
 
       # ------ background intersection object
-      biobj <- getbiobj(genes, genesets)
+      # biobj <- getbiobj(genes, genesets)
 
       # ------ Background genes
       source('R/getBackgroundGenes.R')
@@ -136,10 +140,12 @@ CellEnrich <- function(CountData, GroupInfo) {
       source('R/getHyperPvalue.R')
       pres <- list()
 
+      rc <- rownames(CountData)
+
       w$start()
       for (i in 1:lens) {
         if(i %% lens100 == 0) w$inc(1)
-        pres[[i]] <- getHyperPvalue(s[[i]], genesets, A, lgs, q0, biobj)
+        pres[[i]] <- getHyperPvalue(rc[s[[i]]], genesets, A, lgs, q0)
       }
       w$close()
 
@@ -189,6 +195,10 @@ CellEnrich <- function(CountData, GroupInfo) {
         tcp <- sapply(tcp, function(i) {
           which(names(genesets) == i)
         }, USE.NAMES = FALSE)
+
+        # ------ Exception handling with gene-sets name with special character
+        tcp <- unlist(tcp)
+
         if (length(tcp) < 1) {
           next
         }
@@ -203,9 +213,16 @@ CellEnrich <- function(CountData, GroupInfo) {
         Count <- unname(tcp)
         additive = data.frame(cbind(genes, Count, Group = thisCell))
 
-        if(ncol(CellMarkers)!=0 && ncol(CellMarkers)!= ncol(additive)){
+        # ------ first add
+        if(ncol(CellMarkers)==0) {
           CellMarkers <- rbind(CellMarkers, data.frame(cbind(genes, Count, Group = thisCell), stringsAsFactors = FALSE))
         }
+        else{
+          if(ncol(CellMarkers)!= ncol(additive)){
+            CellMarkers <- rbind(CellMarkers, data.frame(cbind(genes, Count, Group = thisCell), stringsAsFactors = FALSE))
+          }
+        }
+
       }
 
       if(nrow(CellMarkers)){
@@ -366,6 +383,8 @@ CellEnrich <- function(CountData, GroupInfo) {
         eval(parse(text = t))
       }
       # StartEnrich Finished
+
+      print(proc.time() - pt)
 
     })
 

@@ -47,7 +47,9 @@ CellEnrichUI <- function() {
             choices = c(
               "Curated", # c2
               "GeneOntology", # c5 = GO
-              "KEGG"), # KEGG
+              "KEGG", # KEGG
+              "Mouse" # Mouse
+              ),
             selected = "Curated"
           ),
           material_slider(
