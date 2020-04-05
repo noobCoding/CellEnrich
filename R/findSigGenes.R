@@ -8,40 +8,64 @@
 #' @export
 #'
 findSigGenes = function(v, method = 'median', Name){
-  if(!method %in% c('median', 'pos')) stop('wrong method')
+  if(!method %in% c('median', 'pos', 'zero')) stop('wrong method')
+  # it's already matrix
+  # v <- as.matrix(v)
+  cat('findSigGenes started\n')
 
-  v = as.matrix(v)
-  rownames(v) = colnames(v) = NULL
-  Additive = 1
-  v = v + Additive
-  meds = apply(v, 1, median)
-
-  v = log(sweep(v, 1, meds, '/'))
+  pt = proc.time()
+  rownames(v) <- colnames(v) <- NULL
 
   res = list()
 
-  meds = apply(v, 1, median)
+  # 100 : 0.8 seconds
+  # 200 : 1.12
+  # 250 : 1.36. find 20000 gene will take less than minute
 
-  if(method=='median'){
-    for(i in 1:nrow(v)){
-      res[[i]] = which(v[i,] > median(v[i,]))
-    }
+  cat('scaling\n')
+
+  idx <- floor(nrow(v) / 250)
+  v2 = c()
+  for(i in 1:idx){
+    thisIdx <- 1:250 + 250*(i-1)
+    vv <- as.matrix(v[thisIdx,])+1
+    meds <- apply(vv, 1, median)
+    vv <- as(log(sweep(vv, 1, meds, '/')), 'dgCMatrix')
+    v2 <- rbind(v2, vv) # use rbind, not assign
   }
 
+  if(nrow(v)%%250!=0){
+    thisIdx <- (idx*250+1):nrow(v)
+    vv <- as.matrix(v[thisIdx,])+1
+    meds <- apply(vv, 1, median)
+    vv <- log(sweep(vv, 1, meds, '/'))
+    v2 <- rbind(v2, vv)
+  }
+
+  v <- v2
+  rm(v2)
+
+  cat('define Lists\n')
+
+  if(method=='median'){
+    for(i in 1:ncol(v)){
+      res[[i]] = which(v[,i] > median(v[,i]))
+    }
+  }
   if(method == 'zero'){
-    for(i in 1:nrow(v)){
-      idx = which(v[i,]<=0)
-      v[i,] = 1
-      v[i,idx] = 0
+    for(i in 1:ncol(v)){
+      res[[i]] = which(v[,i] > 0)
     }
   }
   if(method == 'mean'){
-    for(i in 1:nrow(v)){
-      idx = which(v[i,]<= mean(v[i,]))
-      v[i,] = 1
-      v[i,idx] = 0
+    for(i in 1:ncol(v)){
+      res[[i]] = which(v[,i]> mean(v[,i]))
     }
   }
+
+  cat(proc.time() - pt)
+
   names(res) <- Name
   return(res)
+
 }
