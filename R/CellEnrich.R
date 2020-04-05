@@ -19,6 +19,7 @@
 #' @import sortable
 #' @import scran
 #' @import Seurat
+#' @import Matrix
 #'
 #' @export
 
@@ -86,14 +87,19 @@ CellEnrich <- function(CountData, GroupInfo) {
 
       genesets <<- genesets
 
-      # source('R/getbiobj.R')
-
-      # ------ background intersection object
-      # biobj <- getbiobj(genes, genesets)
-
       # ------ Background genes
       source('R/getBackgroundGenes.R')
       A <<- getBackgroundGenes(genesets)
+
+      # ------ Calculate t-SNE / U-MAP First
+      # require(Matrix)
+
+      source('R/getTU.R')
+      # dfobj <- getTU(CountData, 't-SNE')
+      dfobj <- getTU(CountData, input$plotOption)
+      dfobj <<- dfobj
+
+      cat('getTU Finished\n')
 
       # ------ Disable radio button
       shinyjs::runjs('$("form p label input").attr("disabled",true)')
@@ -101,6 +107,10 @@ CellEnrich <- function(CountData, GroupInfo) {
       shinyjs::runjs("$('.shinymaterial-slider-maxGenesetSize').attr('disabled',true)")
       shinyjs::runjs("$('.shinymaterial-slider-qvalueCutoff').attr('disabled',true)")
 
+      cat('running gc\n')
+      gc()
+
+      source('R/findSigGenes.R')
       # ------ Find Significant Genes with Fold Change
       if (input$FCoption != "GSVA") {
         # ------ need to build GSVA CASE
@@ -109,13 +119,22 @@ CellEnrich <- function(CountData, GroupInfo) {
         s <- findSigGenes(CountData, input$FCoption, GroupInfo)
       }
 
+      cat("s Finished\n")
+
+      source('r/findSigGenesGroup.R')
+
       # ------ Find Significant Genes with findMarkers
+      require(dplyr)
       s2 <- findSigGenesGroup(CountData, GroupInfo, q0, TopCutoff = 5)
+
+      rc <- rownames(CountData)
+
+      # ------ free memory to calculate biobj
+      rm(CountData)
 
       # ------ marker l1
       markerl1 <- s2 %>% filter(Top < 10)
       markerl1$Group <- as.factor(markerl1$Group)
-
 
       shinyjs::runjs('$(.markerP).show()')
 
@@ -137,15 +156,16 @@ CellEnrich <- function(CountData, GroupInfo) {
       lens = length(s)
       lens100 = round(lens/100)
 
+      source('R/getbiobj.R')
+      biobj <- getbiobj(genes, genesets)
+
       source('R/getHyperPvalue.R')
       pres <- list()
-
-      rc <- rownames(CountData)
 
       w$start()
       for (i in 1:lens) {
         if(i %% lens100 == 0) w$inc(1)
-        pres[[i]] <- getHyperPvalue(rc[s[[i]]], genesets, A, lgs, q0)
+        pres[[i]] <- getHyperPvalue(rc[s[[i]]], genesets, A, lgs, q0, biobj)
       }
       w$close()
 
@@ -270,40 +290,21 @@ CellEnrich <- function(CountData, GroupInfo) {
       source('R/buildDT.R')
       dtobj <<- buildDT(pres2)
 
-      # GroupInfo ->
-
-      if (input$plotOption == "t-SNE") {
-        if(ncol(CountData)<500) tsneE <- Rtsne::Rtsne(t(as.matrix(CountData)), check_duplicates = FALSE, perplexity = 15)
-        else {
-          tsneE <- Rtsne::Rtsne(t(as.matrix(CountData)), check_duplicates = FALSE, perplexity = 15, partial_pca = TRUE) # 15 seconds
-        }
-        dfobj <- data.frame(tsneE$Y, col = GroupInfo, stringsAsFactors = FALSE)
-      }
-
-      if (input$plotOption == "U-MAP") {
-        umapE <- uwot::umap(t(as.matrix(CountData)), fast_sgd = TRUE) # 55 seconds
-        dfobj <- data.frame(umapE, col = GroupInfo, stringsAsFactors = FALSE)
-      }
-
-      colnames(dfobj) <- c('x', 'y', 'col')
-      dfobj <<- dfobj
-
       source('R/briterhex.R')
       source('R/getColv.R')
-
 
       # ------ Color define
       colV <- getColv(GroupInfo)
 
       source('R/getCellHistogram.R')
 
-      CellHistogram <- getCellHistogram(GroupInfo, colV)
+      CellHistogram <<- getCellHistogram(GroupInfo, colV)
 
       output$CellBar <- shiny::renderPlot(CellHistogram) # CELL HISTOGRAM
 
       source("R/getCellPlot.R")
 
-      CellScatter <-  getCellPlot(dfobj, Cells)
+      CellScatter <<- getCellPlot(dfobj, Cells)
 
       output$CellPlot <- shiny::renderPlot(CellScatter)
 
