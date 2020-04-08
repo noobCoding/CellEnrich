@@ -2,6 +2,7 @@
 #'
 #'
 #' @importFrom DT dataTableOutput
+#' @importFrom Matrix t
 #'
 #' @rawNamespace import(SingleCellExperiment, except = show)
 #' @import Rtsne
@@ -19,7 +20,6 @@
 #' @import sortable
 #' @import scran
 #' @import Seurat
-#' @import Matrix
 #'
 #' @export
 
@@ -55,7 +55,11 @@ CellEnrich <- function(CountData, GroupInfo) {
       if (input$genesetOption == "Curated") load("c2v7.RData")
       if (input$genesetOption == "GeneOntology") load("c5v7.RData")
       if (input$genesetOption == "KEGG") load("keggv7.RData")
-      if (input$genesetOption == "Mouse") load("mousegeneset.RData")
+      # if (input$genesetOption == "Mouse") load("mousegeneset.RData")
+      if (input$genesetOption == "Mouse-KEGG") load("mouseKEGG.RData")
+      if (input$genesetOption == "Mouse-GO") load("mouseGO.RData")
+
+      print(length(genesets))
 
       # ------ for test
       # q0 <- 0.1
