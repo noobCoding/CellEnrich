@@ -14,5 +14,6 @@ getTU <- function(CountData, plotOption){
     umapE <- uwot::umap(CountData, fast_sgd = TRUE) # 55 seconds
     dfobj <- data.frame(umapE, col = GroupInfo, stringsAsFactors = FALSE)
   }
+  colnames(dfobj) = c('x','y', 'col')
   return(dfobj)
 }
