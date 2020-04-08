@@ -3,7 +3,7 @@
 #' @description define significant genes along Group.
 #'
 #' @param Count Count data
-#' #' @param ClustInfo Group information
+#' @param ClustInfo Group information
 #' @param q0 qvalue cutoff, default is 0.1
 #' @param TopCutoff cutoff for Top in findMarkers, default is 5.
 #'

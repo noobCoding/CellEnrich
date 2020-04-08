@@ -59,7 +59,8 @@ CellEnrichUI <- function() {
                   "Curated", # c2
                   "GeneOntology", # c5 = GO
                   "KEGG", # KEGG
-                  "Mouse" # Mouse
+                  "Mouse-KEGG", # Mouse
+                  "Mouse-GO"
                 ),
                 selected = "Curated"
               ),

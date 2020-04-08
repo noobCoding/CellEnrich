@@ -32,7 +32,7 @@ save(genesets, file = "mouseGO.RData")
 
 # ------ don't use
 
-BiocManager::install("pathview")
+# BiocManager::install("pathview")
 
 datakegg <- CHRONOS::downloadPathways("mmu", "All")
 
@@ -40,7 +40,6 @@ library(CHRONOS)
 datakegg <- downloadPathways("mmu", "All")
 KEGGS <- downloadPathways("mmu", datakegg)
 pathview::download.kegg(datakegg, "mmu", "xml")
-
 
 # ------ KEGG
 

@@ -13,3 +13,6 @@
 ^keggv7\.RData$
 ^c5v7\.RData$
 ^mousegeneset\.RData$
+^mouseGO\.RData$
+^mouseKEGG\.RData$
+^mouseGeneset\.R$

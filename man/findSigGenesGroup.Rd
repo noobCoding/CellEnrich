@@ -7,8 +7,9 @@
 findSigGenesGroup(Count = NULL, ClustInfo = NULL, q0 = 0.1, TopCutoff = 5)
 }
 \arguments{
-\item{Count}{Count data
-#' @param ClustInfo Group information}
+\item{Count}{Count data}
+
+\item{ClustInfo}{Group information}
 
 \item{q0}{qvalue cutoff, default is 0.1}
 
