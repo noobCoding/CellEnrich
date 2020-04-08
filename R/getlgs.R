@@ -1,3 +1,3 @@
-getlgs <- function(genesets){
-  sapply(1:length(genesets), function(i) { length(genesets[[i]]) })
+getlgs <- function(n){
+  sapply(1:length(n), function(i) { length(genesets[[n[i]]]) })
 }

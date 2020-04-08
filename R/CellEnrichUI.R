@@ -1,5 +1,8 @@
-CellEnrichUI <- function() {
+#' @import shinymaterial
+#' @export
 
+CellEnrichUI <- function() {
+  require(shinymaterial)
   material_page(
     shinyjs::useShinyjs(),
 
@@ -29,52 +32,75 @@ CellEnrichUI <- function() {
         material_card(
           title = "Options",
           divider = TRUE,
-          material_radio_button(
-            input_id = "FCoption",
-            label = "Select FoldChange Option",
-            choices = c("median", "mean", "zero", "GSVA"),
-            selected = "median"
-          ),
-          material_radio_button(
-            input_id = "plotOption",
-            label = "Select Plot Option",
-            choices = c("t-SNE", "U-MAP"),
-            selected = "t-SNE"
-          ),
-          material_radio_button(
-            input_id = "genesetOption",
-            label = "Select Gene-set",
-            choices = c(
-              "Curated", # c2
-              "GeneOntology", # c5 = GO
-              "KEGG", # KEGG
-              "Mouse" # Mouse
+          material_row(
+            material_column(
+              material_radio_button(
+                input_id = "FCoption",
+                label = "Select FoldChange Option",
+                choices = c("median", "mean", "zero", "GSVA"),
+                selected = "median"
               ),
-            selected = "Curated"
+              width = 4
+            ),
+            material_column(
+              material_radio_button(
+                input_id = "plotOption",
+                label = "Select Plot Option",
+                choices = c("t-SNE", "U-MAP"),
+                selected = "t-SNE"
+              ),
+              width = 4
+            ),
+            material_column(
+              material_radio_button(
+                input_id = "genesetOption",
+                label = "Select Gene-set",
+                choices = c(
+                  "Curated", # c2
+                  "GeneOntology", # c5 = GO
+                  "KEGG", # KEGG
+                  "Mouse" # Mouse
+                ),
+                selected = "Curated"
+              ),
+              width = 4
+            )
           ),
-          material_slider(
-            input_id = "minGenesetSize",
-            label = "Minimum Gene-set Size",
-            min_value = 10,
-            max_value = 30,
-            initial_value = 15,
-            step_size = 5
-          ),
-          material_slider(
-            input_id = "maxGenesetSize",
-            label = "Maximum Gene-set Size",
-            min_value = 250,
-            max_value = 750,
-            initial_value = 500,
-            step_size = 5
-          ),
-          material_slider(
-            input_id = "qvalueCutoff",
-            label = "Q-value threshold",
-            min_value = 0,
-            max_value = 0.25,
-            initial_value = 0.1,
-            step_size = 0.05
+
+          material_row(
+            material_column(
+              material_number_box(
+                input_id = "minGenesetSize",
+                label = "Minimum Gene-set Size",
+                min_value = 10,
+                max_value = 30,
+                initial_value = 15,
+                step_size = 5
+              ),
+              width = 4
+            ),
+            material_column(
+              material_number_box(
+                input_id = "maxGenesetSize",
+                label = "Maximum Gene-set Size",
+                min_value = 250,
+                max_value = 750,
+                initial_value = 500,
+                step_size = 5
+              ),
+              width = 4
+            ),
+            material_column(
+              material_number_box(
+                input_id = "qvalueCutoff",
+                label = "Q-value threshold",
+                min_value = 0,
+                max_value = 0.25,
+                initial_value = 0.05,
+                step_size = 0.01
+              ),
+              width = 4
+            )
           ),
           solvedButton(
             inputId = "StartCellEnrich",

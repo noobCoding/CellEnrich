@@ -70,7 +70,7 @@ CellEnrich <- function(CountData, GroupInfo) {
 
       genes <- rownames(CountData)
       genesets <- GenesetFlush(genes, genesets)
-      lgs <- getlgs(genesets)
+      lgs <- getlgs(names(genesets))
 
       # ------ Genesetsize Flush
 
@@ -152,7 +152,7 @@ CellEnrich <- function(CountData, GroupInfo) {
       )
 
       # ------ Hypergeometric pvalue calculation
-      lgs <- getlgs(genesets)
+      lgs <- getlgs(names(genesets))
       lens = length(s)
       lens100 = round(lens/100)
 
@@ -516,6 +516,7 @@ CellEnrich <- function(CountData, GroupInfo) {
     })
   }
 
+  source('R/CellEnrichUI.R')
   ui <- CellEnrichUI()
 
   shiny::shinyApp(ui, server, options = list(launch.browser = TRUE))

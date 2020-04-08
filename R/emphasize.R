@@ -28,7 +28,10 @@ emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres) {
       thisGroup <- rlobj[i, 2]
 
       thisCellsIdx <- which(dfobj$col == thisGroup)
-
+      if(length(thisCellsIdx)==0){
+        ret[[i]] <- c()
+        next
+      }
       rn <- thisCellsIdx
       res <- c()
       for (j in 1:length(rn)) {
@@ -41,9 +44,10 @@ emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres) {
         next
       }
       ret[[i]] <- res
+      names(ret)[i] <- thisGroup
     }
 
-    names(ret) <- rlobj$location
+    #names(ret) <- rlobj$location
     return(ret)
   }
 
