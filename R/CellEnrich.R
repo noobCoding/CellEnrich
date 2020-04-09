@@ -48,7 +48,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       pt <- proc.time()
 
       if(is.null(genesets) ){
-        if(input$genesetOption =='User-Geneset'){
+        if(input$genesetOption == 'User-Geneset'){
           shiny::showNotification('Geneset not given ...', type = 'error', duration = 10)
           return(NULL)
         }
@@ -77,6 +77,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       else{
         shiny::showNotification('User Geneset will be used', type = 'message', duration = 10)
       }
+
+      genesets <<- genesets
       # ------ for test
       # q0 <- 0.1
 
@@ -90,7 +92,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       genes <- rownames(CountData)
       genesets <- GenesetFlush(genes, genesets)
-      lgs <- getlgs(names(genesets))
+      lgs <- getlgs(genesets)
 
       # ------ Genesetsize Flush
 
@@ -172,7 +174,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       )
 
       # ------ Hypergeometric pvalue calculation
-      lgs <- getlgs(names(genesets))
+      lgs <- getlgs(genesets)
       lens = length(s)
       lens100 = round(lens/100)
 
@@ -196,9 +198,11 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       # ------ CellPathwayDF
 
       source('R/buildCellPathwayDF.R')
-      CellPathwayDF <- buildCellPathwayDF(GroupInfo, pres)
+      CellPathwayDF <- buildCellPathwayDF(GroupInfo, pres, genesets)
 
       # pres2 : for each gene-sets, how many cells are significant that gene-sets.
+
+      cat('pres2\n')
 
       pres2 <- sort(table(unlist(pres)), decreasing = T)
       names(pres2) <- names(genesets)[as.numeric(names(pres2))]
@@ -206,7 +210,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       source('R/pathwayPvalue.R')
       # 2625*4
-      PP <- pathwayPvalue(GroupInfo, pres, pres2) # qvalue cutoff removed
+      PP <- pathwayPvalue(GroupInfo, pres, pres2, genesets) # qvalue cutoff removed
 
       CellPathwayDF <- CellPathwayDF %>%
         inner_join(PP) # 1232 * 5
