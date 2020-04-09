@@ -7,28 +7,53 @@ dataset <- listDatasets(ensembl)
 head(dataset)
 dataset[grep("Mouse", dataset$description), ]
 ensembl <- useDataset("mmusculus_gene_ensembl", mart = ensembl)
+
+dataset[grep("Human", dataset$description), ]
+ensembl <- useDataset("hsapiens_gene_ensembl", mart = ensembl)
+
 attributes <- listAttributes(ensembl)
 
 attributes[grep("GO", attributes$description), ]
 
-dataGO <- getBM(attributes = c("external_gene_name", "name_1006"), mart = ensembl)
+dataGO <- getBM(attributes = c("namespace_1003", "external_gene_name", "name_1006"), mart = ensembl)
 
-dataGO <- dataGO[order(dataGO$name_1006), ]
 dataGO <- dataGO[which(dataGO$name_1006 != ""), ]
-dataGO$external_gene_name <- toupper(dataGO$external_gene_name)
-dataGO$name_1006 <- toupper(dataGO$name_1006)
 
-genesets <- list()
-terms <- unique(dataGO$name_1006)
-for (i in 1:length(terms)) {
-  genesets[[i]] <- dataGO$external_gene_name[which(dataGO$name_1006 == terms[i])]
+library(dplyr)
+dataGOMF <- dataGO %>% filter(namespace_1003 =='molecular_function')
+dataGOBP <- dataGO %>% filter(namespace_1003 =='biological_process')
+dataGOCC <- dataGO %>% filter(namespace_1003 =='cellular_component')
+
+buildGeneset = function(dataGO, filename){
+  dataGO <- dataGO %>% select(-namespace_1003)
+
+  dataGO <- dataGO[order(dataGO$name_1006), ]
+
+  dataGO$external_gene_name <- toupper(dataGO$external_gene_name)
+  dataGO$name_1006 <- toupper(dataGO$name_1006)
+
+  genesets <- list()
+  terms <- unique(dataGO$name_1006)
+  for (i in 1:length(terms)) {
+    genesets[[i]] <- dataGO$external_gene_name[which(dataGO$name_1006 == terms[i])]
+  }
+  names(genesets) <- terms
+  lgs <- sapply(1:length(genesets), function(i) {
+    length(genesets[[i]])
+  })
+  genesets <- genesets[intersect(which(lgs >= 15), which(lgs <= 500))]
+  save(genesets, file = filename)
 }
-names(genesets) <- terms
-lgs <- sapply(1:length(genesets), function(i) {
-  length(genesets[[i]])
-})
-genesets <- genesets[intersect(which(lgs >= 15), which(lgs <= 500))]
-save(genesets, file = "mouseGO.RData")
+
+buildGeneset(dataGOMF, 'mouseGOMF.RData')
+buildGeneset(dataGOBP, 'mouseGOBP.RData')
+buildGeneset(dataGOCC, 'mouseGOCC.RData')
+
+buildGeneset(dataGOMF, 'humanGOMF.RData')
+buildGeneset(dataGOBP, 'humanGOBP.RData')
+buildGeneset(dataGOCC, 'humanGOCC.RData')
+
+buildGeneset(dataGO, 'humanGO.RData')
 
 # ------ don't use
 

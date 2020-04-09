@@ -1,6 +1,7 @@
 #' @export
 
-pathwayPvalue <- function(GroupInfo, pres, pres2) {
+pathwayPvalue <- function(GroupInfo, pres, pres2, genesets) {
+  cat('pathwayPvalue\n')
   res <- c()
   Cells <- unique(GroupInfo)
   total <- length(GroupInfo)

@@ -1,7 +1,7 @@
 #' @export
 
 emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres) {
-
+  cat('emphasize\n')
   buildRlobj <- function(items) {
 
     rlobj <- data.frame(stringsAsFactors = FALSE)

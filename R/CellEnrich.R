@@ -20,10 +20,11 @@
 #' @import sortable
 #' @import scran
 #' @import Seurat
+#' @import highcharter
 #'
 #' @export
 
-CellEnrich <- function(CountData, GroupInfo) {
+CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
   require(dplyr)
 
@@ -46,21 +47,38 @@ CellEnrich <- function(CountData, GroupInfo) {
 
       pt <- proc.time()
 
+      if(is.null(genesets) ){
+        if(input$genesetOption == 'User-Geneset'){
+          shiny::showNotification('Geneset not given ...', type = 'error', duration = 10)
+          return(NULL)
+        }
+      }
+
       # ------ Hide Start Button
 
       shinyjs::hide("StartCellEnrich")
 
       # ------ Load Genesets
 
-      if (input$genesetOption == "Curated") load("c2v7.RData")
-      if (input$genesetOption == "GeneOntology") load("c5v7.RData")
-      if (input$genesetOption == "KEGG") load("keggv7.RData")
-      # if (input$genesetOption == "Mouse") load("mousegeneset.RData")
-      if (input$genesetOption == "Mouse-KEGG") load("mouseKEGG.RData")
-      if (input$genesetOption == "Mouse-GO") load("mouseGO.RData")
+      if(is.null(genesets)){
+        if (input$genesetOption == "Human-Curated") load("c2v7.RData")
+        if (input$genesetOption == "Human-GO") load("humanGO.RData")
+        if (input$genesetOption == "Human-GO-BP") load("humanGOBP.RData")
+        if (input$genesetOption == "Human-GO-CC") load("humanGOCC.RData")
+        if (input$genesetOption == "Human-GO-MF") load("humanGOMF.RData")
+        if (input$genesetOption == "Human-KEGG") load("keggv7.RData")
+        if (input$genesetOption == "Mouse-KEGG") load("mouseKEGG.RData")
+        if (input$genesetOption == "Mouse-GO") load("mouseGO.RData")
+        if (input$genesetOption == "Mouse-GO-BP") load("mouseGOBP.RData")
+        if (input$genesetOption == "Mouse-GO-CC") load("mouseGOCC.RData")
+        if (input$genesetOption == "Mouse-GO-MF") load("mouseGOMF.RData")
+      }
 
-      print(length(genesets))
+      else{
+        shiny::showNotification('User Geneset will be used', type = 'message', duration = 10)
+      }
 
+      genesets <<- genesets
       # ------ for test
       # q0 <- 0.1
 
@@ -74,7 +92,7 @@ CellEnrich <- function(CountData, GroupInfo) {
 
       genes <- rownames(CountData)
       genesets <- GenesetFlush(genes, genesets)
-      lgs <- getlgs(names(genesets))
+      lgs <- getlgs(genesets)
 
       # ------ Genesetsize Flush
 
@@ -156,7 +174,7 @@ CellEnrich <- function(CountData, GroupInfo) {
       )
 
       # ------ Hypergeometric pvalue calculation
-      lgs <- getlgs(names(genesets))
+      lgs <- getlgs(genesets)
       lens = length(s)
       lens100 = round(lens/100)
 
@@ -180,9 +198,11 @@ CellEnrich <- function(CountData, GroupInfo) {
       # ------ CellPathwayDF
 
       source('R/buildCellPathwayDF.R')
-      CellPathwayDF <- buildCellPathwayDF(GroupInfo, pres)
+      CellPathwayDF <- buildCellPathwayDF(GroupInfo, pres, genesets)
 
       # pres2 : for each gene-sets, how many cells are significant that gene-sets.
+
+      cat('pres2\n')
 
       pres2 <- sort(table(unlist(pres)), decreasing = T)
       names(pres2) <- names(genesets)[as.numeric(names(pres2))]
@@ -190,7 +210,7 @@ CellEnrich <- function(CountData, GroupInfo) {
 
       source('R/pathwayPvalue.R')
       # 2625*4
-      PP <- pathwayPvalue(GroupInfo, pres, pres2) # qvalue cutoff removed
+      PP <- pathwayPvalue(GroupInfo, pres, pres2, genesets) # qvalue cutoff removed
 
       CellPathwayDF <- CellPathwayDF %>%
         inner_join(PP) # 1232 * 5
@@ -304,13 +324,13 @@ CellEnrich <- function(CountData, GroupInfo) {
 
       CellHistogram <<- getCellHistogram(GroupInfo, colV)
 
-      output$CellBar <- shiny::renderPlot(CellHistogram) # CELL HISTOGRAM
+      output$CellBar <- renderHighchart(CellHistogram) # CELL HISTOGRAM
 
       source("R/getCellPlot.R")
 
       CellScatter <<- getCellPlot(dfobj, Cells)
 
-      output$CellPlot <- shiny::renderPlot(CellScatter)
+      output$CellPlot <- renderHighchart(CellScatter)
 
       source('R/groupTable.R')
 
@@ -354,7 +374,7 @@ CellEnrich <- function(CountData, GroupInfo) {
                           "; $('#toSortButton", i, "').attr('disabled', true);"
                           )
                       ),
-                      style = "position:absolute; top:1em; right:1em;"
+                      style = "position:absolute; top:1em; right:1em;background-color: #1976d2"
                     )
                   )
                 ),

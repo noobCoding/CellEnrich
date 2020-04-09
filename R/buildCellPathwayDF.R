@@ -1,4 +1,5 @@
-buildCellPathwayDF <- function(GroupInfo, pres){
+buildCellPathwayDF <- function(GroupInfo, pres, genesets){
+  cat('buildCellPathwayDF\n')
   Cells <- unique(GroupInfo)
   CellPathwayDF <- data.frame(stringsAsFactors = FALSE)
 
@@ -17,7 +18,8 @@ buildCellPathwayDF <- function(GroupInfo, pres){
 
   # ------ add length column
 
-  Length <- getlgs(CellPathwayDF$Geneset)
+  # Length <- getlgs(CellPathwayDF$Geneset)
+  Length <- getlgs(genesets[as.numeric(as.character(CellPathwayDF$Geneset))])
   CellPathwayDF <- cbind(CellPathwayDF, Length)
 
   # ------ select genesets with count > 1

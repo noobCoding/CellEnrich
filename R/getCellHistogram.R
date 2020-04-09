@@ -1,6 +1,7 @@
 getCellHistogram <- function(GroupInfo, colV){
-  require(ggplot2)
-
+  cat('getCellHistogram\n')
+  #require(ggplot2)
+  require(highcharter)
   Cells <- unique(sort(GroupInfo))
 
   x <- c()
@@ -10,13 +11,14 @@ getCellHistogram <- function(GroupInfo, colV){
     y[i] <- length(which(GroupInfo == Cells[i]))
   }
 
-  ggobjdf <- data.frame(x, y, stringsAsFactors = FALSE)
-  colnames(ggobjdf) <- c("x", "y")
-
-  return(
-    ggplot(ggobjdf, aes(x = x, y = y)) +
-      geom_bar(stat = "identity", fill = colV)
-  )
-
+  hc <- highchart() %>%
+    hc_chart(type = 'column', legend = list(enabled  = FALSE)) %>%
+    hc_title(text = 'Groups') %>%
+    hc_xAxis(categories = x) %>%
+    hc_plotOptions(grouping = FALSE) %>%
+    hc_add_series(data = y, colorByPoint = TRUE, showInLegend = FALSE, name = 'Count') %>%
+    hc_colors(colV) %>%
+    hc_exporting(enabled = TRUE)
+  return(hc)
 
 }
