@@ -17,7 +17,8 @@ getCellHistogram <- function(GroupInfo, colV){
     hc_xAxis(categories = x) %>%
     hc_plotOptions(grouping = FALSE) %>%
     hc_add_series(data = y, colorByPoint = TRUE, showInLegend = FALSE, name = 'Count') %>%
-    hc_colors(colV)
+    hc_colors(colV) %>%
+    hc_exporting(enabled = TRUE)
   return(hc)
 
 }

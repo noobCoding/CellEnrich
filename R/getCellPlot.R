@@ -13,12 +13,16 @@ getCellPlot = function(dfobj, Cells){
   names(UniqueCol) <- Cells
 
   dfobj$col <- unname(UniqueCol[dfobj$col])
+  rownames(dfobj) = NULL
+  print(head(dfobj))
 
   hc <- hchart(
     dfobj,
     type = 'scatter',
     hcaes(x = x, y = y, color = col)
-  ) %>% hc_tooltip(FALSE)
+  ) %>%
+    hc_tooltip(FALSE) %>%
+    hc_exporting(enabled = TRUE)
 
   cat('\n')
 

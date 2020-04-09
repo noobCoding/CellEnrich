@@ -1,8 +1,10 @@
 #' @import shinymaterial
+#' @import highcharter
 #' @export
 
 CellEnrichUI <- function() {
   require(shinymaterial)
+  require(highcharter)
   material_page(
     shinyjs::useShinyjs(),
 
