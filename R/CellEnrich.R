@@ -20,10 +20,11 @@
 #' @import sortable
 #' @import scran
 #' @import Seurat
+#' @import highcharter
 #'
 #' @export
 
-CellEnrich <- function(CountData, GroupInfo) {
+CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
   require(dplyr)
 
@@ -46,21 +47,36 @@ CellEnrich <- function(CountData, GroupInfo) {
 
       pt <- proc.time()
 
+      if(is.null(genesets) ){
+        if(input$genesetOption =='User-Geneset'){
+          shiny::showNotification('Geneset not given ...', type = 'error', duration = 10)
+          return(NULL)
+        }
+      }
+
       # ------ Hide Start Button
 
       shinyjs::hide("StartCellEnrich")
 
       # ------ Load Genesets
 
-      if (input$genesetOption == "Curated") load("c2v7.RData")
-      if (input$genesetOption == "GeneOntology") load("c5v7.RData")
-      if (input$genesetOption == "KEGG") load("keggv7.RData")
-      # if (input$genesetOption == "Mouse") load("mousegeneset.RData")
-      if (input$genesetOption == "Mouse-KEGG") load("mouseKEGG.RData")
-      if (input$genesetOption == "Mouse-GO") load("mouseGO.RData")
+      if(is.null(genesets)){
+        if (input$genesetOption == "Human-Curated") load("c2v7.RData")
+        if (input$genesetOption == "Human-GO") load("humanGO.RData")
+        if (input$genesetOption == "Human-GO-BP") load("humanGOBP.RData")
+        if (input$genesetOption == "Human-GO-CC") load("humanGOCC.RData")
+        if (input$genesetOption == "Human-GO-MF") load("humanGOMF.RData")
+        if (input$genesetOption == "Human-KEGG") load("keggv7.RData")
+        if (input$genesetOption == "Mouse-KEGG") load("mouseKEGG.RData")
+        if (input$genesetOption == "Mouse-GO") load("mouseGO.RData")
+        if (input$genesetOption == "Mouse-GO-BP") load("mouseGOBP.RData")
+        if (input$genesetOption == "Mouse-GO-CC") load("mouseGOCC.RData")
+        if (input$genesetOption == "Mouse-GO-MF") load("mouseGOMF.RData")
+      }
 
-      print(length(genesets))
-
+      else{
+        shiny::showNotification('User Geneset will be used', type = 'message', duration = 10)
+      }
       # ------ for test
       # q0 <- 0.1
 
@@ -304,13 +320,13 @@ CellEnrich <- function(CountData, GroupInfo) {
 
       CellHistogram <<- getCellHistogram(GroupInfo, colV)
 
-      output$CellBar <- shiny::renderPlot(CellHistogram) # CELL HISTOGRAM
+      output$CellBar <- renderHighchart(CellHistogram) # CELL HISTOGRAM
 
       source("R/getCellPlot.R")
 
       CellScatter <<- getCellPlot(dfobj, Cells)
 
-      output$CellPlot <- shiny::renderPlot(CellScatter)
+      output$CellPlot <- renderHighchart(CellScatter)
 
       source('R/groupTable.R')
 
@@ -354,7 +370,7 @@ CellEnrich <- function(CountData, GroupInfo) {
                           "; $('#toSortButton", i, "').attr('disabled', true);"
                           )
                       ),
-                      style = "position:absolute; top:1em; right:1em;"
+                      style = "position:absolute; top:1em; right:1em;background-color: #1976d2"
                     )
                   )
                 ),
