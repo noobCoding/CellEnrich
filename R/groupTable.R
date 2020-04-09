@@ -1,4 +1,5 @@
 groupTable <- function(pres, genesets, dfobj, pres2) {
+  cat('groupTable\n')
   # for pres2
   genesetIdx <- sapply(names(pres2), function(i) {
     which(i == names(genesets))

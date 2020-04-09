@@ -16,3 +16,6 @@
 ^mouseGO\.RData$
 ^mouseKEGG\.RData$
 ^mouseGeneset\.R$
+^mouseGOBP\.RData$
+^mouseGOMF\.RData$
+^mouseGOCC\.RData$
