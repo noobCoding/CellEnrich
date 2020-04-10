@@ -19,7 +19,6 @@
 #' @import scales
 #' @import sortable
 #' @import scran
-#' @import Seurat
 #' @import highcharter
 #'
 #' @export
@@ -80,7 +79,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       genesets <<- genesets
       # ------ for test
-      # q0 <- 0.1
+      # q0 <- 0.05
 
       q0 <- input$qvalueCutoff
 
@@ -423,9 +422,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       # select each cell's frequent pathway
       for (i in 1:length(Cells)) {
-
         thisCellData <- CellPathwayDF %>% dplyr::filter(Cell == Cells[i])
-
         if (nrow(thisCellData) >= 1) {
           thisCellData <- thisCellData %>% top_n(1, wt = Count)
           if (nrow(thisCellData) >= 1) {
@@ -439,10 +436,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           }
           res <- c(res, paste0(thisCellData$Geneset, " @", thisCellData$Cell))
         }
-
       }
-
-      output$CellPlot <- shiny::renderPlot(emphasize(FALSE, res, dfobj, Cells, pres))
+      output$CellPlot <- renderHighchart(emphasize(FALSE, res, dfobj, Cells, pres, genesets))
     })
 
     # draw significant colored images
@@ -475,7 +470,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         }
       }
 
-      output$CellPlot <- shiny::renderPlot(emphasize(FALSE, res, dfobj, Cells, pres))
+      output$CellPlot <- renderHighchart(emphasize(FALSE, res, dfobj, Cells, pres, genesets))
     })
 
     # draw gray colored images
@@ -484,10 +479,18 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         return(NULL)
       }
 
-      grayImage <- ggplot(dfobj, aes(x = x, y = y)) +
-        geom_point(colour = "gray")
+      dfobj_new <- dfobj
+      dfobj_new$col <- '#8395a7'
 
-      output$CellPlot <- shiny::renderPlot(grayImage)
+      grayImage <- hchart(
+          dfobj_new,
+          type = 'scatter',
+          hcaes(x = x, y = y, color = col)
+        ) %>%
+        hc_tooltip(FALSE) %>%
+        hc_exporting(enabled = TRUE)
+
+      output$CellPlot <- renderHighchart(grayImage)
     })
 
     # draw group colored images
@@ -496,16 +499,15 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         return(NULL)
       }
 
-      UniqueCol <- briterhex(scales::hue_pal()(length(Cells)))
-      names(UniqueCol) <- Cells
+      # UniqueCol <- briterhex(scales::hue_pal()(length(Cells)))
+      # names(UniqueCol) <- Cells
 
-      colV <- unname(UniqueCol[dfobj$col])
+      # colV <- unname(UniqueCol[dfobj$col])
 
-      # scatter plot
-      colorImage <- ggplot(dfobj, aes(x = x, y = y)) +
-        geom_point(colour = colV)
+      # CellScatter <<- getCellPlot(dfobj, Cells)
 
-      output$CellPlot <- shiny::renderPlot(colorImage)
+      output$CellPlot <- renderHighchart(CellScatter)
+
     })
 
     # Emphasize with order
@@ -514,7 +516,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         return(NULL)
       }
 
-      output$CellPlot <- shiny::renderPlot(emphasize(TRUE, input$sortList, dfobj, Cells, pres))
+      output$CellPlot <- renderHighchart(emphasize(TRUE, input$sortList, dfobj, Cells, pres, genesets))
     })
 
     # Emphasize without order
@@ -523,7 +525,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         return(NULL)
       }
 
-      output$CellPlot <- shiny::renderPlot(emphasize(FALSE, input$sortList, dfobj, Cells, pres))
+      output$CellPlot <- renderHighchart(emphasize(FALSE, input$sortList, dfobj, Cells, pres, genesets))
     })
 
     # clear timelist in Cell tab

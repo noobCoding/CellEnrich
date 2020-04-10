@@ -14,7 +14,6 @@ getCellPlot = function(dfobj, Cells){
 
   dfobj$col <- unname(UniqueCol[dfobj$col])
   rownames(dfobj) = NULL
-  print(head(dfobj))
 
   hc <- hchart(
     dfobj,
