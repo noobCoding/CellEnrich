@@ -79,7 +79,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       genesets <<- genesets
       # ------ for test
-      # q0 <- 0.1
+      # q0 <- 0.05
 
       q0 <- input$qvalueCutoff
 
