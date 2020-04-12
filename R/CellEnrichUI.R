@@ -11,7 +11,6 @@ CellEnrichUI <- function() {
     # dynamic datatable full width
 
     tags$head(tags$style(type = "text/css", ".display.dataTable.no-footer{width : 100% !important;}")),
-    tags$head(tags$style(type = "text/css", ".markerP {display : none;}")),
 
     # waitress declare
     use_waitress(color = "#697682", percent_color = "#333333"),
@@ -144,19 +143,32 @@ CellEnrichUI <- function() {
         ),
         width = 12
       ),
-      style = "margin : 1em"
+      style = "margin : 1em; border : solid 0.5em #1976d2"
     ),
 
     # marker table
     material_row(
       material_card(
         title = "MarkerGenes",
-        p("DE from each Cell specific", class = 'markerP'),
-        DT::dataTableOutput("markerL1"),
-        p("DE - Pathway from each Cell specific", class = 'markerP'),
-        DT::dataTableOutput("markerL2")
+        material_row(
+          material_column(
+            material_card(
+              title = 'DE from each Cell specific',
+              DT::dataTableOutput("markerL1")
+            ),
+            width = 6
+          )
+          ,
+          material_column(
+            material_card(
+              title = 'DE - Pathway from each Cell specific',
+              DT::dataTableOutput("markerL2")
+            ),
+            width = 6
+          )
+        )
       ),
-      style = "margin : 1em"
+      style = "margin : 1em; border : solid 0.5em #1976d2"
     ),
 
     # emphasize tables
@@ -174,7 +186,7 @@ CellEnrichUI <- function() {
         uiOutput("dynamicTable"),
         depth = 3
       ),
-      style = "margin : 1em"
+      style = "margin : 1em; border : solid 0.5em #1976d2"
     )
   )
 }
