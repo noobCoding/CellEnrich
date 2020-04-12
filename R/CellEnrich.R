@@ -166,7 +166,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           options = list(
             autoWidth = TRUE,
             dom = "ltp",
-            lengthChange = FALSE
+            lengthChange = FALSE,
+            columnDefs = list(list(className = 'dt-center', targets = 0:3))
           ),
           selection = "none",
         )
@@ -208,12 +209,16 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       pres2 <<- pres2
 
       source('R/pathwayPvalue.R')
+      source('R/getOddRatio.R')
       # 2625*4
       PP <- pathwayPvalue(GroupInfo, pres, pres2, genesets) # qvalue cutoff removed
+      OR <- getOddRatio(GroupInfo, pres, pres2, genesets)
+
+      #CellPathwayDF <- CellPathwayDF %>%
+        #inner_join(PP) # 1232 * 5
 
       CellPathwayDF <- CellPathwayDF %>%
-        inner_join(PP) # 1232 * 5
-
+        inner_join(OR)
 
       CellPathwayDF <<- CellPathwayDF
 
@@ -229,13 +234,16 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           filter(Cell == thisCell) %>%
           select(Geneset)
 
+        # s2 <- findSigGenesGroup(CountData, GroupInfo, q0, TopCutoff = 5)
+        # find markers
+
         thisCellDEs <- s2 %>%
           filter(Group == thisCell) %>%
           select(genes)
 
-        tcd <- thisCellDEs[, 1]
-        tcp <- thisCellPathways[, 1]
-        tcp <- sapply(tcp, function(i) {
+        tcd <- thisCellDEs[, 1] # ThisCellDES
+        tcp <- thisCellPathways[, 1] # ThisCellPathways
+        tcp <- sapply(tcp, function(i) { # indexed
           which(names(genesets) == i)
         }, USE.NAMES = FALSE)
 
@@ -261,7 +269,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           CellMarkers <- rbind(CellMarkers, data.frame(cbind(genes, Count, Group = thisCell), stringsAsFactors = FALSE))
         }
         else{
-          if(ncol(CellMarkers)!= ncol(additive)){
+          if(ncol(CellMarkers) == ncol(additive)){
             CellMarkers <- rbind(CellMarkers, data.frame(cbind(genes, Count, Group = thisCell), stringsAsFactors = FALSE))
           }
         }
@@ -275,7 +283,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
         CellMarkers$Group <- as.factor(CellMarkers$Group)
         CellMarkers$Count <- as.numeric(CellMarkers$Count)
-        CellMarkers$Group <- as.factor(CellMarkers$Group)
+        CellMarkers$FDR <- as.numeric(CellMarkers$FDR)
 
         output$markerL2 <- DT::renderDataTable(
           DT::datatable(CellMarkers,
@@ -284,7 +292,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                         options = list(
                           autoWidth = TRUE,
                           dom = "ltp",
-                          lengthChange = FALSE
+                          lengthChange = FALSE,
+                          columnDefs = list(list(className = 'dt-center', targets = 0:4))
                         ),
                         selection = "none",
           )
@@ -293,15 +302,17 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       else{
         print('CellMarker Not Available')
         output$markerL2 <- DT::renderDataTable(
-          DT::datatable(s2,
-                        rownames = FALSE,
-                        filter = "top",
-                        options = list(
-                          autoWidth = TRUE,
-                          dom = "ltp",
-                          lengthChange = FALSE
-                        ),
-                        selection = "none",
+          DT::datatable(
+            s2,
+            rownames = FALSE,
+            filter = "top",
+            options = list(
+              autoWidth = TRUE,
+              dom = "ltp",
+              lengthChange = FALSE,
+              columnDefs = list(list(className = 'dt-center', targets = 0:4))
+            ),
+            selection = "none",
           )
         )
       }
@@ -398,7 +409,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
               "scrollX = TRUE,",
               "autoWidth = TRUE,",
               "lengthChange = FALSE,",
-              "order = list(list(1,'desc'))",
+              "order = list(list(3,'desc'))", # odd ratio based
               "),",
             "rownames = FALSE,",
             "selection = 'single')",
