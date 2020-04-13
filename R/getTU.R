@@ -1,4 +1,4 @@
-getTU <- function(CountData, plotOption){
+getTU <- function(CountData, GroupInfo, plotOption){
   cat('transpose in getTU started\n')
   CountData <- as.matrix(Matrix::t(CountData))
   cat('t-SNE / U-MAP started\n')
