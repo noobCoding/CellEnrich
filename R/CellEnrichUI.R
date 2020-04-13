@@ -129,7 +129,7 @@ CellEnrichUI <- function() {
           title = "Group plot / Distribution",
           depth = 3,
           material_column(
-            highchartOutput("CellPlot", height = "700px"),
+            plotOutput("CellPlot", height = "700px"),
             width = 6
           ),
           material_column(

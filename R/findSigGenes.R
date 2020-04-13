@@ -8,12 +8,11 @@
 #' @export
 #'
 findSigGenes = function(v, method = 'median', Name){
-  if(!method %in% c('median', 'pos', 'zero')) stop('wrong method')
+  if(!method %in% c('median', 'mean', 'zero')) stop('wrong method')
   # it's already matrix
   # v <- as.matrix(v)
   cat('findSigGenes started\n')
 
-  pt = proc.time()
   rownames(v) <- colnames(v) <- NULL
 
   res = list()
@@ -62,8 +61,6 @@ findSigGenes = function(v, method = 'median', Name){
       res[[i]] = which(v[,i]> mean(v[,i]))
     }
   }
-
-  cat(proc.time() - pt)
 
   names(res) <- Name
   return(res)

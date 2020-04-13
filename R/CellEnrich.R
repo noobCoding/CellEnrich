@@ -1,6 +1,5 @@
 #' @title CellEnrich
 #'
-#'
 #' @importFrom DT dataTableOutput
 #' @importFrom Matrix t
 #'
@@ -19,7 +18,6 @@
 #' @import scales
 #' @import sortable
 #' @import scran
-#' @import highcharter
 #'
 #' @export
 
@@ -117,7 +115,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       source('R/getTU.R')
       # dfobj <- getTU(CountData, 't-SNE')
-      dfobj <- getTU(CountData, input$plotOption)
+      dfobj <- getTU(CountData, GroupInfo, input$plotOption)
       dfobj <<- dfobj
 
       cat('getTU Finished\n')
@@ -340,7 +338,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       CellScatter <<- getCellPlot(dfobj, Cells)
 
-      output$CellPlot <- renderHighchart(CellScatter)
+      output$CellPlot <- renderPlot(CellScatter)
 
       source('R/groupTable.R')
 
@@ -439,7 +437,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           if (nrow(thisCellData) >= 1) {
             thisCellData <- thisCellData %>% top_n(-1, wt = Length)
             if (nrow(thisCellData) >= 1) {
-              thisCellData <- thisCellData %>% top_n(-1, wt = Qvalue)
+              thisCellData <- thisCellData %>% top_n(-1, wt = OddRatio)
               if (nrow(thisCellData) >= 1) {
                 thisCellData <- thisCellData %>% top_n(1)
               }
@@ -448,7 +446,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           res <- c(res, paste0(thisCellData$Geneset, " @", thisCellData$Cell))
         }
       }
-      output$CellPlot <- renderHighchart(emphasize(FALSE, res, dfobj, Cells, pres, genesets))
+      output$CellPlot <- renderPlot(emphasize(FALSE, res, dfobj, Cells, pres, genesets))
     })
 
     # draw significant colored images
@@ -464,7 +462,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
         thisCellData <- CellPathwayDF %>% dplyr::filter(Cell == thisCell)
         if (nrow(thisCellData) >= 1) {
-          thisCellData <- thisCellData %>% top_n(-1, wt = Qvalue)
+          thisCellData <- thisCellData %>% top_n(-1, wt = OddRatio)
 
           if (nrow(thisCellData) >= 1) {
             thisCellData <- thisCellData %>% top_n(-1, wt = Length)
@@ -481,7 +479,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         }
       }
 
-      output$CellPlot <- renderHighchart(emphasize(FALSE, res, dfobj, Cells, pres, genesets))
+      output$CellPlot <- renderPlot(emphasize(FALSE, res, dfobj, Cells, pres, genesets))
     })
 
     # draw gray colored images
@@ -490,18 +488,22 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         return(NULL)
       }
 
-      dfobj_new <- dfobj
-      dfobj_new$col <- '#8395a7'
+      grayImage <- ggplot(dfobj, aes(x = x, y = y)) +
+        geom_point(colour = "gray")
 
-      grayImage <- hchart(
-          dfobj_new,
-          type = 'scatter',
-          hcaes(x = x, y = y, color = col)
-        ) %>%
-        hc_tooltip(FALSE) %>%
-        hc_exporting(enabled = TRUE)
+      #dfobj_new <- dfobj
+      #dfobj_new$col <- '#8395a7'
 
-      output$CellPlot <- renderHighchart(grayImage)
+      #grayImage <- hchart(
+          #dfobj_new,
+          #type = 'scatter',
+          #hcaes(x = x, y = y, color = col)
+        #) %>%
+        #hc_tooltip(FALSE) %>%
+        #hc_exporting(enabled = TRUE)
+
+      output$CellPlot <- shiny::renderPlot(grayImage)
+      # output$CellPlot <- renderHighchart(grayImage)
     })
 
     # draw group colored images
@@ -510,14 +512,18 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         return(NULL)
       }
 
-      # UniqueCol <- briterhex(scales::hue_pal()(length(Cells)))
-      # names(UniqueCol) <- Cells
+      UniqueCol <- briterhex(scales::hue_pal()(length(Cells)))
+      names(UniqueCol) <- Cells
 
-      # colV <- unname(UniqueCol[dfobj$col])
+      colV <- unname(UniqueCol[dfobj$col])
+
+      colorImage <- ggplot(dfobj, aes(x = x, y = y)) +
+        geom_point(colour = colV)
 
       # CellScatter <<- getCellPlot(dfobj, Cells)
+      output$CellPlot <- shiny::renderPlot(colorImage)
 
-      output$CellPlot <- renderHighchart(CellScatter)
+      # output$CellPlot <- renderHighchart(CellScatter)
 
     })
 
@@ -527,7 +533,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         return(NULL)
       }
 
-      output$CellPlot <- renderHighchart(emphasize(TRUE, input$sortList, dfobj, Cells, pres, genesets))
+      output$CellPlot <- renderPlot(emphasize(TRUE, input$sortList, dfobj, Cells, pres, genesets))
     })
 
     # Emphasize without order
@@ -536,7 +542,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         return(NULL)
       }
 
-      output$CellPlot <- renderHighchart(emphasize(FALSE, input$sortList, dfobj, Cells, pres, genesets))
+      output$CellPlot <- renderPlot(emphasize(FALSE, input$sortList, dfobj, Cells, pres, genesets))
     })
 
     # clear timelist in Cell tab

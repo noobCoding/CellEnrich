@@ -1,7 +1,8 @@
 getCellPlot = function(dfobj, Cells){
 
   cat('getCellPlot\n')
-  require(highcharter)
+  require(ggplot2)
+  #require(highcharter)
 
   colnames(dfobj) <- c("x", "y", "col")
   dfobj <<- dfobj
@@ -12,19 +13,25 @@ getCellPlot = function(dfobj, Cells){
   UniqueCol <- briterhex(scales::hue_pal()(length(Cells)))
   names(UniqueCol) <- Cells
 
-  dfobj$col <- unname(UniqueCol[dfobj$col])
-  rownames(dfobj) = NULL
-
-  hc <- hchart(
-    dfobj,
-    type = 'scatter',
-    hcaes(x = x, y = y, color = col)
-  ) %>%
-    hc_tooltip(FALSE) %>%
-    hc_exporting(enabled = TRUE)
+  colV <- unname(UniqueCol[dfobj$col])
 
   cat('\n')
+  return(
+    ggplot(dfobj, aes(x = x, y = y)) +
+      geom_point(colour = colV)
+  )
 
-  return(hc)
+  # highcharter cancel
+
+  #dfobj$col <- unname(UniqueCol[dfobj$col])
+  #rownames(dfobj) = NULL
+
+  #hchart(dfobj, type = 'scatter', hcaes(x = x, y = y, color = col)) %>%
+    #hc_add_series(data = dfobj[3000,nrow(dfobj)], colorByPoint = TRUE, showInLegend = FALSE) %>%
+    #hc_colors(colV)
+    #hc_tooltip(FALSE) %>%
+    #hc_exporting(enabled = TRUE)
+
+  #return(hc)
 
 }
