@@ -20,7 +20,7 @@ pathwayPvalue <- function(GroupInfo, pres, pres2, genesets) {
       thisPathway <- names(thisCellPathways)[j]
       q <- unname(thisCellPathways)[j] # selected white ball
       m <- pres2[names(genesets)[as.numeric(thisPathway)]] # total white ball
-      pv[j] <- round(1 - phyper(q - 1, m, total - m, k), 4)
+      pv[j] <- 1 - phyper(q - 1, m, total - m, k)
     }
     names(pv) <- names(genesets)[as.numeric(names(thisCellPathways))]
 
@@ -32,7 +32,7 @@ pathwayPvalue <- function(GroupInfo, pres, pres2, genesets) {
   res$Cell <- as.character(res$Cell)
   res$Geneset <- as.character(res$Geneset)
 
-  res$Qvalue <- round(p.adjust(as.numeric(as.character(res$Qvalue)), "fdr"), 4)
+  res$Qvalue <- -log10(as.numeric(as.character(res$Qvalue)))
 
   return(res)
 }

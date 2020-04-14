@@ -114,7 +114,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       # require(Matrix)
 
       source('R/getTU.R')
-      # dfobj <- getTU(CountData, 't-SNE')
+      # dfobj <- getTU(CountData, GroupInfo, 't-SNE')
       dfobj <- getTU(CountData, GroupInfo, input$plotOption)
       dfobj <<- dfobj
 
@@ -212,8 +212,32 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       PP <- pathwayPvalue(GroupInfo, pres, pres2, genesets) # qvalue cutoff removed
       OR <- getOddRatio(GroupInfo, pres, pres2, genesets)
 
-      #CellPathwayDF <- CellPathwayDF %>%
-        #inner_join(PP) # 1232 * 5
+      # QVCUTOFF <- 4
+      CellPathwayDFP <- CellPathwayDF %>% inner_join(PP) %>% select(Cell, Geneset, Qvalue) %>% filter(Qvalue > 4)
+
+      ggs <- unique(CellPathwayDFP %>% select(Geneset))[,1]
+      ces <- unique(CellPathwayDFP %>% select(Cell))[,1]
+
+      nr <- length(ggs) # nrow
+      nc <- length(ces) # ncol
+
+      output$tbldn <- downloadHandler(
+        filename = function(){'mytable.csv'},
+        content = function(file){
+          # pathway - cell ? -log pvalue
+          outputFile = matrix(0,nr,nc)
+
+          rownames(outputFile) = ggs
+          colnames(outputFile) = ces
+
+          for(i in 1:length(ces)){
+            tf <- CellPathwayDFP %>% filter(Cell == ces[i]) %>% select(Geneset, Qvalue)
+            outputFile[(tf %>% select(Geneset))[,1],i] = (tf%>% select(Qvalue))[,1]
+          }
+          write.csv(outputFile, file)
+        }
+      )
+
 
       CellPathwayDF <- CellPathwayDF %>%
         inner_join(OR)
@@ -340,6 +364,13 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       output$CellPlot <- renderPlot(CellScatter)
 
+      output$imgdn <- downloadHandler(
+        filename = function(){'myfigure.png'},
+        content = function(file){
+          ggsave(file, CellScatter, device = 'png')
+        }
+      )
+
       source('R/groupTable.R')
 
       gt <<- groupTable(pres, genesets, dfobj, pres2)
@@ -417,6 +448,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       }
       # StartEnrich Finished
 
+
       print(proc.time() - pt)
 
     })
@@ -446,7 +478,20 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           res <- c(res, paste0(thisCellData$Geneset, " @", thisCellData$Cell))
         }
       }
-      output$CellPlot <- renderPlot(emphasize(FALSE, res, dfobj, Cells, pres, genesets))
+
+
+      plotOutput <- renderPlot(emphasize(FALSE, res, dfobj, Cells, pres, genesets))
+
+      output$imgdn <- downloadHandler(
+        filename = function(){'myfigure.png'},
+        content = function(file){
+          ggsave(file, plotOutput, device = 'png')
+        }
+      )
+
+      output$CellPlot <- plotOutput
+
+      # output$CellPlot <- renderPlot(emphasize(FALSE, res, dfobj, Cells, pres, genesets))
     })
 
     # draw significant colored images
@@ -478,8 +523,16 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           res <- c(res, paste0(thisCellData$Geneset, " @", thisCellData$Cell))
         }
       }
+      plotOutput <- renderPlot(emphasize(FALSE, res, dfobj, Cells, pres, genesets))
 
-      output$CellPlot <- renderPlot(emphasize(FALSE, res, dfobj, Cells, pres, genesets))
+      output$imgdn <- downloadHandler(
+        filename = function(){'myfigure.png'},
+        content = function(file){
+          ggsave(file, plotOutput, device = 'png')
+        }
+      )
+
+      output$CellPlot <- plotOutput
     })
 
     # draw gray colored images
@@ -502,6 +555,13 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         #hc_tooltip(FALSE) %>%
         #hc_exporting(enabled = TRUE)
 
+      output$imgdn <- downloadHandler(
+        filename = function(){'myfigure.png'},
+        content = function(file){
+          ggsave(file, grayImage, device = 'png')
+        }
+      )
+
       output$CellPlot <- shiny::renderPlot(grayImage)
       # output$CellPlot <- renderHighchart(grayImage)
     })
@@ -521,6 +581,14 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         geom_point(colour = colV)
 
       # CellScatter <<- getCellPlot(dfobj, Cells)
+
+      output$imgdn <- downloadHandler(
+        filename = function(){'myfigure.png'},
+        content = function(file){
+          ggsave(file, colorImage, device = 'png')
+        }
+      )
+
       output$CellPlot <- shiny::renderPlot(colorImage)
 
       # output$CellPlot <- renderHighchart(CellScatter)
@@ -532,8 +600,17 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       if (input$OrderEmphasize == 0) { # prevent default click state
         return(NULL)
       }
+      plotOutput <- renderPlot(emphasize(TRUE, input$sortList, dfobj, Cells, pres, genesets))
+      output$CellPlot <- plotOutput
 
-      output$CellPlot <- renderPlot(emphasize(TRUE, input$sortList, dfobj, Cells, pres, genesets))
+      output$imgdn <- downloadHandler(
+        filename = function(){'myfigure.png'},
+        content = function(file){
+          ggsave(file, plotOutput, device = 'png')
+        }
+      )
+
+
     })
 
     # Emphasize without order
@@ -557,6 +634,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         )
       )
     })
+
   }
 
   source('R/CellEnrichUI.R')
