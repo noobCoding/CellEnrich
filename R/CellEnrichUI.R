@@ -136,10 +136,15 @@ CellEnrichUI <- function() {
             highchartOutput("CellBar", height = "700px"), # cell distribution
             width = 6
           ),
-          material_button("colorbtn", "toColor", icon = "color_lens", color = "blue darken-2"),
-          material_button("graybtn", "toGray", icon = "clear", color = "blue darken-2"),
-          material_button("freqbtn", "Frequent", icon = "grain", color = "blue darken-2"),
-          material_button("sigbtn", "Significant", icon = "grade", color = "blue darken-2")
+          material_row(
+            shiny::downloadButton("imgdn", "Save", icon = 'save', style = 'background-color : #616161 !important')
+          ),
+          material_row(
+            material_button("colorbtn", "toColor", icon = "color_lens", color = "blue darken-2"),
+            material_button("graybtn", "toGray", icon = "clear", color = "blue darken-2"),
+            material_button("freqbtn", "Frequent", icon = "grain", color = "blue darken-2"),
+            material_button("sigbtn", "Significant", icon = "grade", color = "blue darken-2")
+          )
         ),
         width = 12
       ),
@@ -157,8 +162,7 @@ CellEnrichUI <- function() {
               DT::dataTableOutput("markerL1")
             ),
             width = 6
-          )
-          ,
+          ),
           material_column(
             material_card(
               title = 'DE - Pathway from each Cell specific',
@@ -179,14 +183,28 @@ CellEnrichUI <- function() {
           title = "Pathway Emphasize", divider = TRUE,
           tags$h3("To be recognized by application, Please move element's position"),
           rank_list(text = "Pathways", labels = "Please Clear First", input_id = "sortList", css_id = "mysortableCell"),
-          material_button("OrderEmphasize", "Emphasize with Order", icon = "timeline", color = 'blue darken-2'),
-          material_button("Emphasize", "Emphasize without Order", icon = "bubble_chart", color = 'blue darken-2'),
-          material_button("ClearList", "Clear List", icon = "clear_all", color = 'blue darken-2'),
+          material_row(
+            material_button("OrderEmphasize", "Emphasize with Order", icon = "timeline", color = 'blue darken-2'),
+            material_button("Emphasize", "Emphasize without Order", icon = "bubble_chart", color = 'blue darken-2'),
+            material_button("ClearList", "Clear List", icon = "clear_all", color = 'blue darken-2')
+          ),
+          material_row(
+            shiny::downloadButton("tbldn", "Save", icon = 'save', style = 'background-color : #616161 !important')
+          ),
         ),
         uiOutput("dynamicTable"),
         depth = 3
       ),
       style = "margin : 1em; border : solid 0.5em #1976d2"
     )
+  )
+}
+
+
+myDnButton <- function(outputId, label = 'Download', type = 'default', ...){
+  aTag <- tags$a(
+    id = outputId, href = '', target = '_blank',
+    class = paste0('btn btn-', type, ' shiny-download-link'),
+    download = NA, icon('download', label), ...
   )
 }
