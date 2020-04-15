@@ -19,3 +19,8 @@
 ^mouseGOBP\.RData$
 ^mouseGOMF\.RData$
 ^mouseGOCC\.RData$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^vignettes/articles$
+^images$

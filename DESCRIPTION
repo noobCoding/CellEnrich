@@ -6,7 +6,7 @@ Authors@R:
            family = "Kim",
            role = c("aut", "cre"),
            email = "hwanistic@gmail.com")
-Description: What the package does (one paragraph).
+Description: Pathway Enrichment Analysis, Visualize for Single Cell Data.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
@@ -22,5 +22,6 @@ Imports:
     magrittr,
     shinymaterial
 Suggests: 
-    testthat (>= 2.1.0)
+    testthat (>= 2.1.0),
+    rmarkdown
 RoxygenNote: 7.1.0
