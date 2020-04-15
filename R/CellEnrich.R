@@ -817,7 +817,6 @@ solvedButton <- function(inputId, label, style = NULL, onClick = NULL, ...) {
 #'
 #' @rawNamespace import(SingleCellExperiment, except = show)
 #' @import Rtsne
-#' @import shinyCyJS
 #' @import dplyr
 #' @rawNamespace import(shiny, except = dataTableOutput)
 #' @import shinymaterial
