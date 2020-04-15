@@ -2,10 +2,20 @@
 % Please edit documentation in R/CellEnrich.R
 \name{CellEnrich}
 \alias{CellEnrich}
-\title{CellEnrich}
+\title{Pathway Enrichment Analysis / Visualize for Single Cell Data}
 \usage{
 CellEnrich(CountData, GroupInfo, genesets = NULL)
 }
+\arguments{
+\item{CountData}{CountData [dgCMatrix]}
+
+\item{GroupInfo}{GroupInfo for each samples. [string]}
+
+\item{genesets}{(optional), user geneset to analysis. [list]}
+}
+\value{
+no return.
+}
 \description{
-CellEnrich
+Pathway Enrichment Analysis / Visualize for Single Cell Data
 }

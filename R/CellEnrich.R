@@ -1,18 +1,838 @@
-#' @title CellEnrich
+GenesetFlush <- function(genes, genesets){
+  cat('GenesetFlush\n')
+  for (i in 1:length(genesets)) {
+    genesets[[i]] <- intersect(genesets[[i]], genes)
+  }
+  return(genesets)
+}
+
+getlgs <- function(genesets){
+  n <- names(genesets)
+  cat('getlgs\n')
+  sapply(1:length(n), function(i) { length(genesets[[n[i]]]) })
+}
+
+GenesetsizeFlush = function(genesets, lgs, minsize, maxsize){
+  cat('GenesetSizeFlush\n')
+  genesets[intersect(which(lgs >= minsize), which(lgs <= maxsize))]
+}
+
+GeneFlush = function(genes, genesets){
+  cat('GeneFlush\n')
+  gsgenes <- unique(unlist(genesets))
+  remgenes <- sapply(setdiff(genes, gsgenes), function(i) { which(i == genes) }, USE.NAMES = FALSE)
+  return(remgenes)
+}
+
+getBackgroundGenes = function(genesets){
+  cat('getBackgroundGenes\n')
+  length(unique(unlist(genesets)))
+}
+
+getTU <- function(CountData, GroupInfo, plotOption){
+  cat('transpose in getTU started\n')
+  CountData <- as.matrix(Matrix::t(CountData))
+  cat('t-SNE / U-MAP started\n')
+  if (plotOption == "t-SNE") {
+    if(nrow(CountData)<500) tsneE <- Rtsne::Rtsne(CountData, check_duplicates = FALSE, perplexity = 15)
+    else {
+      tsneE <- Rtsne::Rtsne(CountData, check_duplicates = FALSE, perplexity = 15, partial_pca = TRUE) # 15 seconds
+    }
+    dfobj <- data.frame(tsneE$Y, col = GroupInfo, stringsAsFactors = FALSE)
+  }
+
+  if (plotOption == "U-MAP") {
+    umapE <- uwot::umap(CountData, fast_sgd = TRUE) # 55 seconds
+    dfobj <- data.frame(umapE, col = GroupInfo, stringsAsFactors = FALSE)
+  }
+  colnames(dfobj) = c('x','y', 'col')
+  return(dfobj)
+}
+
+findSigGenes = function(v, method = 'median', Name){
+  if(!method %in% c('median', 'mean', 'zero', 'GSVA')) stop('wrong method')
+  # it's already matrix
+  # v <- as.matrix(v)
+  cat('findSigGenes started\n')
+
+  rownames(v) <- colnames(v) <- NULL
+
+  res = list()
+
+  # 100 : 0.8 seconds
+  # 200 : 1.12
+  # 250 : 1.36. find 20000 gene will take less than minute
+
+  cat('scaling\n')
+
+  idx <- floor(nrow(v) / 250)
+  v2 = c()
+  for(i in 1:idx){
+    thisIdx <- 1:250 + 250*(i-1)
+    vv <- as.matrix(v[thisIdx,])+1
+    meds <- apply(vv, 1, median)
+    vv <- as(log(sweep(vv, 1, meds, '/')), 'dgCMatrix')
+    v2 <- rbind(v2, vv) # use rbind, not assign
+  }
+
+  if(nrow(v)%%250!=0){
+    thisIdx <- (idx*250+1):nrow(v)
+    vv <- as.matrix(v[thisIdx,])+1
+    meds <- apply(vv, 1, median)
+    vv <- log(sweep(vv, 1, meds, '/'))
+    v2 <- rbind(v2, vv)
+  }
+
+  v <- v2
+  rm(v2)
+
+  cat('define Lists\n')
+
+  if(method=='median'){
+    for(i in 1:ncol(v)){
+      res[[i]] = which(v[,i] > median(v[,i]))
+    }
+  }
+  if(method == 'zero'){
+    for(i in 1:ncol(v)){
+      res[[i]] = which(v[,i] > 0)
+    }
+  }
+  if(method == 'mean'){
+    for(i in 1:ncol(v)){
+      res[[i]] = which(v[,i]> mean(v[,i]))
+    }
+  }
+
+  names(res) <- Name
+  return(res)
+
+}
+
+findSigGenesGroup = function(Count = NULL, ClustInfo = NULL, q0 = 0.1, TopCutoff = 5){
+  require(scran)
+
+  if(is.null(Count)) stop('Count must given')
+  if(is.null(ClustInfo)) stop('ClustInfo must given')
+
+  GrpRes = scran::findMarkers(x = as.matrix(Count), ClustInfo, test = 'wilcox', direction = 'up')
+  Grp = unique(ClustInfo)
+
+  res = data.frame(stringsAsFactors = FALSE)
+
+  for(i in 1:length(Grp)){
+    G = data.frame(
+      genes = rownames(GrpRes[[1]]),
+      Group = Grp[i],
+      GrpRes[[1]],
+      row.names = NULL,
+      stringsAsFactors = FALSE
+    ) %>%
+      select(Group, Top, genes, FDR) %>%
+      filter(FDR <= q0) %>%
+      # filter(Top <= TopCutoff) %>%
+      arrange(FDR)
+
+    res = rbind(res, G)
+  }
+  res$genes = as.character(res$genes)
+  res$Group = as.character(res$Group)
+  res$FDR <- round(as.numeric(res$FDR), 6)
+  return(res)
+}
+
+getbiobj <- function(genes, genesets) {
+  gidx <- 1:length(genes)
+  names(gidx) <- genes
+
+  res <- matrix(0, length(genes), length(genesets))
+  for (i in 1:length(genesets)) {
+    res[unname(gidx[genesets[[i]]]), i] <- 1
+  }
+
+  rownames(res) <- genes
+  colnames(res) <- names(genesets)
+  return(res)
+}
+
+getHyperPvalue <- function(genes, genesets, A, lgs, q0, biobj) {
+
+  lg <- length(genes)
+
+  if(lg == 0){return(integer(0))}
+  gidx <- 1:length(genes)
+  names(gidx) <- genes
+
+  if(length(genes)==1){
+    biobj <- biobj[genes,]
+  }
+  else{
+    biobj <- unname(colSums(biobj[genes,]))
+  }
+
+  # ------
+
+  pv <- sapply(1:length(genesets), function(i) {
+    q <- biobj[i] # selected white ball
+    m <- lgs[i] # white ball
+    n <- A - m # black ball
+    k <- lg # selected ball
+    1 - phyper(q - 1, m, n, k)
+  })
+  # names(pv) <- names(genesets)
+  pv <- p.adjust(pv, "fdr")
+  return(which(pv < q0))
+}
+
+buildCellPathwayDF <- function(GroupInfo, pres, genesets){
+  cat('buildCellPathwayDF\n')
+  Cells <- unique(GroupInfo)
+  CellPathwayDF <- data.frame(stringsAsFactors = FALSE)
+
+  for (i in 1:length(Cells)) {
+    thisCell <- Cells[i]
+    tt <- table(unlist(pres[which(thisCell == GroupInfo)]))
+
+    if(nrow(tt)) { CellPathwayDF <- rbind(CellPathwayDF, cbind(thisCell, names(tt), unname(tt))) }
+  }
+
+  colnames(CellPathwayDF) <- c("Cell", "Geneset", "Count")
+
+  CellPathwayDF$Cell <- as.character(CellPathwayDF$Cell)
+  CellPathwayDF$Geneset <- names(genesets)[as.numeric(as.character(CellPathwayDF$Geneset))]
+  CellPathwayDF$Count <- as.numeric(as.character(CellPathwayDF$Count))
+
+  # ------ add length column
+
+  # Length <- getlgs(CellPathwayDF$Geneset)
+  Length <- getlgs(genesets[as.character(CellPathwayDF$Geneset)])
+  CellPathwayDF <- cbind(CellPathwayDF, Length)
+
+  # ------ select genesets with count > 1
+
+  CellPathwayDF <- CellPathwayDF %>%
+    dplyr::filter(Count > 1)
+
+  return(CellPathwayDF)
+}
+
+pathwayPvalue <- function(GroupInfo, pres, pres2, genesets) {
+  cat('pathwayPvalue\n')
+  res <- c()
+  Cells <- unique(GroupInfo)
+  total <- length(GroupInfo)
+
+  for (i in 1:length(Cells)) {
+    thisCell <- Cells[i]
+    thisCellIdx <- which(GroupInfo == thisCell)
+
+    k <- length(thisCellIdx)
+
+    thisCellPathways <- table(unlist(pres[thisCellIdx]))
+    if(nrow(thisCellPathways)<1){next}
+    pv <- c()
+
+    for (j in 1:length(thisCellPathways)) {
+      thisPathway <- names(thisCellPathways)[j]
+      q <- unname(thisCellPathways)[j] # selected white ball
+      m <- pres2[names(genesets)[as.numeric(thisPathway)]] # total white ball
+      pv[j] <- 1 - phyper(q - 1, m, total - m, k)
+    }
+    names(pv) <- names(genesets)[as.numeric(names(thisCellPathways))]
+
+    res <- rbind(res, cbind(thisCell, names(pv), unname(pv)))
+  }
+  res <- data.frame(res, stringsAsFactors = FALSE)
+  colnames(res) <- c("Cell", "Geneset", "Qvalue")
+
+  res$Cell <- as.character(res$Cell)
+  res$Geneset <- as.character(res$Geneset)
+
+  res$Qvalue <- -log10(as.numeric(as.character(res$Qvalue)))
+
+  return(res)
+}
+
+getOddRatio = function(GroupInfo, pres, pres2, genesets){
+  cat('getOddRatio\n')
+
+  # pres : which gene-sets are significant for each cells.
+  # pres2 : for each gene-sets, how many cells are significant that gene-sets.
+
+  # 전체 그룹에서 유의한 회수 20 # pres2[genesets[i]]
+  # 특정 그룹에서 유의한 회수 6 # pres2[thiscellidx]
+
+  # 전체 그룹 Cell 수 : N
+  # 특정 그룹 Cell 수 : K
+
+  # Group_specific_OR = (6/K) / (14/N)
+
+  res <- data.frame(stringsAsFactors = FALSE)
+  Cells <- unique(GroupInfo)
+  total <- length(GroupInfo)
+
+  for(i in 1:length(Cells)){
+
+    thisCell = Cells[i]
+    thisCellIdx = which(GroupInfo == thisCell)
+
+    OR <- unname(sapply(1:length(genesets), function(k){
+      A <- pres2[names(genesets)[k]] # 전체 Cell에서 유의한 회수
+      if(is.na(A)) return(0)
+      N <- total # 전체 Cell 수
+
+      B <- table(unlist(pres[thisCellIdx]))[as.character(k)] # 특정 Cell에서 유의한 회수
+      if(is.na(B)) return(0)
+      K <- length(thisCellIdx)
+
+      return( (B/K) / (A/N) )
+    }))
+    OR <- round(OR, 4)
+    # Cell, Geneset, OR
+    res <- rbind(res,
+                 data.frame(
+                   Cell = as.character(thisCell),
+                   Geneset =as.character(names(genesets)),
+                   OddRatio = as.numeric(OR), stringsAsFactors = FALSE)
+    )
+  }
+
+  colnames(res) <- c('Cell', "Geneset", "OddRatio")
+
+  res <- res %>% filter(OddRatio>0)
+
+  return(res)
+
+}
+
+buildDT <- function(pres2) {
+  DT::datatable(
+    data.frame(
+      Geneset = names(pres2),
+      Count = as.numeric(pres2)
+    ),
+    options = list(
+      dom = "ltp",
+      lengthChange = FALSE
+    ),
+    rownames = FALSE,
+    selection = "single"
+  )
+}
+
+briterhex <- function(colors) {
+  if(length(colors)==0){stop('Length of color should be larger than zero --- briterhex')}
+  res <- c()
+  for (i in 1:length(colors)) {
+    v <- as.vector(col2rgb(colors[i])) * 1.3
+    v <- sapply(v, function(i) {
+      min(i, 255)
+    })
+    res[i] <- rgb(v[1], v[2], v[3], max = 255)
+  }
+  return(res)
+}
+
+getColv <- function(GroupInfo){
+  Cells <- unique(sort(GroupInfo))
+
+  UniqueCol <- briterhex(scales::hue_pal()(length(Cells)))
+  names(UniqueCol) <- Cells
+
+  x <- c()
+  y <- c()
+  for (i in 1:length(Cells)) {
+    x[i] <- Cells[i]
+    y[i] <- length(which(GroupInfo == Cells[i]))
+  }
+
+  colV <- unname(UniqueCol[x])
+  names(colV) <- Cells
+  return(colV)
+}
+
+getCellHistogram <- function(GroupInfo, colV){
+  cat('getCellHistogram\n')
+  #require(ggplot2)
+  require(highcharter)
+  Cells <- unique(sort(GroupInfo))
+
+  x <- c()
+  y <- c()
+  for (i in 1:length(Cells)) {
+    x[i] <- Cells[i]
+    y[i] <- length(which(GroupInfo == Cells[i]))
+  }
+
+  hc <- highchart() %>%
+    hc_chart(type = 'column', legend = list(enabled  = FALSE)) %>%
+    hc_title(text = 'Groups') %>%
+    hc_xAxis(categories = x) %>%
+    hc_plotOptions(grouping = FALSE) %>%
+    hc_add_series(data = y, colorByPoint = TRUE, showInLegend = FALSE, name = 'Count') %>%
+    hc_colors(colV) %>%
+    hc_exporting(enabled = TRUE)
+  return(hc)
+
+}
+
+getCellPlot = function(dfobj, Cells){
+
+  cat('getCellPlot\n')
+  require(ggplot2)
+  #require(highcharter)
+
+  colnames(dfobj) <- c("x", "y", "col")
+  dfobj <<- dfobj
+
+
+  UniqueCol <- briterhex(scales::hue_pal()(length(Cells)))
+  names(UniqueCol) <- Cells
+
+  colV <- unname(UniqueCol[dfobj$col])
+
+  cat('\n')
+  return(
+    ggplot(dfobj, aes(x = x, y = y)) +
+      geom_point(colour = colV)
+  )
+
+  # highcharter cancel
+
+  #dfobj$col <- unname(UniqueCol[dfobj$col])
+  #rownames(dfobj) = NULL
+
+  #hchart(dfobj, type = 'scatter', hcaes(x = x, y = y, color = col)) %>%
+  #hc_add_series(data = dfobj[3000,nrow(dfobj)], colorByPoint = TRUE, showInLegend = FALSE) %>%
+  #hc_colors(colV)
+  #hc_tooltip(FALSE) %>%
+  #hc_exporting(enabled = TRUE)
+
+  #return(hc)
+
+}
+
+groupTable <- function(pres, genesets, dfobj, pres2) {
+  cat('groupTable\n')
+  # for pres2
+  genesetIdx <- sapply(names(pres2), function(i) {
+    which(i == names(genesets))
+  }, USE.NAMES = FALSE)
+  pres2Idx <- pres2
+  names(pres2Idx) <- genesetIdx
+
+  groups <- sort(as.character(unique(dfobj$col)))
+  res <- data.frame(stringsAsFactors = FALSE)
+
+  tot <- sum(pres2Idx)
+
+  for (i in 1:length(groups)) {
+    pathways <- table(unlist(pres[which(dfobj$col == groups[i])]))
+    if(length(pathways)<1){next}
+    # what genesets are enriched per each group.
+
+    k <- sum(pathways) # selected ball
+
+    gt <- sapply(1:length(pathways), function(j) {
+      q <- pathways[j] # selected white ball, 1
+      m <- unname(pres2Idx[names(pathways[j])]) # total white ball, 28
+      # n <- tot - m # total black ball
+      round(1 - phyper(q - 1, m, tot - m, k), 4)
+    })
+    gt <- gt[which(gt < 0.25)] # pvalue 0.25
+    if(length(gt)){
+      res <- rbind(res, cbind(groups[i], names(gt), unname(gt)))
+    }
+  }
+  colnames(res) <- c("groups", "genesetidx", "pvalue")
+
+  res$groups <- as.character(res$groups)
+  res$genesetidx <- as.numeric(as.character(res$genesetidx))
+  res$genesetidx <- sapply(res$genesetidx, function(i) {
+    names(genesets)[i]
+  })
+  res$pvalue <- as.numeric(as.character(res$pvalue))
+
+  return(res)
+}
+
+
+CellEnrichUI <- function() {
+  require(shinymaterial)
+  require(highcharter)
+  material_page(
+    shinyjs::useShinyjs(),
+
+    # dynamic datatable full width
+
+    tags$head(tags$style(type = "text/css", ".display.dataTable.no-footer{width : 100% !important;}")),
+
+    # waitress declare
+    use_waitress(color = "#697682", percent_color = "#333333"),
+
+    title = paste0(
+      "CellEnrich ",
+      "<a href = 'https://github.com/jhk0530/cellenrich' target = '_blank'> ", # github link
+      "<i class='material-icons' style = 'font-size:1.3em;'>info</i> </a>" # icon tag
+    ),
+    nav_bar_fixed = FALSE,
+    nav_bar_color = "blue darken-2",
+    font_color = "#ffffff",
+    include_fonts = FALSE,
+    include_nav_bar = TRUE,
+    include_icons = FALSE,
+
+    # CellEnrich options
+    material_row(
+      material_column(
+        material_card(
+          title = "Options",
+          divider = TRUE,
+          style = 'border : solid 0.5em #1976d2',
+          material_row(
+            material_column(
+              material_card(
+                material_radio_button(
+                  input_id = "FCoption",
+                  label = "Select FoldChange Option",
+                  choices = c("median", "mean", "zero", "GSVA"),
+                  selected = "median",
+                  color = '#1976d2'
+                ),
+                material_radio_button(
+                  input_id = "plotOption",
+                  label = "Select Plot Option",
+                  choices = c("t-SNE", "U-MAP"),
+                  selected = "t-SNE",
+                  color = '#1976d2'
+                )
+              ),
+              width = 4
+            ),
+            material_column(
+              material_card(
+                material_number_box(
+                  input_id = "minGenesetSize",
+                  label = "Minimum Gene-set Size",
+                  min_value = 10,
+                  max_value = 30,
+                  initial_value = 15,
+                  step_size = 5
+                ),
+                material_number_box(
+                  input_id = "maxGenesetSize",
+                  label = "Maximum Gene-set Size",
+                  min_value = 250,
+                  max_value = 750,
+                  initial_value = 500,
+                  step_size = 5
+                ),
+                material_number_box(
+                  input_id = "qvalueCutoff",
+                  label = "Q-value threshold",
+                  min_value = 0,
+                  max_value = 0.25,
+                  initial_value = 0.05,
+                  step_size = 0.01
+                )
+              ),
+              width = 4
+            ),
+            material_column(
+              material_card(
+                material_radio_button(
+                  input_id = "genesetOption",
+                  label = "Select Gene-set",
+                  color = '#1976d2',
+                  choices = c(
+                    "User-Geneset",
+                    "Human-Curated", # c2
+                    "Human-KEGG", # KEGG
+                    "Human-GO",
+                    "Human-GO-BP",
+                    "Human-GO-CC",
+                    "Human-GO-MF",
+                    "Mouse-KEGG", # Mouse
+                    "Mouse-GO",
+                    "Mouse-GO-BP",
+                    "Mouse-GO-CC",
+                    "Mouse-GO-MF"
+                  ),
+                  selected = NULL
+                )
+              ),
+              width = 4
+            )
+          ),
+          solvedButton(
+            inputId = "StartCellEnrich",
+            label = "Start CellEnrich",
+            style = "margin-left:45%; background-color: #1976d2",
+            onClick = 'console.log("CellEnrich");'
+          ),
+          depth = 3
+        ),
+        width = 6,
+        offset = 3 # center half layout
+      )
+    ),
+
+    # tSNE/UMAP plot
+    material_row(
+      material_column(
+        material_card(
+          title = "Group plot / Distribution",
+          depth = 3,
+          material_column(
+            plotOutput("CellPlot", height = "700px"),
+            width = 6
+          ),
+          material_column(
+            highchartOutput("CellBar", height = "700px"), # cell distribution
+            width = 6
+          ),
+          material_row(
+            shiny::downloadButton("imgdn", "Save", icon = 'save', style = 'background-color : #616161 !important')
+          ),
+          material_row(
+            material_button("colorbtn", "toColor", icon = "color_lens", color = "blue darken-2"),
+            material_button("graybtn", "toGray", icon = "clear", color = "blue darken-2"),
+            material_button("freqbtn", "Frequent", icon = "grain", color = "blue darken-2"),
+            material_button("sigbtn", "Significant", icon = "grade", color = "blue darken-2")
+          )
+        ),
+        width = 12
+      ),
+      style = "margin : 1em; border : solid 0.5em #1976d2"
+    ),
+
+    # marker table
+    material_row(
+      material_card(
+        title = "MarkerGenes",
+        material_row(
+          material_column(
+            material_card(
+              title = 'DE from each Cell specific',
+              DT::dataTableOutput("markerL1")
+            ),
+            width = 6
+          ),
+          material_column(
+            material_card(
+              title = 'DE - Pathway from each Cell specific',
+              DT::dataTableOutput("markerL2")
+            ),
+            width = 6
+          )
+        )
+      ),
+      style = "margin : 1em; border : solid 0.5em #1976d2"
+    ),
+
+    # emphasize tables
+    material_row(
+      material_card(
+        title = "",
+        material_card(
+          title = "Pathway Emphasize", divider = TRUE,
+          tags$h3("To be recognized by application, Please move element's position"),
+          rank_list(text = "Pathways", labels = "Please Clear First", input_id = "sortList", css_id = "mysortableCell"),
+          material_row(
+            material_button("OrderEmphasize", "Emphasize with Order", icon = "timeline", color = 'blue darken-2'),
+            material_button("Emphasize", "Emphasize without Order", icon = "bubble_chart", color = 'blue darken-2'),
+            material_button("ClearList", "Clear List", icon = "clear_all", color = 'blue darken-2')
+          ),
+          material_row(
+            shiny::downloadButton("tbldn", "Save", icon = 'save', style = 'background-color : #616161 !important')
+          ),
+        ),
+        uiOutput("dynamicTable"),
+        depth = 3
+      ),
+      style = "margin : 1em; border : solid 0.5em #1976d2"
+    )
+  )
+}
+
+myDnButton <- function(outputId, label = 'Download', type = 'default', ...){
+  aTag <- tags$a(
+    id = outputId, href = '', target = '_blank',
+    class = paste0('btn btn-', type, ' shiny-download-link'),
+    download = NA, icon('download', label), ...
+  )
+}
+
+emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres, genesets) {
+  cat('emphasize\n')
+  buildRlobj <- function(items) {
+
+    rlobj <- data.frame(stringsAsFactors = FALSE)
+
+    for (i in 1:length(items)) {
+      kk <- strsplit(items[[i]], " @")[[1]]
+      name <- kk[1]
+      location <- kk[2]
+      rlobj <- rbind(rlobj, cbind(name, location))
+    }
+
+    colnames(rlobj) <- c("name", "location")
+    rlobj$name <- as.character(rlobj$name)
+    rlobj$location <- as.character(rlobj$location)
+
+    return(rlobj)
+  }
+
+  getCellValues <- function(rlobj) {
+
+    ret <- list()
+    for (i in 1:nrow(rlobj)) {
+      thisGeneset <- which(names(genesets) == rlobj[i, 1]) # index
+      thisGroup <- rlobj[i, 2]
+
+      thisCellsIdx <- which(dfobj$col == thisGroup)
+      if(length(thisCellsIdx)==0){
+        ret[[i]] <- c()
+        next
+      }
+      rn <- thisCellsIdx
+      res <- c()
+      for (j in 1:length(rn)) {
+        if (thisGeneset %in% pres[[rn[j]]]) {
+          res <- c(res, rn[j])
+        }
+      }
+      if (length(res) == 0) {
+        rlobj <- rlobj[-i, ]
+        next
+      }
+      ret[[i]] <- res
+      names(ret)[i] <- thisGroup
+    }
+
+    #names(ret) <- rlobj$location
+    return(ret)
+  }
+
+  rlobj <- buildRlobj(inputObj) # split into name, location dataframe
+
+  cellValues <- getCellValues(rlobj) # get cell index for each cell
+
+  dfobj_new <- data.frame(dfobj, stringsAsFactors = FALSE)
+
+  colnames(dfobj_new) <- c("x", "y", "col")
+
+  # define ggobj2 element
+
+  UniqueCol <- briterhex(scales::hue_pal()(length(Cells)))
+  names(UniqueCol) <- Cells
+
+  colV <- unname(UniqueCol[dfobj_new$col])
+
+  colV[-unlist(cellValues, use.names = FALSE)] <- "#95A5A6" # gray color
+
+  dfobj_new$col <- colV
+  rownames(dfobj_new) = NULL
+
+  #hc <- hchart(
+  #dfobj_new,
+  #type = 'scatter',
+  #hcaes(x = x, y = y, color = col)
+  #) %>%
+  #hc_tooltip(FALSE) %>%
+  #hc_exporting(enabled = TRUE)
+
+  graphString <- "ggobj2 <- ggplot(dfobj_new, aes(x = x, y = y)) + geom_point(colour = colV)"
+
+  if (path) { # add mean point to path
+    dfobj_path = data.frame()
+    for (i in 1:length(cellValues)) {
+      x <- mean(as.numeric(dfobj_new$x[cellValues[[i]]]))
+      y <- mean(as.numeric(dfobj_new$y[cellValues[[i]]]))
+
+      dfobj_new <- rbind(dfobj_new, c(x, y, "meanPoint"))
+      colV <- c(colV, "#000000")
+
+      dfobj_path <- rbind(dfobj_path, c(x, y))
+    }
+    colnames(dfobj_path) = c('x','y')
+
+    #hc <- hc %>%
+    #hc_add_series(dfobj_path, 'line', hcaes(x = x, y = y), showInLegend = FALSE) %>%
+    #hc_plotOptions(
+    #line = list(
+    #marker = FALSE,
+    #dashStyle = 'ShortDash',
+    #lineColor = '#5f27cd',
+    #lineWidth = 2
+    #))
+
+    newIdx <- (nrow(dfobj) + 1):nrow(dfobj_new)
+    cellValues <- c(unname(unlist(cellValues)), newIdx)
+
+    dfobj_new$x <- round(as.numeric(dfobj_new$x), 4)
+    dfobj_new$y <- round(as.numeric(dfobj_new$y), 4)
+
+    for (i in 1:(length(newIdx) - 1)) { # add curve
+      newCurve <- paste(
+        " + geom_curve( aes(x = ", "x[newIdx[", i,
+        "]], y = y[newIdx[", i, "]], xend = x[newIdx[", i + 1,
+        "]], yend = y[newIdx[", i + 1, ']]), size = 0.5, linetype = "longdash",',
+        "curvature = 0.1, colour = '#000000', ", 'arrow = arrow(length = unit(0.1,"inches")))'
+        # "curvature = 0.1, colour = colV[newIdx[", i, ']], arrow = arrow(length = unit(0.1,"inches")))'
+      )
+      graphString <- paste(graphString, newCurve, sep = "")
+    }
+  }
+
+  eval(parse(text = graphString))
+  return(ggobj2)
+  # return(hc)
+}
+
+sortItem <- function(label, tableName) {
+  options(useFancyQuotes = FALSE)
+  paste0(
+    "$('#", tableName, "')",
+    ".append(", "`<div class=", "'rank-list-item'", " draggable='true'",
+    " style = 'transform: translateZ(0px);'>` + ", label, " + `</div>`)"
+  )
+}
+
+solvedButton <- function(inputId, label, style = NULL, onClick = NULL, ...) {
+  value <- restoreInput(id = inputId, default = NULL)
+  tags$button(
+    id = inputId, style = style, onClick = onClick,
+    type = "button", class = "btn btn-default action-button",
+    `data-val` = value, list(label),
+    ...
+  )
+}
+
+
+#'
+#' @name CellEnrich
+#' @title Pathway Enrichment Analysis / Visualize for Single Cell Data
+#'
+#' @param CountData CountData [dgCMatrix]
+#' @param GroupInfo GroupInfo for each samples. [string]
+#' @param genesets (optional), user geneset to analysis. [list]
+#'
+#' @return no return.
+#'
 #'
 #' @importFrom DT dataTableOutput
 #' @importFrom Matrix t
 #'
 #' @rawNamespace import(SingleCellExperiment, except = show)
 #' @import Rtsne
-#' @import shinyCyJS
 #' @import dplyr
 #' @rawNamespace import(shiny, except = dataTableOutput)
+#' @import shinymaterial
 #' @import ggplot2
 #' @import uwot
 #' @import htmltools
 #' @import magrittr
-#' @import shinymaterial
 #' @import waiter
 #' @rawNamespace import(shinyjs, except = runExample)
 #' @import scales
@@ -84,36 +904,28 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       # ------ Create new Waitress
       w <- Waitress$new(selector = NULL, theme = "overlay-radius")
 
-      source('R/GenesetFlush.R')
-      source('R/getlgs.R')
-
       genes <- rownames(CountData)
       genesets <- GenesetFlush(genes, genesets)
       lgs <- getlgs(genesets)
 
       # ------ Genesetsize Flush
 
-      source('R/GenesetsizeFlush.R')
-
       genesets <- GenesetsizeFlush(genesets, lgs, input$minGenesetSize, input$maxGenesetSize)
       # ------ For Tests
       # genesets <- GenesetsizeFlush(genesets, lgs, 15, 500)
 
       # ------ Gene Flush
-      source('R/GeneFlush.R')
       remgenes <- GeneFlush(genes, genesets)
       CountData <- CountData[-remgenes, ]
 
       genesets <<- genesets
 
       # ------ Background genes
-      source('R/getBackgroundGenes.R')
       A <<- getBackgroundGenes(genesets)
 
       # ------ Calculate t-SNE / U-MAP First
       # require(Matrix)
 
-      source('R/getTU.R')
       # dfobj <- getTU(CountData, GroupInfo, 't-SNE')
       dfobj <- getTU(CountData, GroupInfo, input$plotOption)
       dfobj <<- dfobj
@@ -129,7 +941,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       cat('running gc\n')
       gc()
 
-      source('R/findSigGenes.R')
       # ------ Find Significant Genes with Fold Change
       if (input$FCoption != "GSVA") {
         # ------ need to build GSVA CASE
@@ -139,8 +950,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       }
 
       cat("s Finished\n")
-
-      source('r/findSigGenesGroup.R')
 
       # ------ Find Significant Genes with findMarkers
       require(dplyr)
@@ -176,10 +985,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       lens = length(s)
       lens100 = round(lens/100)
 
-      source('R/getbiobj.R')
       biobj <- getbiobj(genes, genesets)
 
-      source('R/getHyperPvalue.R')
       pres <- list()
 
       w$start()
@@ -195,7 +1002,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       # ------ CellPathwayDF
 
-      source('R/buildCellPathwayDF.R')
       CellPathwayDF <- buildCellPathwayDF(GroupInfo, pres, genesets)
 
       # pres2 : for each gene-sets, how many cells are significant that gene-sets.
@@ -206,8 +1012,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       names(pres2) <- names(genesets)[as.numeric(names(pres2))]
       pres2 <<- pres2
 
-      source('R/pathwayPvalue.R')
-      source('R/getOddRatio.R')
       # 2625*4
       PP <- pathwayPvalue(GroupInfo, pres, pres2, genesets) # qvalue cutoff removed
       OR <- getOddRatio(GroupInfo, pres, pres2, genesets)
@@ -343,22 +1147,14 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       # group 별 DE Genes
 
       # is counted
-      source('R/buildDT.R')
       dtobj <<- buildDT(pres2)
-
-      source('R/briterhex.R')
-      source('R/getColv.R')
 
       # ------ Color define
       colV <- getColv(GroupInfo)
 
-      source('R/getCellHistogram.R')
-
       CellHistogram <<- getCellHistogram(GroupInfo, colV)
 
       output$CellBar <- renderHighchart(CellHistogram) # CELL HISTOGRAM
-
-      source("R/getCellPlot.R")
 
       CellScatter <<- getCellPlot(dfobj, Cells)
 
@@ -370,8 +1166,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           ggsave(file, CellScatter, device = 'png')
         }
       )
-
-      source('R/groupTable.R')
 
       gt <<- groupTable(pres, genesets, dfobj, pres2)
 
@@ -480,16 +1274,16 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       }
 
 
-      plotOutput <- renderPlot(emphasize(FALSE, res, dfobj, Cells, pres, genesets))
+      plotImg <- emphasize(FALSE, res, dfobj, Cells, pres, genesets)
 
       output$imgdn <- downloadHandler(
         filename = function(){'myfigure.png'},
         content = function(file){
-          ggsave(file, plotOutput, device = 'png')
+          ggsave(file, plotImg, device = 'png')
         }
       )
 
-      output$CellPlot <- plotOutput
+      output$CellPlot <- renderPlot(plotImg)
 
       # output$CellPlot <- renderPlot(emphasize(FALSE, res, dfobj, Cells, pres, genesets))
     })
@@ -523,16 +1317,16 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           res <- c(res, paste0(thisCellData$Geneset, " @", thisCellData$Cell))
         }
       }
-      plotOutput <- renderPlot(emphasize(FALSE, res, dfobj, Cells, pres, genesets))
+      plotImg <- emphasize(FALSE, res, dfobj, Cells, pres, genesets)
 
       output$imgdn <- downloadHandler(
         filename = function(){'myfigure.png'},
         content = function(file){
-          ggsave(file, plotOutput, device = 'png')
+          ggsave(file, plotImg, device = 'png')
         }
       )
 
-      output$CellPlot <- plotOutput
+      output$CellPlot <- renderPlot(plotImg)
     })
 
     # draw gray colored images
@@ -600,13 +1394,13 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       if (input$OrderEmphasize == 0) { # prevent default click state
         return(NULL)
       }
-      plotOutput <- renderPlot(emphasize(TRUE, input$sortList, dfobj, Cells, pres, genesets))
-      output$CellPlot <- plotOutput
+      plotImg <- emphasize(TRUE, input$sortList, dfobj, Cells, pres, genesets)
+      output$CellPlot <- renderPlot(plotImg)
 
       output$imgdn <- downloadHandler(
         filename = function(){'myfigure.png'},
         content = function(file){
-          ggsave(file, plotOutput, device = 'png')
+          ggsave(file, plotImg, device = 'png')
         }
       )
 
@@ -619,7 +1413,16 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         return(NULL)
       }
 
-      output$CellPlot <- renderPlot(emphasize(FALSE, input$sortList, dfobj, Cells, pres, genesets))
+      plotImg <- emphasize(FALSE, input$sortList, dfobj, Cells, pres, genesets)
+      output$CellPlot <- renderPlot(plotImg)
+
+      output$imgdn <- downloadHandler(
+        filename = function(){'myfigure.png'},
+        content = function(file){
+          ggsave(file, plotImg, device = 'png')
+        }
+      )
+
     })
 
     # clear timelist in Cell tab
@@ -637,8 +1440,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
   }
 
-  source('R/CellEnrichUI.R')
   ui <- CellEnrichUI()
 
   shiny::shinyApp(ui, server, options = list(launch.browser = TRUE))
 }
+
+

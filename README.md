@@ -1,158 +1,155 @@
-# CellEnrich
+# CellEnrich 
+
 Pathway enrichment analysis / visualize for Single Cell Data
 
+## :wrench: Install
 
-## 0211
- 
--build backbone structure
+```R
+devtools::install_github('unistbig/cellenrich')
+library(CellEnrich)
+```
 
-<img src='https://user-images.githubusercontent.com/6457691/74223238-9fd00800-4cf9-11ea-99d0-2b50758a3919.png' width = '700'/>
-<img src='https://user-images.githubusercontent.com/6457691/74223541-47e5d100-4cfa-11ea-86ed-decddffdc8e9.png' width = '700'/>
+## :paperclip: Dependency
 
-## 0213
+* [dplyr](https://github.com/tidyverse/dplyr) - 0.8.5
+* [DT](https://github.com/rstudio/DT) - 0.13
+* [ggplot2](https://github.com/tidyverse/ggplot2) - 3.3.0
+* [htmltools](https://github.com/rstudio/htmltools) - 0.4.0
+* [magrittr](https://github.com/tidyverse/magrittr) - 1.5
+* [Rtsne](https://github.com/jkrijthe/Rtsne) - 0.15
+* [scales](https://github.com/r-lib/scales) - 1.1.0
+* [scran](https://git.bioconductor.org/packages/scran) - 1.14.6
+* [shiny](https://github.com/rstudio/shiny) - 1.4.0.2
+* [shinyjs](https://github.com/daattali/shinyjs) - 1.1
+* [shinymaterial](https://github.com/ericrayanderson/shinymaterial) - 1.0.1
+* [SingleCellExperiment](https://git.bioconductor.org/packages/SingleCellExperiment) - 1.8.0
+* [sortable](https://github.com/rstudio/sortable) - 0.4.2
+* [uwot](https://github.com/jlmelville/uwot) - 0.1.8
+* [waiter](https://github.com/JohnCoene/waiter) - 0.1.1.9000
 
-- added `waitress` progress bar
-- added interactive datatable feature.
+## :wrench: 2700 PBMCs tutorial
 
-<img src='https://user-images.githubusercontent.com/6457691/74440986-62fb4100-4eb2-11ea-8085-171d4c335617.png' width = '700'/>
-<img src='https://user-images.githubusercontent.com/6457691/74441131-a5bd1900-4eb2-11ea-88f8-9412040d57e8.gif' width = '700'/>
+In this tutorial, we will use Seurat's tutorial data. 
 
-## 0218
+To get full description about 2700 PBMCs, refer [here](https://satijalab.org/seurat/v3.1/pbmc3k_tutorial.html)
 
-- added dynamic datatable along groups (cell group for example)
+We assume that all dependent packages is already installed.
 
-<img src='https://user-images.githubusercontent.com/6457691/74725628-8131ba00-5281-11ea-8c29-fd6446681e20.png' width = '700'/>
-<img src='https://user-images.githubusercontent.com/6457691/74725638-83941400-5281-11ea-9a4e-32e7faeec329.png' width = '700'/>
+pre-processed data is included.
 
-## 0220
+### Data Required :
 
-- dynamic datatable precisely modified
+- `pbmcData` --> input for `CountData` parameter
+- `ClustInfo` --> input for `GroupInfo` parameter
 
-<img src='https://user-images.githubusercontent.com/6457691/74899286-d257c000-53df-11ea-8d14-34f53d77a812.png' width = '700'/>
+### Run : 
 
-- dynamic datatable colored by each's group color in graph
+by following codes, user can see interactive `Shiny` page.
 
-<img src='https://user-images.githubusercontent.com/6457691/74907956-dc85b880-53f7-11ea-82c4-ef276fe64fa6.png' width = '700'/>
+```r
+load("pbmcClustinfo.RData")
+load("pbmcData.RData")
 
-- gray color feature added
+CountData = pbmcData
+GroupInfo = ClustInfo
 
+# GroupInfo is basically Factor type data 
+# so it needs to be changed as Character type.
 
+g = as.character(GroupInfo)
+names(g) = names(GroupInfo)
 
-<img src='https://user-images.githubusercontent.com/6457691/74936214-19b86d80-542d-11ea-88e8-98e8c067c124.gif' width = '700'/>
+# this will run CellEnrich
 
+CellEnrich(CountData = CountData, GroupInfo = g)
 
-## 0221
+```
 
-- working on `sortablejs`
+### Result :
 
-<img src='https://user-images.githubusercontent.com/6457691/75020773-b6831580-54d6-11ea-906e-d46d70f94dec.png' width = '700'/>
+- To Start Analysis, set geneset option as `Human-KEGG`. and use `START CellEnrich` button.
 
-## 0223
+<img src='images/options2.png'>
 
-- working on `sortablejs`
+- And this will show results with in 30 seconds ~ 1 min. 
+- test environment : 
+  - Win 10
+  - i5-8400
+  - 16G RAM.
 
-![I](https://user-images.githubusercontent.com/6457691/75112059-83ca5000-5683-11ea-8f0e-b61d2be5e31f.gif)
+CellEnrich is consisted with 3 module. ( and option )
 
+1) plots
 
-## 0224
+<img src='images/groups2.png'>
 
-- built timeplot 
+User can download result image with highcharter option or `save` button.
 
-![image](https://user-images.githubusercontent.com/6457691/75122196-91f98a00-56de-11ea-8a0b-1b95146d6615.png)
+<img src='images/highcharts.png'>
 
-- fixed error
+t-sne / u-map result plot can be emphasized with 4 button :
 
-![image](https://user-images.githubusercontent.com/6457691/75125148-10622600-56f7-11ea-82e8-8bc2c6ac723b.png)
+`TOCOLOR` button ( default ) will colorize as group information.
 
-- modified term, added UMAP from `uwot` package.
+`TOGRAY` button will colorize all dots to gray color.
 
-![image](https://user-images.githubusercontent.com/6457691/75138678-29d29480-572e-11ea-96e0-20f7482b97ca.png)
+<img src='images/togray.png'>
 
-## 0302
+`FREQUENT` button will colorize frequently enriched cell in each group.
 
-- working with cellpathway vis
+<img src='images/frequent.png'>
 
-![image](https://user-images.githubusercontent.com/6457691/75662991-716b9a00-5cb3-11ea-89df-7e3679dc2ab4.png)
+`SIGNIFICANT` button will colorize most significantly enriched cell in each group.
 
+<img src='images/significant.png'>
 
-## 0303
+2) markers
 
-- working with cellpathway vis, added qvalue.(default <= 0.1)
+<img src='images/markers2.png'>
 
-![image](https://user-images.githubusercontent.com/6457691/75752606-6b85bf80-5d6c-11ea-8792-e52f50900289.png)
+this marker module will show Differentially Expressed genes in 
+  
+  1) each group ( use findMarker in `scran` )
+  
+  2) each group and pathway specific ( using fisher's exact test )
+  
+3) pathways
 
+this pathway module will show significant pathways for each groups in table format.
 
-## 0306
+<img src='images/pathways2.png'>
 
-- working with ui/ux
-- start / options moved to navigator
-- added github link in header (info icon)
+to use emphasize feature, user should clear `sortable` list with `clear list` button.
 
-![image](https://user-images.githubusercontent.com/6457691/76047868-6a8ca200-5fa7-11ea-87cf-fa56b8a90b76.png)
+<img src='images/clearlist.png'>
 
-![image](https://user-images.githubusercontent.com/6457691/76047874-711b1980-5fa7-11ea-9442-b543f3f37d43.png)
+for each group, only 1 pathway can be selected for emphasize in plot.
 
-- working with pathway emphasize
+<img src='images/select.png'>
 
-![image](https://user-images.githubusercontent.com/6457691/76057497-0d9be680-5fbd-11ea-9648-a5824c1127d1.png)
+note that. user must move element **at least one time** after selection to `sortable` detects it.
 
-- disable options after run
+<img src='images/emphasize.png'>
+<img src='images/emphasize2.png'>
 
-![image](https://user-images.githubusercontent.com/6457691/76078314-c1b16780-5fe5-11ea-8165-68388c5e14a0.png)
+2 emphasize option can be used.
 
-- built freq, sig. (has bug yet)
+  1) `withoutorder`
+   this will emphasize cells with selected pathway is enriched.
+  
+  <img src='images/emphasize_without_order.png'>
+  
+  2) `withorder`
+   this will emphasize cells with selected pathway is enriched. and also it will generate path based on order in `sortable`
+   <img src='images/emphasize_with_order.png'>
+   
+using `save` button in pathways module, user can download pathway - group significance table.
 
-![image](https://user-images.githubusercontent.com/6457691/76078341-cf66ed00-5fe5-11ea-8613-cd7425cff4be.png)
+<img src='images/table.png'>
 
-## 0307
+## :blush: Authors
+* :octocat: Jinhwan Kim [@jhk0530](http://github.com/jhk0530)
+* prof. Dougu Nam *dougnam@unist.ac.kr*
 
-- built freq, sig ( has cell coloring but index yet)
-
-![image](https://user-images.githubusercontent.com/6457691/76144425-8a18ed00-60c3-11ea-8ded-21121b438484.png)
-
-## 0310
-
-- built freq, sig bug fixed.
-
-- Tocolor
-![image](https://user-images.githubusercontent.com/6457691/76292668-f594d180-62f2-11ea-9895-82f08b5a78da.png)
-
-- Togray
-![image](https://user-images.githubusercontent.com/6457691/76292683-fe85a300-62f2-11ea-9043-b027e7044bba.png)
-
-- Frequent
-![image](https://user-images.githubusercontent.com/6457691/76292709-08a7a180-62f3-11ea-8b96-29f076621dc5.png)
-
-- Significant
-![image](https://user-images.githubusercontent.com/6457691/76292726-13facd00-62f3-11ea-8bf3-953ad524c3eb.png)
-
-## 0311
-
-- geneset option added
-- ui fixed
-- marker gene L1 added
-
-![image](https://user-images.githubusercontent.com/6457691/76387818-10c31800-63ab-11ea-93e7-9d788786db3d.png)
-
-![image](https://user-images.githubusercontent.com/6457691/76387841-1caeda00-63ab-11ea-88eb-042e8ea71221.png)
-
-![image](https://user-images.githubusercontent.com/6457691/76387865-259fab80-63ab-11ea-9741-46fdb87c0bec.png)
-
-![image](https://user-images.githubusercontent.com/6457691/76413232-695cda00-63d8-11ea-9a96-e49a039ee749.png)
-
-
-## 0312
-
-- marker gene L2 added
-
-![image](https://user-images.githubusercontent.com/6457691/76487309-63610a80-6465-11ea-9bdc-ee6226538acf.png)
-
-## 0313
-
-- optimize for calculating cell specific genes with hypergeometric. (X3)
-
-## 0314 
-
-- sort button activation optimized.
-- code organize include code split, variable naming.
-
+## :memo: License
+This project is [MIT](https://opensource.org/licenses/MIT) licensed
