@@ -141,7 +141,7 @@ note that. user must move element **at least one time** after selection to `sort
   
   2) `withorder`
    this will emphasize cells with selected pathway is enriched. and also it will generate path based on order in `sortable`
-   <img src='emphasize_with_order.png'>
+   <img src='images/emphasize_with_order.png'>
    
 using `save` button in pathways module, user can download pathway - group significance table.
 
