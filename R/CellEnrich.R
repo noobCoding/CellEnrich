@@ -810,7 +810,16 @@ solvedButton <- function(inputId, label, style = NULL, onClick = NULL, ...) {
 }
 
 
-#' @title CellEnrich
+#'
+#' @name CellEnrich
+#' @title Pathway Enrichment Analysis / Visualize for Single Cell Data
+#'
+#' @param CountData CountData [dgCMatrix]
+#' @param GroupInfo GroupInfo for each samples. [string]
+#' @param genesets (optional), user geneset to analysis. [list]
+#'
+#' @return no return.
+#'
 #'
 #' @importFrom DT dataTableOutput
 #' @importFrom Matrix t
@@ -824,7 +833,6 @@ solvedButton <- function(inputId, label, style = NULL, onClick = NULL, ...) {
 #' @import uwot
 #' @import htmltools
 #' @import magrittr
-#' @import shinymaterial
 #' @import waiter
 #' @rawNamespace import(shinyjs, except = runExample)
 #' @import scales
@@ -1266,16 +1274,16 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       }
 
 
-      plotOutput <- renderPlot(emphasize(FALSE, res, dfobj, Cells, pres, genesets))
+      plotImg <- emphasize(FALSE, res, dfobj, Cells, pres, genesets)
 
       output$imgdn <- downloadHandler(
         filename = function(){'myfigure.png'},
         content = function(file){
-          ggsave(file, plotOutput, device = 'png')
+          ggsave(file, plotImg, device = 'png')
         }
       )
 
-      output$CellPlot <- plotOutput
+      output$CellPlot <- renderPlot(plotImg)
 
       # output$CellPlot <- renderPlot(emphasize(FALSE, res, dfobj, Cells, pres, genesets))
     })
@@ -1309,16 +1317,16 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           res <- c(res, paste0(thisCellData$Geneset, " @", thisCellData$Cell))
         }
       }
-      plotOutput <- renderPlot(emphasize(FALSE, res, dfobj, Cells, pres, genesets))
+      plotImg <- emphasize(FALSE, res, dfobj, Cells, pres, genesets)
 
       output$imgdn <- downloadHandler(
         filename = function(){'myfigure.png'},
         content = function(file){
-          ggsave(file, plotOutput, device = 'png')
+          ggsave(file, plotImg, device = 'png')
         }
       )
 
-      output$CellPlot <- plotOutput
+      output$CellPlot <- renderPlot(plotImg)
     })
 
     # draw gray colored images
@@ -1386,13 +1394,13 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       if (input$OrderEmphasize == 0) { # prevent default click state
         return(NULL)
       }
-      plotOutput <- renderPlot(emphasize(TRUE, input$sortList, dfobj, Cells, pres, genesets))
-      output$CellPlot <- plotOutput
+      plotImg <- emphasize(TRUE, input$sortList, dfobj, Cells, pres, genesets)
+      output$CellPlot <- renderPlot(plotImg)
 
       output$imgdn <- downloadHandler(
         filename = function(){'myfigure.png'},
         content = function(file){
-          ggsave(file, plotOutput, device = 'png')
+          ggsave(file, plotImg, device = 'png')
         }
       )
 
@@ -1405,7 +1413,16 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         return(NULL)
       }
 
-      output$CellPlot <- renderPlot(emphasize(FALSE, input$sortList, dfobj, Cells, pres, genesets))
+      plotImg <- emphasize(FALSE, input$sortList, dfobj, Cells, pres, genesets)
+      output$CellPlot <- renderPlot(plotImg)
+
+      output$imgdn <- downloadHandler(
+        filename = function(){'myfigure.png'},
+        content = function(file){
+          ggsave(file, plotImg, device = 'png')
+        }
+      )
+
     })
 
     # clear timelist in Cell tab

@@ -1,15 +1,18 @@
-
-#' @title gaussian kernal transform (GSVA)
 #'
-#' @description transform count data with gaussian kernal using pre calculated cdf
-#' this takes ~ 3 min with 20000 * 90 size datas
+#' @name GK
+#'
+#' @title Gaussian Kernal transform (GSVA)
+#'
+#' @param v CountData [dgCMatrix]
+#'
+#' @description Transform count data with gaussian kernal using pre-calculated cdf
+#' This takes ~ 3 min with 20000 * 90 size datas, (Really Really Slow)
+#'
+#' @return transformed CountData
 #'
 #' @seealso https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-14-7
+#'
 #' @export
-#'
-#' @param v count data
-#'
-#'
 #'
 
 GK <- function(v) {

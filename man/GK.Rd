@@ -2,16 +2,19 @@
 % Please edit documentation in R/GK.R
 \name{GK}
 \alias{GK}
-\title{gaussian kernal transform (GSVA)}
+\title{Gaussian Kernal transform (GSVA)}
 \usage{
 GK(v)
 }
 \arguments{
-\item{v}{count data}
+\item{v}{CountData [dgCMatrix]}
+}
+\value{
+transformed CountData
 }
 \description{
-transform count data with gaussian kernal using pre calculated cdf
-this takes ~ 3 min with 20000 * 90 size datas
+Transform count data with gaussian kernal using pre-calculated cdf
+This takes ~ 3 min with 20000 * 90 size datas, (Really Really Slow)
 }
 \seealso{
 https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-14-7
