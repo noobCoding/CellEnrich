@@ -1,0 +1,164 @@
+---
+title: "PBMC 2700 tutorial"
+author: "Jinhwan Kim"
+date : "2020.04.16"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+In this tutorial, we will use PBMC analysis data from [Seurat](https://satijalab.org/seurat/).
+
+To get full description about experiment, refer [here](https://satijalab.org/seurat/v3.1/pbmc3k_tutorial.html)
+
+We assume that all dependent packages is already installed.
+
+## Required Packages
+
+* [dplyr](https://github.com/tidyverse/dplyr) - 0.8.5
+* [DT](https://github.com/rstudio/DT) - 0.13
+* [ggplot2](https://github.com/tidyverse/ggplot2) - 3.3.0
+* [htmltools](https://github.com/rstudio/htmltools) - 0.4.0
+* [magrittr](https://github.com/tidyverse/magrittr) - 1.5
+* [Rtsne](https://github.com/jkrijthe/Rtsne) - 0.15
+* [scales](https://github.com/r-lib/scales) - 1.1.0
+* [scran](https://git.bioconductor.org/packages/scran) - 1.14.6
+* [shiny](https://github.com/rstudio/shiny) - 1.4.0.2
+* [shinyjs](https://github.com/daattali/shinyjs) - 1.1
+* [shinymaterial](https://github.com/ericrayanderson/shinymaterial) - 1.0.1
+* [SingleCellExperiment](https://git.bioconductor.org/packages/SingleCellExperiment) - 1.8.0
+* [sortable](https://github.com/rstudio/sortable) - 0.4.2
+* [uwot](https://github.com/jlmelville/uwot) - 0.1.8
+* [waiter](https://github.com/JohnCoene/waiter) - 0.1.1.9000
+
+## Required Data
+
+Pre-processed data is included in github [repository](https://github.com/jhk0530/cellenrich).
+
+|Filename|Parameter|Type|
+|:---:|:---:|:---:|
+|`pbmcData.RData`|`CountData`|`dgCMatrix`|
+|`pbmcClustinfo.RData`|`GroupInfo`|`Character`|
+
+## Run
+
+with these Codes, user can see interactive `shiny` page.
+
+```R
+
+load("pbmcClustinfo.RData")
+load("pbmcData.RData")
+
+CountData = pbmcData
+GroupInfo = ClustInfo
+
+# GroupInfo is basically Factor type data 
+# so it needs to be changed as Character type.
+
+g = as.character(GroupInfo)
+names(g) = names(GroupInfo)
+
+# this will run CellEnrich
+
+CellEnrich(CountData = CountData, GroupInfo = g)
+
+```
+## Result
+
+Set options before start `CellEnrich`.
+
+Possible options are : 
+
+- Strategy for Differential Expressed Genes.
+- Plot Options
+- Gene-set and their size cutoff to used in analysis.
+
+After 30 seconds ~ 1 min, analysis result will be appear.
+
+used Test environment : 
+
+- OS : win 10
+- CPU : i5-8400 
+- RAM : 16G
+
+CellEnrich is consisted with 3 modules.
+  
+### 1. Plot Module
+  
+<img src='images/groups2.png'>
+
+Left plot is scatter plot created with `t-SNE` or `U-MAP` and `ggplot2` that user selected in option. 
+
+- *In this tutorial, scatter plot is `t-SNE` result.*
+
+- this scatter plot can be **emphasized** with 4 buttons:
+
+  1. `TOCOLOR` button ( default ) will colorize as group information.
+  
+  2. `TOGRAY` button will colorize all dots to gray color.
+  
+  <img src='images/togray.png'>
+  
+  3. `FREQUENT` button will colorize frequently enriched cell in each group.
+  
+  <img src='images/frequent.png'>
+  
+  4. `SIGNIFICANT` button will colorize most significantly enriched cell in each group.
+
+  <img src='images/significant.png'>
+
+Right plot is histogram plot created with `highcharter` to see distribution of Group / Cell labels.
+
+- *In this tutorial, 9 group exists.*
+
+User can download both result with `save` button (LEFT) and `export` options in right top (RIGHT).
+
+<img src='images/highchart.png'>
+  
+------
+  
+### 2. Marker Module
+  
+<img src='images/markers2.png'>
+
+This marker module will show Differentially Expressed genes in : 
+
+  1. Each group ( using findMarker in scran )
+
+  2. Each group and pathway specific ( using fisher's exact test )
+
+------
+  
+### 3. Pathways Module
+
+<img src='images/pathways2.png'>
+
+This pathway module will show significant pathways for each groups in table format.
+
+To use emphasize feature, user should clear `sortable` list with `CLEARLIST` button.
+
+<img src='images/clearlist.png'>
+
+For each group, **only 1 pathway** can be selected for emphasize in scatter plot.
+
+<img src='images/select.png'>
+
+2 emphasize option can be used.
+
+  1. `WITHOUTORDER` : This will emphasize cells with selected pathway is enriched.
+  
+  <img src='images/emphasize_without_order.png'>
+  
+  2. `WITHORDER` : This will emphasize cells with selected pathway is enriched. and also it will generate path based on order in `sortable`
+  
+  <img src='images/emphasize_with_order.png'>  
+
+
+Using `SAVE` button in pathways module, user can download pathway - group significance table.
+
+<img src='images/table.png'>
+
