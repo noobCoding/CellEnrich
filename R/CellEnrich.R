@@ -180,8 +180,8 @@ getHyperPvalue <- function(genes, genesets, A, lgs, q0, biobj) {
     1 - phyper(q - 1, m, n, k)
   })
   # names(pv) <- names(genesets)
-  pv <- p.adjust(pv, "fdr")
-  return(which(pv < q0))
+  return(pv)
+  # return(which(pv < q0))
 }
 
 buildCellPathwayDF <- function(GroupInfo, pres, genesets){
@@ -997,12 +997,25 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       pres <- list()
 
+      presTab <- c()
+
       w$start()
       for (i in 1:lens) {
         if(i %% lens100 == 0) w$inc(1)
-        pres[[i]] <- getHyperPvalue(rc[s[[i]]], genesets, A, lgs, q0, biobj)
+        prespv <- getHyperPvalue(rc[s[[i]]], genesets, A, lgs, q0, biobj)
+
+        pres[[i]] <- which(p.adjust(prespv, 'fdr')<q0)
+
+        prespv[which(prespv<1e-20)] = 1e-20
+
+        presTab <- cbind(presTab, -log10(prespv))
       }
       w$close()
+
+      colnames(presTab) <- colnames(CountData)
+      rownames(presTab) <- names(genesets)
+
+      print(dim(presTab))
 
       pres <<- pres
 
@@ -1037,16 +1050,17 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         filename = function(){'mytable.csv'},
         content = function(file){
           # pathway - cell ? -log pvalue
-          outputFile = matrix(0,nr,nc)
+          #outputFile = matrix(0,nr,nc)
 
-          rownames(outputFile) = ggs
-          colnames(outputFile) = ces
+          #rownames(outputFile) = ggs
+          #colnames(outputFile) = ces
 
-          for(i in 1:length(ces)){
-            tf <- CellPathwayDFP %>% filter(Cell == ces[i]) %>% select(Geneset, Qvalue)
-            outputFile[(tf %>% select(Geneset))[,1],i] = (tf%>% select(Qvalue))[,1]
-          }
-          write.csv(outputFile, file)
+          #for(i in 1:length(ces)){
+            #tf <- CellPathwayDFP %>% filter(Cell == ces[i]) %>% select(Geneset, Qvalue)
+            #outputFile[(tf %>% select(Geneset))[,1],i] = (tf%>% select(Qvalue))[,1]
+          #}
+          #write.csv(outputFile, file)
+          write.csv(presTab, file)
         }
       )
 
