@@ -8,7 +8,6 @@ Pathway enrichment analysis / visualize for Single Cell Data
 devtools::install_github('unistbig/cellenrich')
 library(CellEnrich)
 ```
-
 ## :paperclip: Dependency
 
 * [dplyr](https://github.com/tidyverse/dplyr) - 0.8.5
@@ -26,7 +25,6 @@ library(CellEnrich)
 * [sortable](https://github.com/rstudio/sortable) - 0.4.2
 * [uwot](https://github.com/jlmelville/uwot) - 0.1.8
 * [waiter](https://github.com/JohnCoene/waiter) - 0.1.1.9000
-
 
 ## :blush: Authors
 * :octocat: Jinhwan Kim [@jhk0530](http://github.com/jhk0530)
