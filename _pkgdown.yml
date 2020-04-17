@@ -1,5 +1,8 @@
 destination: docs
+authors:
+  Jinhwam Kim:
+    href: https://github.com/jhk0530
 navbar:
   structure:
-    left:  [home, intro, reference, articles, tutorials, news]
+    left:  [home, reference, articles, tutorials]
     right: [github]
