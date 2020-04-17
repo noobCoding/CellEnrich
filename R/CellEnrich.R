@@ -180,8 +180,8 @@ getHyperPvalue <- function(genes, genesets, A, lgs, q0, biobj) {
     1 - phyper(q - 1, m, n, k)
   })
   # names(pv) <- names(genesets)
-  pv <- p.adjust(pv, "fdr")
-  return(which(pv < q0))
+  return(pv)
+  # return(which(pv < q0))
 }
 
 buildCellPathwayDF <- function(GroupInfo, pres, genesets){
@@ -247,7 +247,7 @@ pathwayPvalue <- function(GroupInfo, pres, pres2, genesets) {
 
   res$Cell <- as.character(res$Cell)
   res$Geneset <- as.character(res$Geneset)
-
+  res$Qvalue[which(res$Qvalue <= 1e-20)] <- 1e-20
   res$Qvalue <- -log10(as.numeric(as.character(res$Qvalue)))
 
   return(res)
@@ -495,7 +495,7 @@ CellEnrichUI <- function() {
                 material_radio_button(
                   input_id = "FCoption",
                   label = "Select FoldChange Option",
-                  choices = c("median", "mean", "zero", "GSVA"),
+                  choices = c("median", "mean", "zero"),
                   selected = "median",
                   color = '#1976d2'
                 ),
@@ -583,13 +583,21 @@ CellEnrichUI <- function() {
         material_card(
           title = "Group plot / Distribution",
           depth = 3,
-          material_column(
-            plotOutput("CellPlot", height = "700px"),
-            width = 6
+          material_row(
+            material_column(
+              plotOutput("CellPlot", height = "700px"),
+              width = 6
+            ),
+            material_column(
+              highchartOutput("CellBar", height = "700px"), # cell distribution
+              width = 6
+            )
           ),
-          material_column(
-            highchartOutput("CellBar", height = "700px"), # cell distribution
-            width = 6
+          material_row(
+            material_card(
+              title = 'information',
+              DT::dataTableOutput('legendTable')
+            )
           ),
           material_row(
             shiny::downloadButton("imgdn", "Save", icon = 'save', style = 'background-color : #616161 !important')
@@ -989,12 +997,25 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       pres <- list()
 
+      presTab <- c()
+
       w$start()
       for (i in 1:lens) {
         if(i %% lens100 == 0) w$inc(1)
-        pres[[i]] <- getHyperPvalue(rc[s[[i]]], genesets, A, lgs, q0, biobj)
+        prespv <- getHyperPvalue(rc[s[[i]]], genesets, A, lgs, q0, biobj)
+
+        pres[[i]] <- which(p.adjust(prespv, 'fdr')<q0)
+
+        prespv[which(prespv<1e-20)] = 1e-20
+
+        presTab <- cbind(presTab, -log10(prespv))
       }
       w$close()
+
+      colnames(presTab) <- colnames(CountData)
+      rownames(presTab) <- names(genesets)
+
+      print(dim(presTab))
 
       pres <<- pres
 
@@ -1020,7 +1041,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       CellPathwayDFP <- CellPathwayDF %>% inner_join(PP) %>% select(Cell, Geneset, Qvalue) %>% filter(Qvalue > 4)
 
       ggs <- unique(CellPathwayDFP %>% select(Geneset))[,1]
-      ces <- unique(CellPathwayDFP %>% select(Cell))[,1]
+      ces <- sort(unique(CellPathwayDFP %>% select(Cell))[,1])
 
       nr <- length(ggs) # nrow
       nc <- length(ces) # ncol
@@ -1029,16 +1050,17 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         filename = function(){'mytable.csv'},
         content = function(file){
           # pathway - cell ? -log pvalue
-          outputFile = matrix(0,nr,nc)
+          #outputFile = matrix(0,nr,nc)
 
-          rownames(outputFile) = ggs
-          colnames(outputFile) = ces
+          #rownames(outputFile) = ggs
+          #colnames(outputFile) = ces
 
-          for(i in 1:length(ces)){
-            tf <- CellPathwayDFP %>% filter(Cell == ces[i]) %>% select(Geneset, Qvalue)
-            outputFile[(tf %>% select(Geneset))[,1],i] = (tf%>% select(Qvalue))[,1]
-          }
-          write.csv(outputFile, file)
+          #for(i in 1:length(ces)){
+            #tf <- CellPathwayDFP %>% filter(Cell == ces[i]) %>% select(Geneset, Qvalue)
+            #outputFile[(tf %>% select(Geneset))[,1],i] = (tf%>% select(Qvalue))[,1]
+          #}
+          #write.csv(outputFile, file)
+          write.csv(presTab, file)
         }
       )
 
@@ -1273,6 +1295,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         }
       }
 
+      output$legendTable <- DT::renderDataTable(
+        buildLegend(res)
+      )
 
       plotImg <- emphasize(FALSE, res, dfobj, Cells, pres, genesets)
 
@@ -1317,6 +1342,11 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           res <- c(res, paste0(thisCellData$Geneset, " @", thisCellData$Cell))
         }
       }
+
+      output$legendTable <- DT::renderDataTable(
+        buildLegend(res)
+      )
+
       plotImg <- emphasize(FALSE, res, dfobj, Cells, pres, genesets)
 
       output$imgdn <- downloadHandler(
@@ -1356,6 +1386,24 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         }
       )
 
+
+      o <- data.frame(Pathway = '', Group = '')
+      colnames(o) <- c("Pathway", "Group")
+
+      output$legendTable <- DT::renderDataTable(
+        DT::datatable(
+          o,
+          rownames = FALSE,
+          options = list(
+            autoWidth = TRUE,
+            dom = "ltp",
+            lengthChange = FALSE
+            ,columnDefs = list(list(className = 'dt-center', targets = 0:1))
+          ),
+          selection = "none"
+        )
+      )
+
       output$CellPlot <- shiny::renderPlot(grayImage)
       # output$CellPlot <- renderHighchart(grayImage)
     })
@@ -1382,7 +1430,23 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           ggsave(file, colorImage, device = 'png')
         }
       )
+      o <- data.frame(Pathway = '', Group = '')
+      colnames(o) <- c("Pathway", "Group")
 
+
+      output$legendTable <- DT::renderDataTable(
+        DT::datatable(
+          o,
+          rownames = FALSE,
+          options = list(
+            autoWidth = TRUE,
+            dom = "ltp",
+            lengthChange = FALSE
+            ,columnDefs = list(list(className = 'dt-center', targets = 0:1))
+          ),
+          selection = "none"
+        )
+      )
       output$CellPlot <- shiny::renderPlot(colorImage)
 
       # output$CellPlot <- renderHighchart(CellScatter)
@@ -1396,6 +1460,10 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       }
       plotImg <- emphasize(TRUE, input$sortList, dfobj, Cells, pres, genesets)
       output$CellPlot <- renderPlot(plotImg)
+
+      output$legendTable <- DT::renderDataTable(
+        buildLegend(input$sortList)
+      )
 
       output$imgdn <- downloadHandler(
         filename = function(){'myfigure.png'},
@@ -1415,6 +1483,10 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       plotImg <- emphasize(FALSE, input$sortList, dfobj, Cells, pres, genesets)
       output$CellPlot <- renderPlot(plotImg)
+
+      output$legendTable <- DT::renderDataTable(
+        buildLegend(input$sortList)
+      )
 
       output$imgdn <- downloadHandler(
         filename = function(){'myfigure.png'},
@@ -1446,3 +1518,33 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 }
 
 
+buildLegend = function(sortList){
+
+  rlobj <- data.frame(stringsAsFactors = FALSE)
+
+  for (i in 1:length(sortList)) {
+    kk <- strsplit(sortList[[i]], " @")[[1]]
+    Pathway <- kk[1]
+    Group <- kk[2]
+    rlobj <- rbind(rlobj, cbind(Pathway, Group))
+  }
+
+  colnames(rlobj) <- c("Pathway", "Group")
+  rlobj$Pathway <- as.character(rlobj$Pathway)
+  rlobj$Group <- as.character(rlobj$Group)
+
+  return(
+    DT::datatable(
+      rlobj,
+      rownames = FALSE,
+      options = list(
+        autoWidth = TRUE,
+        dom = "ltp",
+        lengthChange = FALSE
+        ,columnDefs = list(list(className = 'dt-center', targets = 0:1))
+      ),
+      selection = "none"
+    )
+  )
+
+}
