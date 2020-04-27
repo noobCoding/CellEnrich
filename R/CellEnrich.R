@@ -363,6 +363,7 @@ getCellHistogram <- function(GroupInfo, colV){
     x[i] <- Cells[i]
     y[i] <- length(which(GroupInfo == Cells[i]))
   }
+  colV <- unname(colV)
 
   hc <- highchart() %>%
     hc_chart(type = 'column', legend = list(enabled  = FALSE)) %>%
@@ -1015,7 +1016,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       colnames(presTab) <- colnames(CountData)
       rownames(presTab) <- names(genesets)
 
-      print(dim(presTab))
 
       pres <<- pres
 
@@ -1263,7 +1263,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         eval(parse(text = t))
       }
       # StartEnrich Finished
-
 
       print(proc.time() - pt)
 
