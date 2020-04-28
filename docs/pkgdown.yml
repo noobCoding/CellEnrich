@@ -2,6 +2,7 @@ pandoc: 2.7.2
 pkgdown: 1.5.1
 pkgdown_sha: ~
 articles:
+  how-to-install: how-to-install.html
   pbmc-2700-tutorial: pbmc-2700-tutorial.html
-last_built: 2020-04-16T07:03Z
+last_built: 2020-04-28T05:20Z
 
