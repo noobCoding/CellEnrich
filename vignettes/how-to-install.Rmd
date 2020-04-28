@@ -1,0 +1,68 @@
+---
+title: "How to install CellEnrich"
+author: "Jinhwan Kim"
+date : "2020.04.28"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{How to install CellEnrich}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+* Testing Environment
+
+1. Windows 10
+2. R version 4.0
+3. Rstudio 1.2.5042
+4. Rtools 40
+
+* This installation guide is written in latest version of R (4.0).
+
+* Also some package needs **install from sources which needs compilation** and it needs proper version of [Rtools](https://cran.r-project.org/bin/windows/Rtools/) installed
+
+
+* It's recommended to install `devtools`, `BiocManager` package first, to install following packages in Github / Bioconductor (not in CRAN).
+
+```R
+library(devtools)
+library(BiocManager)
+```
+------
+
+As noted in [README](https://github.com/unistbig/CellEnrich)
+
+`CellEnrich` needs some packages to be installed before use it.
+
+Bioconductor Packages
+
+1. `SingleCellExperiment`
+2. `scran`
+
+```R
+BiocManager::install('SingleCellExperiment')
+BiocManager::install('scran')
+```
+Other Packages 
+
+1. `waiter`
+
+```R
+devtools::install_github('JohnCoene/waiter')
+```
+
+
+After install these 3 packages, 
+
+running this Script will install most of dependent packages. 
+
+```R
+install_github('unistbig/CellEnrich')
+library(CellEnrich)
+```
