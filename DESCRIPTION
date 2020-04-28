@@ -11,18 +11,26 @@ License: MIT + file LICENSE
 URL: https://github.com/jhk0530/CellEnrich
 Encoding: UTF-8
 LazyData: true
+Depends:
+    R (>= 3.5.0)
 Imports:
     SingleCellExperiment,
     Rtsne,
     shinyCyJS,
     shiny,
+    shinyjs,
+    sortable,
     DT,
+    dplyr,
     ggplot2,
     Seurat,
     htmltools,
     magrittr,
-    shinymaterial
+    shinymaterial,
+    highcharter
 Suggests: 
     testthat (>= 2.1.0),
-    rmarkdown
+    rmarkdown,
+    knitr
 RoxygenNote: 7.1.0
+VignetteBuilder: knitr
