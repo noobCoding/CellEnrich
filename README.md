@@ -2,6 +2,8 @@
 
 Pathway enrichment analysis / visualize for Single Cell Data
 
+Online manual is available in [here](https://jhk0530.github.io/CellEnrich/)
+
 ## :wrench: Install
 
 ```R
