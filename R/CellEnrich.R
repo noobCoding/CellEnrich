@@ -262,28 +262,26 @@ pathwayPvalue <- function(GroupInfo, pres, pres2, genesets) {
   return(res)
 }
 
+# pres : which gene-sets are significant for each cells.
+# pres2 : for each gene-sets, how many cells are significant that gene-sets.
+
+# 전체 그룹에서 유의한 회수 20 # pres2[genesets[i]]
+# 특정 그룹에서 유의한 회수 6 # pres2[thiscellidx]
+
+# 전체 그룹 Cell 수 : N
+# 특정 그룹 Cell 수 : K
+
+# Group_specific_OR = (6/K) / (14/N)
+
 getOddRatio <- function(GroupInfo, pres, pres2, genesets, ratio) {
   cat("getOddRatio\n")
-
-  # pres : which gene-sets are significant for each cells.
-  # pres2 : for each gene-sets, how many cells are significant that gene-sets.
-
-  # 전체 그룹에서 유의한 회수 20 # pres2[genesets[i]]
-  # 특정 그룹에서 유의한 회수 6 # pres2[thiscellidx]
-
-  # 전체 그룹 Cell 수 : N
-  # 특정 그룹 Cell 수 : K
-
-  # Group_specific_OR = (6/K) / (14/N)
 
   res <- data.frame(stringsAsFactors = FALSE)
   Cells <- unique(GroupInfo)
   total <- length(GroupInfo)
-
   for (i in 1:length(Cells)) {
     thisCell <- Cells[i]
     thisCellIdx <- which(GroupInfo == thisCell)
-
     OR <- unname(sapply(1:length(genesets), function(k) {
       B <- table(unlist(pres[thisCellIdx]))[as.character(k)] # 특정 Cell에서 유의한 회수
       if (is.na(B)) {
@@ -292,14 +290,11 @@ getOddRatio <- function(GroupInfo, pres, pres2, genesets, ratio) {
       if (B < length(thisCellIdx) * ratio) {
         return(0)
       }
-
       A <- pres2[names(genesets)[k]] # 전체 Cell에서 유의한 회수
       if (is.na(A)) {
         return(0)
       }
       N <- total # 전체 Cell 수
-
-
 
       K <- length(thisCellIdx)
 
@@ -672,6 +667,33 @@ CellEnrichUI <- function() {
       material_card(
         title = "",
         material_card(
+          title = "Pathway biplot", divider = TRUE,
+          material_row(
+            material_column(
+              plotOutput("biPlot", height = "700px"),
+              width = 9
+            ),
+            material_column(
+              material_row(
+                numericInput("biFont", label = "Label Size", value = 3, min = 1, max = 5, step = 1),
+                numericInput("biX", label = "X area", value = 5, min = 1, max = 10, step = 1),
+                numericInput("biY", label = "Y area", value = 5, min = 1, max = 10, step = 1),
+                material_row(
+                  material_button("relFreq", "Biplot with Relative Freq.", color = "blue darken-2")
+                ),
+                material_row(
+                  material_button("absFreq", "Biplot with Absolute Freq.", color = "blue darken-2")
+                ),
+                material_row(
+                  material_button("refreshBiplot", "Refresh Biplot Download Image", color = "blue darken-2")
+                ),
+                shiny::downloadButton("biplotdn", "Save Biplot", icon = "save", style = "background-color : #616161 !important")
+              ),
+              width = 3
+            )
+          ),
+        ),
+        material_card(
           title = "Pathway Emphasize", divider = TRUE,
           tags$h3("To be recognized by application, Please move element's position"),
           rank_list(text = "Pathways", labels = "Please Clear First", input_id = "sortList", css_id = "mysortableCell"),
@@ -868,6 +890,7 @@ solvedButton <- function(inputId, label, style = NULL, onClick = NULL, ...) {
 #' @import ggplot2
 #' @import uwot
 #' @import htmltools
+#' @import ggbiplot
 #' @import magrittr
 #' @import waiter
 #' @rawNamespace import(shinyjs, except = runExample)
@@ -879,10 +902,64 @@ solvedButton <- function(inputId, label, style = NULL, onClick = NULL, ...) {
 
 CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
   require(dplyr)
-
+  require(plyr)
+  require(shiny)
   options(useFancyQuotes = FALSE)
 
   server <- function(input, output, session) {
+
+
+    buildbiplot <- function(relative = TRUE, biFont, biX, biY, genesets) {
+      require(ggbiplot)
+
+      Cells <- sort(unique(GroupInfo))
+
+      tab <- matrix(0,nrow = length(genesets), ncol = length(Cells))
+
+      for(i in 1:length(Cells)){
+        thisCell <- Cells[i]
+        thisCellIdx <- which(GroupInfo == thisCell)
+        v <- rep(0,length(genesets))
+
+        vs <- table(unlist(pres[thisCellIdx]))
+        nvs <- as.numeric(names(vs))
+        vs <- unname(vs)
+        v[nvs] <- vs
+        if(relative){
+          tab[,i] = v/length(thisCellIdx)
+        }
+        else{
+          tab[,i] = v
+        }
+      }
+      rownames(tab) <- names(genesets)
+      colnames(tab) <- Cells
+      tab <- tab[-which(sapply(1:nrow(tab), function(i){sum(tab[i,])==0})),] # remove zero
+
+      # select high in groups
+
+      high <- c()
+      for(i in 1:ncol(tab)){
+        high <- c(high, names(tab[order(tab[,i], decreasing = TRUE)[1:5],i]))
+      }
+      high <- unique(high)
+      tab <- tab[high,]
+
+      model <- prcomp(tab, scale = TRUE)
+      BiPlot <<- ggbiplot::ggbiplot(
+        model,
+        labels = rownames(tab),
+        labels.size = biFont,
+        scale = 1,
+        var.scale = 1,
+        obs.scale = 1) +
+        xlim(c(-biX,biX)) +
+        ylim(c(-biY,biY))
+
+      return( BiPlot )
+
+    }
+
 
     ### CODES
 
@@ -894,6 +971,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
     gt <- Cells <- A <- ""
     CellScatter <- ""
     CellHistogram <- ""
+    BiPlot <- ""
 
     observeEvent(input$StartCellEnrich, {
       pt <- proc.time()
@@ -1061,6 +1139,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       # 2625*4
       PP <- pathwayPvalue(GroupInfo, pres, pres2, genesets) # qvalue cutoff removed
       OR <- getOddRatio(GroupInfo, pres, pres2, genesets, input$ORratio)
+      # OR <- getOddRatio(GroupInfo, pres, pres2, genesets, 0.1)
 
       # QVCUTOFF <- 4
       CellPathwayDFP <- CellPathwayDF %>%
@@ -1177,7 +1256,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         )
       }
       else {
-        print("CellMarker Not Available")
+        cat("CellMarker Not Available\n")
         output$markerL2 <- DT::renderDataTable(
           DT::datatable(
             s2,
@@ -1365,6 +1444,19 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       # output$CellPlot <- renderPlot(emphasize(FALSE, res, dfobj, Cells, pres, genesets))
     })
 
+    observeEvent(input$refreshBiplot, {
+      if(input$refreshBiplot==0){return(NULL)}
+      cat('refreshed\n')
+      output$biplotdn <- downloadHandler(
+        filename = function() {
+          "mybiplot.png"
+        },
+        content = function(file) {
+          ggsave(file, BiPlot, device = "png")
+        }
+      )
+    })
+
     # draw significant colored images
     observeEvent(input$sigbtn, {
       if (input$sigbtn == 0) { # prevent default click state
@@ -1540,6 +1632,41 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         )
       )
     })
+
+    observeEvent(input$relFreq,{
+      if(input$relFreq == 0){
+        return(NULL)
+      }
+
+
+      output$biPlot <- renderPlot(buildbiplot(relative = TRUE, input$biFont, input$biX, input$biY, genesets))
+
+      output$biplotdn <- downloadHandler(
+        filename = function() {
+          "mybiplot.png"
+        },
+        content = function(file) {
+          ggsave(file, device = "png")
+        }
+      )
+    })
+
+    observeEvent(input$absFreq,{
+      if(input$absFreq == 0){
+        return(NULL)
+      }
+
+      output$biPlot <- renderPlot(buildbiplot(relative = FALSE, input$biFont, input$biX, input$biY, genesets))
+
+      output$biplotdn <- downloadHandler(
+        filename = function() {
+          "mybiplot.png"
+        },
+        content = function(file) {
+          ggsave(file, device = "png")
+        }
+      )
+    })
   }
 
   ui <- CellEnrichUI()
@@ -1602,14 +1729,4 @@ buildLegend <- function(sortList, img = FALSE, name = NULL) {
       selection = "none"
     )
   )
-}
-
-buildFreqPathway <- function() {
-
-  if(relative){
-
-  }
-  else{
-
-  }
 }
