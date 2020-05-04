@@ -1,7 +1,7 @@
 ---
 title: "PBMC 2700 tutorial"
 author: "Jinhwan Kim"
-date : "2020.04.16"
+date : "2020.05.04"
 output: rmarkdown::html_vignette
 ---
 
@@ -33,21 +33,12 @@ with these Codes, user can see interactive `shiny` page.
 
 ```R
 
-load("pbmcClustinfo.RData")
-load("pbmcData.RData")
-
-CountData = pbmcData
-GroupInfo = ClustInfo
-
-# GroupInfo is basically Factor type data 
-# so it needs to be changed as Character type.
-
-g = as.character(GroupInfo)
-names(g) = names(GroupInfo)
+CountData = CellEnrich::pbmcData
+GroupInfo = CellEnrich::pbmcClustInfo
 
 # this will run CellEnrich
 
-CellEnrich(CountData = CountData, GroupInfo = g)
+CellEnrich(CountData, GroupInfo)
 
 ```
 ## Result
