@@ -27,7 +27,8 @@ Imports:
     htmltools,
     magrittr,
     shinymaterial,
-    highcharter
+    highcharter,
+    ggbiplot
 Suggests: 
     testthat (>= 2.1.0),
     rmarkdown,
