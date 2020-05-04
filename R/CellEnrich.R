@@ -605,7 +605,7 @@ CellEnrichUI <- function() {
           ),
           material_row(
             material_button("colorbtn", "toColor", icon = "color_lens", color = "blue darken-2"),
-            material_button("graybtn", "toGray", icon = "clear", color = "blue darken-2"),
+
             material_button("freqbtn", "Frequent", icon = "grain", color = "blue darken-2"),
             material_button("sigbtn", "Significant", icon = "grade", color = "blue darken-2")
           )
@@ -878,7 +878,10 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           shiny::showNotification('Geneset not given ...', type = 'error', duration = 10)
           return(NULL)
         }
+
       }
+
+
 
       # ------ Hide Start Button
 
@@ -1356,55 +1359,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       )
 
       output$CellPlot <- renderPlot(plotImg)
-    })
-
-    # draw gray colored images
-    observeEvent(input$graybtn, {
-      if (input$graybtn == 0) { # prevent default click state
-        return(NULL)
-      }
-
-      grayImage <- ggplot(dfobj, aes(x = x, y = y)) +
-        geom_point(colour = "gray")
-
-      #dfobj_new <- dfobj
-      #dfobj_new$col <- '#8395a7'
-
-      #grayImage <- hchart(
-          #dfobj_new,
-          #type = 'scatter',
-          #hcaes(x = x, y = y, color = col)
-        #) %>%
-        #hc_tooltip(FALSE) %>%
-        #hc_exporting(enabled = TRUE)
-
-      output$imgdn <- downloadHandler(
-        filename = function(){'myfigure.png'},
-        content = function(file){
-          ggsave(file, grayImage, device = 'png')
-        }
-      )
-
-
-      o <- data.frame(Pathway = '', Group = '')
-      colnames(o) <- c("Pathway", "Group")
-
-      output$legendTable <- DT::renderDataTable(
-        DT::datatable(
-          o,
-          rownames = FALSE,
-          options = list(
-            autoWidth = TRUE,
-            dom = "ltp",
-            lengthChange = FALSE
-            ,columnDefs = list(list(className = 'dt-center', targets = 0:1))
-          ),
-          selection = "none"
-        )
-      )
-
-      output$CellPlot <- shiny::renderPlot(grayImage)
-      # output$CellPlot <- renderHighchart(grayImage)
     })
 
     # draw group colored images
