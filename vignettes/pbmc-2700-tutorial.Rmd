@@ -33,6 +33,9 @@ with these Codes, user can see interactive `shiny` page.
 
 ```R
 
+# Download Genesets 
+CellEnrich::DownloadData()
+
 CountData = CellEnrich::pbmcData
 GroupInfo = CellEnrich::pbmcClustInfo
 
