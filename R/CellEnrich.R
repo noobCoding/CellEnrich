@@ -262,7 +262,7 @@ pathwayPvalue <- function(GroupInfo, pres, pres2, genesets) {
   return(res)
 }
 
-getOddRatio <- function(GroupInfo, pres, pres2, genesets) {
+getOddRatio <- function(GroupInfo, pres, pres2, genesets, ratio) {
   cat("getOddRatio\n")
 
   # pres : which gene-sets are significant for each cells.
@@ -289,7 +289,7 @@ getOddRatio <- function(GroupInfo, pres, pres2, genesets) {
       if (is.na(B)) {
         return(0)
       }
-      if (B < length(thisCellIdx) * 0.15) {
+      if (B < length(thisCellIdx) * ratio) {
         return(0)
       }
 
@@ -549,6 +549,14 @@ CellEnrichUI <- function() {
                   step_size = 5
                 ),
                 material_number_box(
+                  input_id = "ORratio",
+                  label = "OddRatio Frequency",
+                  min_value = 0,
+                  max_value = 0.5,
+                  initial_value = 0.1,
+                  step_size = 0.05
+                ),
+                material_number_box(
                   input_id = "qvalueCutoff",
                   label = "Q-value threshold",
                   min_value = 0,
@@ -620,7 +628,8 @@ CellEnrichUI <- function() {
           material_row(
             material_card(
               title = "information",
-              DT::dataTableOutput("legendTable")
+              DT::dataTableOutput("legendTable"),
+              shiny::downloadButton("legenddn", "Save Legend", icon = "save", style = "background-color : #616161 !important; display:none;")
             )
           ),
           material_row(
@@ -812,6 +821,7 @@ emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres, genesets) {
   }
 
   eval(parse(text = graphString))
+
   return(ggobj2)
   # return(hc)
 }
@@ -1050,7 +1060,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       # 2625*4
       PP <- pathwayPvalue(GroupInfo, pres, pres2, genesets) # qvalue cutoff removed
-      OR <- getOddRatio(GroupInfo, pres, pres2, genesets)
+      OR <- getOddRatio(GroupInfo, pres, pres2, genesets, input$ORratio)
 
       # QVCUTOFF <- 4
       CellPathwayDFP <- CellPathwayDF %>%
@@ -1201,6 +1211,21 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       output$CellPlot <- renderPlot(CellScatter)
 
+      output$legenddn <- downloadHandler(
+        filename = 'mylegend.png',
+        content = function(file){
+          png(file)
+          plot(NULL ,xaxt='n',yaxt='n',bty='n',ylab='',xlab='', xlim=0:1, ylim=0:1)
+          legend(
+            'center',
+             legend = c('Sugar maple', 'White ash', 'Black walnut','Red oak', 'Eastern hemlock'),
+             pch = 16, pt.cex = 3, cex = 1.5, bty='n',
+             col = c('orange', 'red', 'green', 'blue', 'purple')
+          )
+          dev.off()
+        }
+      )
+
       output$imgdn <- downloadHandler(
         filename = function() {
           "myfigure.png"
@@ -1326,6 +1351,14 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           ggsave(file, plotImg, device = "png")
         }
       )
+      shinyjs::show('legenddn')
+
+      output$legenddn <- downloadHandler(
+        filename = 'mylegend.png',
+        content = function(file){
+          buildLegend(res, img = TRUE, name = file)
+        }
+      )
 
       output$CellPlot <- renderPlot(plotImg)
 
@@ -1338,6 +1371,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         return(NULL)
       }
 
+      shinyjs::show('legenddn')
       res <- c()
 
       for (i in 1:length(Cells)) {
@@ -1377,6 +1411,13 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         }
       )
 
+      output$legenddn <- downloadHandler(
+        filename = 'mylegend.png',
+        content = function(file){
+          buildLegend(res, img = TRUE, name = file)
+        }
+      )
+
       output$CellPlot <- renderPlot(plotImg)
     })
 
@@ -1385,7 +1426,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       if (input$colorbtn == 0) { # prevent default click state
         return(NULL)
       }
-
+      shinyjs::hide('legenddn')
       UniqueCol <- briterhex(scales::hue_pal()(length(Cells)))
       names(UniqueCol) <- Cells
 
@@ -1431,6 +1472,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       if (input$OrderEmphasize == 0) { # prevent default click state
         return(NULL)
       }
+
+      shinyjs::show('legenddn')
       plotImg <- emphasize(TRUE, input$sortList, dfobj, Cells, pres, genesets)
       output$CellPlot <- renderPlot(plotImg)
 
@@ -1446,6 +1489,13 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           ggsave(file, plotImg, device = "png")
         }
       )
+
+      output$legenddn <- downloadHandler(
+        filename = 'mylegend.png',
+        content = function(file){
+          buildLegend(res, img = TRUE, name = file)
+        }
+      )
     })
 
     # Emphasize without order
@@ -1453,7 +1503,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       if (input$Emphasize == 0) { # prevent default click state
         return(NULL)
       }
-
+      shinyjs::show('legenddn')
       plotImg <- emphasize(FALSE, input$sortList, dfobj, Cells, pres, genesets)
       output$CellPlot <- renderPlot(plotImg)
 
@@ -1467,6 +1517,13 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         },
         content = function(file) {
           ggsave(file, plotImg, device = "png")
+        }
+      )
+
+      output$legenddn <- downloadHandler(
+        filename = 'mylegend.png',
+        content = function(file){
+          buildLegend(res, img = TRUE, name = file)
         }
       )
     })
@@ -1491,7 +1548,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 }
 
 
-buildLegend <- function(sortList) {
+buildLegend <- function(sortList, img = FALSE, name = NULL) {
+
   colV <- getColv(GroupInfo)
 
   rlobj <- data.frame(stringsAsFactors = FALSE)
@@ -1504,6 +1562,20 @@ buildLegend <- function(sortList) {
   }
 
   colnames(rlobj) <- c("Pathway", "Group")
+
+  if(img){
+    png(name)
+    plot(NULL ,xaxt='n',yaxt='n',bty='n',ylab='',xlab='', xlim = 0:1, ylim = 0:1)
+    legend(
+      'center',
+      legend = rlobj$Pathway,
+      pch = 15, pt.cex = 2, cex = 1.2, bty='n',
+      col = colV[rlobj$Group]
+    )
+    dev.off()
+    return()
+  }
+
 
   rlobj$Pathway <- paste0(
     sapply(
@@ -1534,7 +1606,6 @@ buildLegend <- function(sortList) {
 
 buildFreqPathway <- function() {
 
-}
   if(relative){
 
   }
