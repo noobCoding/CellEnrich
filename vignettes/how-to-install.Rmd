@@ -52,11 +52,14 @@ BiocManager::install('scran')
 Other Packages 
 
 1. `waiter`
+2. `ggbiplot`
+
 
 ```R
 devtools::install_github('JohnCoene/waiter')
-```
+devtools::install_github('vqv/ggbiplot')
 
+```
 
 After install these 3 packages, 
 
