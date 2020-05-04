@@ -2,16 +2,4 @@
 .Rhistory
 .RData
 .Ruserdata
-pbmcData.RData
-pbmcClustinfo.RData
-pbmc_hclust.RData
-yan.rds
-c2v7.RData
-c5v7.RData
-keggv7.RData
-k.RData
-k_cellinfo.RData
-k_clustinfo.RData
-mousegeneset.RData
-k_dgc.RData
 inst/doc
