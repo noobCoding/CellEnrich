@@ -277,29 +277,36 @@ getOddRatio = function(GroupInfo, pres, pres2, genesets){
     thisCellIdx = which(GroupInfo == thisCell)
 
     OR <- unname(sapply(1:length(genesets), function(k){
+
+      B <- table(unlist(pres[thisCellIdx]))[as.character(k)] # 특정 Cell에서 유의한 회수
+      if(is.na(B)) return(0)
+      if(B < length(thisCellIdx)*0.15) return(0)
+
       A <- pres2[names(genesets)[k]] # 전체 Cell에서 유의한 회수
       if(is.na(A)) return(0)
       N <- total # 전체 Cell 수
 
-      B <- table(unlist(pres[thisCellIdx]))[as.character(k)] # 특정 Cell에서 유의한 회수
-      if(is.na(B)) return(0)
+
+
       K <- length(thisCellIdx)
 
       return( (B/K) / (A/N) )
     }))
+
     OR <- round(OR, 4)
     # Cell, Geneset, OR
-    res <- rbind(res,
-                 data.frame(
-                   Cell = as.character(thisCell),
-                   Geneset =as.character(names(genesets)),
-                   OddRatio = as.numeric(OR), stringsAsFactors = FALSE)
+    res <- rbind(
+      res,
+      data.frame(
+        Cell = as.character(thisCell),
+        Geneset = as.character(names(genesets)),
+        OddRatio = as.numeric(OR), stringsAsFactors = FALSE)
     )
   }
 
   colnames(res) <- c('Cell', "Geneset", "OddRatio")
 
-  res <- res %>% filter(OddRatio>0)
+  res <- res %>% filter(OddRatio > 1)
 
   return(res)
 
@@ -595,17 +602,16 @@ CellEnrichUI <- function() {
             )
           ),
           material_row(
+            shiny::downloadButton("imgdn", "Save Scatter Plot", icon = 'save', style = 'background-color : #616161 !important')
+          ),
+          material_row(
             material_card(
               title = 'information',
               DT::dataTableOutput('legendTable')
             )
           ),
           material_row(
-            shiny::downloadButton("imgdn", "Save", icon = 'save', style = 'background-color : #616161 !important')
-          ),
-          material_row(
             material_button("colorbtn", "toColor", icon = "color_lens", color = "blue darken-2"),
-
             material_button("freqbtn", "Frequent", icon = "grain", color = "blue darken-2"),
             material_button("sigbtn", "Significant", icon = "grade", color = "blue darken-2")
           )
@@ -878,10 +884,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           shiny::showNotification('Geneset not given ...', type = 'error', duration = 10)
           return(NULL)
         }
-
       }
-
-
 
       # ------ Hide Start Button
 
@@ -1386,7 +1389,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       o <- data.frame(Pathway = '', Group = '')
       colnames(o) <- c("Pathway", "Group")
 
-
+      # clear legendtable
       output$legendTable <- DT::renderDataTable(
         DT::datatable(
           o,
@@ -1473,6 +1476,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
 buildLegend = function(sortList){
 
+  colV <- getColv(GroupInfo)
+
   rlobj <- data.frame(stringsAsFactors = FALSE)
 
   for (i in 1:length(sortList)) {
@@ -1483,12 +1488,18 @@ buildLegend = function(sortList){
   }
 
   colnames(rlobj) <- c("Pathway", "Group")
-  rlobj$Pathway <- as.character(rlobj$Pathway)
+
+  rlobj$Pathway <- paste0(
+    sapply(colV[rlobj$Group],
+           function(i){
+             paste0('<div style="background: ', i,'; display: inline-block; width: 1em;height: 1em;"></div>') }),
+    ' ', as.character(rlobj$Pathway))
   rlobj$Group <- as.character(rlobj$Group)
 
   return(
     DT::datatable(
       rlobj,
+      escape = FALSE,
       rownames = FALSE,
       options = list(
         autoWidth = TRUE,
