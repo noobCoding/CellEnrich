@@ -6,16 +6,9 @@
 #'
 #' @export
 
+#' @export
+
 DownloadData <- function() {
-  NowDir <- getwd()
-
-  dataDir <- file.path(system.file("CellEnrich", package = "CellEnrich"))
-
-  if (!dir.exists(dataDir)) {
-    dir.create(dataDir, showWarnings = FALSE)
-  }
-
-  setwd(dataDir)
 
   filelist <- c(
     "c2v7.RData",
@@ -38,5 +31,4 @@ DownloadData <- function() {
     download.file(urls[i], filelist[i])
   }
 
-  setwd(NowDir)
 }
