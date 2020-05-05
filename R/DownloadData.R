@@ -6,13 +6,11 @@
 #'
 #' @export
 
-#' @export
-
 DownloadData <- function() {
 
   filelist <- c(
+    # Gene-sets
     "c2v7.RData",
-    "c5v7.RData",
     "humanGO.RData",
     "humanGOBP.RData",
     "humanGOCC.RData",
@@ -22,7 +20,14 @@ DownloadData <- function() {
     "mouseGOBP.RData",
     "mouseGOCC.RData",
     "mouseGOMF.RData",
-    "mouseKEGG.RData"
+    "mouseKEGG.RData",
+    # Datasets
+    "koh.RData",
+    "kohInfo.RData",
+    "mouseClustInfo.RData",
+    "mouseData.RData",
+    "pbmcClustInfo.RData",
+    "pbmcData.RData"
   )
 
   filelist <- setdiff(filelist, dir())
