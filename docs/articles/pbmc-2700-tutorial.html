@@ -85,7 +85,7 @@
       <h1 data-toc-skip>PBMC 2700 tutorial</h1>
                         <h4 class="author">Jinhwan Kim</h4>
             
-            <h4 class="date">2020.05.04</h4>
+            <h4 class="date">2020.05.05</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/jhk0530/CellEnrich/blob/master/vignettes/pbmc-2700-tutorial.Rmd"><code>vignettes/pbmc-2700-tutorial.Rmd</code></a></small>
       <div class="hidden name"><code>pbmc-2700-tutorial.Rmd</code></div>
@@ -126,11 +126,14 @@
 <a href="#run" class="anchor"></a>Run</h2>
 <p>with these Codes, user can see interactive <code>shiny</code> page.</p>
 <div class="sourceCode" id="cb1"><html><body><pre class="r">
-<span class="co"># Download Genesets </span>
+<span class="co"># Download data, if not downloaded</span>
 <span class="kw pkg">CellEnrich</span><span class="kw ns">::</span><span class="fu"><a href="../reference/DownloadData.html">DownloadData</a></span>()
 
-<span class="no">CountData</span> <span class="kw">=</span> <span class="kw pkg">CellEnrich</span><span class="kw ns">::</span><span class="no">pbmcData</span>
-<span class="no">GroupInfo</span> <span class="kw">=</span> <span class="kw pkg">CellEnrich</span><span class="kw ns">::</span><span class="no">pbmcClustInfo</span>
+<span class="fu"><a href="https://rdrr.io/r/base/load.html">load</a></span>(<span class="st">"pbmcData.RData"</span>)
+<span class="fu"><a href="https://rdrr.io/r/base/load.html">load</a></span>(<span class="st">"pbmcClustInfo.RData"</span>)
+
+<span class="no">CountData</span> <span class="kw">&lt;-</span> <span class="no">pbmcData</span>
+<span class="no">GroupInfo</span> <span class="kw">&lt;-</span> <span class="no">pbmcClustInfo</span>
 
 <span class="co"># this will run CellEnrich</span>
 

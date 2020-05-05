@@ -1,7 +1,7 @@
 ---
 title: "How to install CellEnrich"
 author: "Jinhwan Kim"
-date : "2020.04.28"
+date : "2020.05.05"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{How to install CellEnrich}
@@ -16,6 +16,8 @@ knitr::opts_chunk$set(
 )
 ```
 
+## Introduction
+
 * Testing Environment
 
 1. Windows 10
@@ -25,8 +27,9 @@ knitr::opts_chunk$set(
 
 * This installation guide is written in latest version of R (4.0).
 
-* Also some package needs **install from sources which needs compilation** and it needs proper version of [Rtools](https://cran.r-project.org/bin/windows/Rtools/) installed
+## Install Dependent Packages
 
+* Also some package needs **install from sources which needs compilation** and it needs proper version of [Rtools](https://cran.r-project.org/bin/windows/Rtools/) installed
 
 * It's recommended to install `devtools`, `BiocManager` package first, to install following packages in Github / Bioconductor (not in CRAN).
 
@@ -54,14 +57,14 @@ Other Packages
 1. `waiter`
 2. `ggbiplot`
 
-
 ```R
 devtools::install_github('JohnCoene/waiter')
 devtools::install_github('vqv/ggbiplot')
 
 ```
-
 After install these 3 packages, 
+
+## Install CellEnrich
 
 running this Script will install most of dependent packages. 
 
@@ -69,3 +72,52 @@ running this Script will install most of dependent packages.
 install_github('unistbig/CellEnrich')
 library(CellEnrich)
 ```
+
+------
+
+## Download Example Data
+
+CellEnrich provides example dataset and gene-sets.
+
+using this function, user can download them in current working directory.
+
+```R
+CellEnrich::DownloadData()
+```
+
+Here are list of data.
+
+- Human Gene-sets
+
+  - "c2v7.RData" ( Curated )
+  - "humanGO.RData"
+  - "humanGOBP.RData"
+  - "humanGOCC.RData"
+  - "humanGOMF.RData"
+  - "keggv7.RData" ( KEGG )
+  
+- Mouse Gene-sets
+
+  - "mouseGO.RData"
+  - "mouseGOBP.RData"
+  - "mouseGOCC.RData"
+  - "mouseGOMF.RData"
+  - "mouseKEGG.RData"
+
+- Human Data
+
+  - [Seurat PBMC Guide](https://satijalab.org/seurat/v3.1/pbmc3k_tutorial.html)
+  
+  - "pbmcClustInfo.RData"
+  - "pbmcData.RData"
+
+  - [DuoClustering](https://bioconductor.org/packages/release/data/experiment/html/DuoClustering2018.html)
+  - [paper](https://f1000research.com/articles/7-1141)
+
+  - "koh.RData"
+  - "kohInfo.RData"
+    
+- Mouse Data
+  
+  - [Seurat Mouse Guide](https://satijalab.org/seurat/v3.1/mca.html)
+
