@@ -28,7 +28,8 @@ Imports:
     magrittr,
     shinymaterial,
     highcharter,
-    ggbiplot
+    ggbiplot,
+    ggrepel
 Suggests: 
     testthat (>= 2.1.0),
     rmarkdown,
