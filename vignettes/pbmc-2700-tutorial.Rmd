@@ -1,7 +1,7 @@
 ---
 title: "PBMC 2700 tutorial"
 author: "Jinhwan Kim"
-date : "2020.05.04"
+date : "2020.05.05"
 output: rmarkdown::html_vignette
 ---
 
@@ -33,11 +33,14 @@ with these Codes, user can see interactive `shiny` page.
 
 ```R
 
-# Download Genesets 
+# Download data, if not downloaded
 CellEnrich::DownloadData()
 
-CountData = CellEnrich::pbmcData
-GroupInfo = CellEnrich::pbmcClustInfo
+load("pbmcData.RData")
+load("pbmcClustInfo.RData")
+
+CountData <- pbmcData
+GroupInfo <- pbmcClustInfo
 
 # this will run CellEnrich
 

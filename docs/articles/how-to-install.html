@@ -85,7 +85,7 @@
       <h1 data-toc-skip>How to install CellEnrich</h1>
                         <h4 class="author">Jinhwan Kim</h4>
             
-            <h4 class="date">2020.04.28</h4>
+            <h4 class="date">2020.05.05</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/jhk0530/CellEnrich/blob/master/vignettes/how-to-install.Rmd"><code>vignettes/how-to-install.Rmd</code></a></small>
       <div class="hidden name"><code>how-to-install.Rmd</code></div>
@@ -94,6 +94,9 @@
 
     
     
+<div id="introduction" class="section level2">
+<h2 class="hasAnchor">
+<a href="#introduction" class="anchor"></a>Introduction</h2>
 <ul>
 <li>Testing Environment</li>
 </ul>
@@ -104,7 +107,13 @@
 <li>Rtools 40</li>
 </ol>
 <ul>
-<li><p>This installation guide is written in latest version of R (4.0).</p></li>
+<li>This installation guide is written in latest version of R (4.0).</li>
+</ul>
+</div>
+<div id="install-dependent-packages" class="section level2">
+<h2 class="hasAnchor">
+<a href="#install-dependent-packages" class="anchor"></a>Install Dependent Packages</h2>
+<ul>
 <li><p>Also some package needs <strong>install from sources which needs compilation</strong> and it needs proper version of <a href="https://cran.r-project.org/bin/windows/Rtools/">Rtools</a> installed</p></li>
 <li><p>It’s recommended to install <code>devtools</code>, <code>BiocManager</code> package first, to install following packages in Github / Bioconductor (not in CRAN).</p></li>
 </ul>
@@ -128,14 +137,71 @@
 <div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="kw pkg">devtools</span><span class="kw ns">::</span><span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span>(<span class="st">'JohnCoene/waiter'</span>)
 <span class="kw pkg">devtools</span><span class="kw ns">::</span><span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span>(<span class="st">'vqv/ggbiplot'</span>)</pre></body></html></div>
 <p>After install these 3 packages,</p>
+</div>
+<div id="install-cellenrich" class="section level2">
+<h2 class="hasAnchor">
+<a href="#install-cellenrich" class="anchor"></a>Install CellEnrich</h2>
 <p>running this Script will install most of dependent packages.</p>
 <div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span>(<span class="st">'unistbig/CellEnrich'</span>)
 <span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">CellEnrich</span>)</pre></body></html></div>
+<hr>
+</div>
+<div id="download-example-data" class="section level2">
+<h2 class="hasAnchor">
+<a href="#download-example-data" class="anchor"></a>Download Example Data</h2>
+<p>CellEnrich provides example dataset and gene-sets.</p>
+<p>using this function, user can download them in current working directory.</p>
+<div class="sourceCode" id="cb5"><html><body><pre class="r"><span class="kw pkg">CellEnrich</span><span class="kw ns">::</span><span class="fu"><a href="../reference/DownloadData.html">DownloadData</a></span>()</pre></body></html></div>
+<p>Here are list of data.</p>
+<ul>
+<li>
+<p>Human Gene-sets</p>
+<ul>
+<li>“c2v7.RData” ( Curated )</li>
+<li>“humanGO.RData”</li>
+<li>“humanGOBP.RData”</li>
+<li>“humanGOCC.RData”</li>
+<li>“humanGOMF.RData”</li>
+<li>“keggv7.RData” ( KEGG )</li>
+</ul>
+</li>
+<li>
+<p>Mouse Gene-sets</p>
+<ul>
+<li>“mouseGO.RData”</li>
+<li>“mouseGOBP.RData”</li>
+<li>“mouseGOCC.RData”</li>
+<li>“mouseGOMF.RData”</li>
+<li>“mouseKEGG.RData”</li>
+</ul>
+</li>
+<li>
+<p>Human Data</p>
+<ul>
+<li><p><a href="https://satijalab.org/seurat/v3.1/pbmc3k_tutorial.html">Seurat PBMC Guide</a></p></li>
+<li><p>“pbmcClustInfo.RData”</p></li>
+<li><p>“pbmcData.RData”</p></li>
+<li><p><a href="https://bioconductor.org/packages/release/data/experiment/html/DuoClustering2018.html">DuoClustering</a></p></li>
+<li><p><a href="https://f1000research.com/articles/7-1141">paper</a></p></li>
+<li><p>“koh.RData”</p></li>
+<li><p>“kohInfo.RData”</p></li>
+</ul>
+</li>
+<li>
+<p>Mouse Data</p>
+<ul>
+<li><a href="https://satijalab.org/seurat/v3.1/mca.html">Seurat Mouse Guide</a></li>
+</ul>
+</li>
+</ul>
+</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
 
-      </div>
+        <nav id="toc" data-toggle="toc"><h2 data-toc-skip>Contents</h2>
+    </nav>
+</div>
 
 </div>
 
