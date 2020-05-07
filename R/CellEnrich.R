@@ -1061,12 +1061,12 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       # ------ Load Genesets
 
       if (is.null(genesets)) {
-        if (input$genesetOption == "Human-Curated") load("c2v7.RData")
+        if (input$genesetOption == "Human-Curated") load("c2v71.RData")
         if (input$genesetOption == "Human-GO") load("humanGO.RData")
         if (input$genesetOption == "Human-GO-BP") load("humanGOBP.RData")
         if (input$genesetOption == "Human-GO-CC") load("humanGOCC.RData")
         if (input$genesetOption == "Human-GO-MF") load("humanGOMF.RData")
-        if (input$genesetOption == "Human-KEGG") load("keggv7.RData")
+        if (input$genesetOption == "Human-KEGG") load("humanKEGG.RData")
         if (input$genesetOption == "Mouse-KEGG") load("mouseKEGG.RData")
         if (input$genesetOption == "Mouse-GO") load("mouseGO.RData")
         if (input$genesetOption == "Mouse-GO-BP") load("mouseGOBP.RData")
