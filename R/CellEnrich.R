@@ -126,9 +126,9 @@ findSigGenesGroup <- function(Count = NULL, ClustInfo = NULL, q0 = 0.1, TopCutof
 
   for (i in 1:length(Grp)) {
     G <- data.frame(
-      genes = rownames(GrpRes[[1]]),
+      genes = rownames(GrpRes[[i]]),
       Group = Grp[i],
-      GrpRes[[1]],
+      GrpRes[[i]],
       row.names = NULL,
       stringsAsFactors = FALSE
     ) %>%
@@ -1199,6 +1199,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       CellPathwayDF <- buildCellPathwayDF(GroupInfo, pres, genesets)
 
+      # group / pathway count
+
       # pres2 : for each gene-sets, how many cells are significant that gene-sets.
 
       cat("pres2\n")
@@ -1216,6 +1218,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
 
       # QVCUTOFF <- 4
+
+      # group / pathway /
       CellPathwayDFP <- CellPathwayDF %>%
         inner_join(PP) %>%
         select(Cell, Geneset, Qvalue) %>%
