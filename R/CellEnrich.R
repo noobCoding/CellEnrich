@@ -93,19 +93,33 @@ findSigGenes <- function(v, method = "median", Name) {
 
   cat("define Lists\n")
 
+  med2 <- function(v) {
+    v <- v[which(v > 0)]
+    return(median(v) / 2)
+  }
+
+  mean2 <- function(v) {
+    v <- v[which(v > 0)]
+    return(mean(v) / 2)
+  }
+
   if (method == "median") {
     for (i in 1:ncol(v)) {
-      res[[i]] <- which(v[, i] > median(v[, i]))
+      # res[[i]] <- which(v[, i] > median(v[, i]))
+      res[[i]] <- which(v[, i] > med2(v[, i]))
+      # write(length(which(v[, i] > median(v[, i]))), file='med1.txt', append = TRUE)
+      # write(length(res[[i]]), file='med2.txt', append = TRUE)
     }
   }
   if (method == "zero") {
     for (i in 1:ncol(v)) {
-      res[[i]] <- which(v[, i] > 0)
+      res[[i]] <- which(v[, i] > 1)
     }
   }
   if (method == "mean") {
     for (i in 1:ncol(v)) {
-      res[[i]] <- which(v[, i] > mean(v[, i]))
+      # res[[i]] <- which(v[, i] > mean(v[, i]))
+      res[[i]] <- which(v[, i] > mean2(v[, i]))
     }
   }
 
@@ -673,10 +687,10 @@ CellEnrichUI <- function() {
               plotOutput("biPlot", height = "700px"),
               width = 9
             ),
-            #material_column(
-              #DT::dataTableOutput('bitable'),
-              #width = 2
-            #),
+            # material_column(
+            # DT::dataTableOutput('bitable'),
+            # width = 2
+            # ),
             material_column(
               material_row(
                 numericInput("biCount", label = "Pathway Count", value = 5, min = 2, max = 10, step = 1),
@@ -688,11 +702,11 @@ CellEnrichUI <- function() {
                 ),
                 material_row(
                   material_button("orbp", "Biplot with Odd Ratio", color = "blue darken-2")
-                )#,
-                #material_row(
-                  #material_button("refreshBiplot", "Refresh Biplot Download Image", color = "blue darken-2")
-                #),
-                #shiny::downloadButton("biplotdn", "Save Biplot", icon = "save", style = "background-color : #616161 !important")
+                ) # ,
+                # material_row(
+                # material_button("refreshBiplot", "Refresh Biplot Download Image", color = "blue darken-2")
+                # ),
+                # shiny::downloadButton("biplotdn", "Save Biplot", icon = "save", style = "background-color : #616161 !important")
               ),
               width = 2
             )
@@ -700,10 +714,10 @@ CellEnrichUI <- function() {
         ),
         material_card(
           title = "Pathway Emphasize", divider = TRUE,
-          #tags$h3("To be recognized by application, Please move element's position"),
+          # tags$h3("To be recognized by application, Please move element's position"),
           rank_list(text = "Pathways", labels = "Please Clear First", input_id = "sortList", css_id = "mysortableCell"),
           material_row(
-            #material_button("OrderEmphasize", "Emphasize with Order", icon = "timeline", color = "blue darken-2"),
+            # material_button("OrderEmphasize", "Emphasize with Order", icon = "timeline", color = "blue darken-2"),
             material_button("Emphasize", "Emphasize", icon = "bubble_chart", color = "blue darken-2"),
             material_button("ClearList", "Clear List", icon = "clear_all", color = "blue darken-2")
           ),
@@ -751,7 +765,9 @@ emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres, genesets) {
     for (i in 1:nrow(rlobj)) {
       thisGeneset <- which(names(genesets) == rlobj[i, 1]) # index
 
-      if(length(thisGeneset)>1){thisGeneset <- thisGeneset[1]}
+      if (length(thisGeneset) > 1) {
+        thisGeneset <- thisGeneset[1]
+      }
 
       thisGroup <- rlobj[i, 2]
 
@@ -917,12 +933,10 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
   options(useFancyQuotes = FALSE)
 
   server <- function(input, output, session) {
-
     buildbiplot <- function(biFont, biX, biY, genesets, TOPN = 5, oddratio = FALSE) {
-
       Cells <- sort(unique(GroupInfo))
 
-      if(oddratio){
+      if (oddratio) {
         total <- length(GroupInfo)
 
         dat <- OR %>%
@@ -932,17 +946,19 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
         gs <- unique(dat$Geneset)
 
-        tab <- matrix(0,nrow = length(gs), ncol = length(Cells))
+        tab <- matrix(0, nrow = length(gs), ncol = length(Cells))
         rownames(tab) <- gs
         colnames(tab) <- Cells
 
-        gs <- sapply(gs,function(i){which(names(genesets)==i)})
+        gs <- sapply(gs, function(i) {
+          which(names(genesets) == i)
+        })
 
         for (i in 1:length(Cells)) {
           thisCell <- Cells[i]
           thisCellIdx <- which(GroupInfo == thisCell)
 
-          tab[,i] <- round( unname(
+          tab[, i] <- round(unname(
             sapply(1:length(gs), function(k) {
               k <- gs[k]
               B <- table(unlist(pres[thisCellIdx]))[as.character(unname(k))] # 특정 Cell에서 유의한 회수
@@ -961,76 +977,75 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
             })
           ), 4)
           # Cell, Geneset, OR
-
         }
-
       }
-      else{ # FREQUENCY
+      else { # FREQUENCY
 
-        tab <- matrix(0,nrow = length(genesets), ncol = length(Cells))
+        tab <- matrix(0, nrow = length(genesets), ncol = length(Cells))
 
-        for(i in 1:length(Cells)){
+        for (i in 1:length(Cells)) {
           thisCell <- Cells[i]
           thisCellIdx <- which(GroupInfo == thisCell)
-          v <- rep(0,length(genesets))
+          v <- rep(0, length(genesets))
 
           vs <- table(unlist(pres[thisCellIdx]))
           nvs <- as.numeric(names(vs))
           vs <- unname(vs)
           v[nvs] <- vs
 
-          tab[,i] = v/length(thisCellIdx)
+          tab[, i] <- v / length(thisCellIdx)
         }
         rownames(tab) <- names(genesets)
         colnames(tab) <- Cells
-        tab <- tab[-which(sapply(1:nrow(tab), function(i){sum(tab[i,])==0})),] # remove zero
+        tab <- tab[-which(sapply(1:nrow(tab), function(i) {
+          sum(tab[i, ]) == 0
+        })), ] # remove zero
 
         # select high in groups
 
         high <- c()
-        for(i in 1:ncol(tab)){
-          high <- c(high, names(tab[order(tab[,i], decreasing = TRUE)[1:TOPN],i]))
+        for (i in 1:ncol(tab)) {
+          high <- c(high, names(tab[order(tab[, i], decreasing = TRUE)[1:TOPN], i]))
         }
         high <- unique(high)
-        tab <- tab[high,]
-
+        tab <- tab[high, ]
       }
 
-      labels = rownames(tab)
-      #labels <- paste0('P',sapply(rownames(tab), function(i){which(names(genesets)==i)}, USE.NAMES = FALSE))
+      labels <- rownames(tab)
+      # labels <- paste0('P',sapply(rownames(tab), function(i){which(names(genesets)==i)}, USE.NAMES = FALSE))
 
-      #output$bitable <- renderDataTable(
-        #DT::datatable(
-          #data.frame(pathways = rownames(tab), index = labels),
-          #rownames = FALSE,
-          #options = list(
-            #autoWidth = TRUE,
-            #dom = "ltp",
-            #lengthChange = FALSE
-          #),
-          #selection = "none"
-        #)
-      #)
+      # output$bitable <- renderDataTable(
+      # DT::datatable(
+      # data.frame(pathways = rownames(tab), index = labels),
+      # rownames = FALSE,
+      # options = list(
+      # autoWidth = TRUE,
+      # dom = "ltp",
+      # lengthChange = FALSE
+      # ),
+      # selection = "none"
+      # )
+      # )
 
       model <- prcomp(tab, scale = TRUE)
       BiPlot <<-
         ggbiplot(
-        model,
-        labels = NULL,
-        labels.size = 0,
-        varname.size = biFont,
-        scale = 1,
-        var.scale = 1,
-        obs.scale = 1) +
-        xlim(c(-biX,biX)) +
-        ylim(c(-biY,biY)) +
+          model,
+          labels = NULL,
+          labels.size = 0,
+          varname.size = biFont,
+          scale = 1,
+          var.scale = 1,
+          obs.scale = 1
+        ) +
+        xlim(c(-biX, biX)) +
+        ylim(c(-biY, biY)) +
         geom_text_repel(
           label = labels,
           box.padding = 1,
           point.padding = 1
         )
-      return( BiPlot )
-
+      return(BiPlot)
     }
 
     ### CODES
@@ -1156,7 +1171,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           options = list(
             autoWidth = TRUE,
             dom = "ltp",
-            lengthChange = FALSE,
+            # lengthChange = FALSE,
             columnDefs = list(list(className = "dt-center", targets = 0:3))
           ),
           selection = "none",
@@ -1326,7 +1341,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
             options = list(
               autoWidth = TRUE,
               dom = "ltp",
-              lengthChange = FALSE,
+              # lengthChange = FALSE,
               columnDefs = list(list(className = "dt-center", targets = 0:4))
             ),
             selection = "none",
@@ -1369,15 +1384,15 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       output$CellPlot <- renderPlot(CellScatter)
 
       output$legenddn <- downloadHandler(
-        filename = 'mylegend.png',
-        content = function(file){
+        filename = "mylegend.png",
+        content = function(file) {
           png(file)
-          plot(NULL ,xaxt='n',yaxt='n',bty='n',ylab='',xlab='', xlim=0:1, ylim=0:1)
+          plot(NULL, xaxt = "n", yaxt = "n", bty = "n", ylab = "", xlab = "", xlim = 0:1, ylim = 0:1)
           legend(
-            'center',
-             legend = c('Sugar maple', 'White ash', 'Black walnut','Red oak', 'Eastern hemlock'),
-             pch = 16, pt.cex = 3, cex = 1.5, bty='n',
-             col = c('orange', 'red', 'green', 'blue', 'purple')
+            "center",
+            legend = c("Sugar maple", "White ash", "Black walnut", "Red oak", "Eastern hemlock"),
+            pch = 16, pt.cex = 3, cex = 1.5, bty = "n",
+            col = c("orange", "red", "green", "blue", "purple")
           )
           dev.off()
         }
@@ -1508,11 +1523,11 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           ggsave(file, plotImg, device = "png")
         }
       )
-      shinyjs::show('legenddn')
+      shinyjs::show("legenddn")
 
       output$legenddn <- downloadHandler(
-        filename = 'mylegend.png',
-        content = function(file){
+        filename = "mylegend.png",
+        content = function(file) {
           buildLegend(res, img = TRUE, name = file, GroupInfo = GroupInfo)
         }
       )
@@ -1523,8 +1538,10 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
     })
 
     observeEvent(input$refreshBiplot, {
-      if(input$refreshBiplot==0){return(NULL)}
-      cat('refreshed\n')
+      if (input$refreshBiplot == 0) {
+        return(NULL)
+      }
+      cat("refreshed\n")
       output$biplotdn <- downloadHandler(
         filename = function() {
           "mybiplot.png"
@@ -1541,7 +1558,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         return(NULL)
       }
 
-      shinyjs::show('legenddn')
+      shinyjs::show("legenddn")
       res <- c()
 
       for (i in 1:length(Cells)) {
@@ -1582,8 +1599,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       )
 
       output$legenddn <- downloadHandler(
-        filename = 'mylegend.png',
-        content = function(file){
+        filename = "mylegend.png",
+        content = function(file) {
           buildLegend(res, img = TRUE, name = file, GroupInfo = GroupInfo)
         }
       )
@@ -1596,7 +1613,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       if (input$colorbtn == 0) { # prevent default click state
         return(NULL)
       }
-      shinyjs::hide('legenddn')
+      shinyjs::hide("legenddn")
       UniqueCol <- briterhex(scales::hue_pal()(length(Cells)))
       names(UniqueCol) <- Cells
 
@@ -1643,7 +1660,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         return(NULL)
       }
 
-      shinyjs::show('legenddn')
+      shinyjs::show("legenddn")
       plotImg <- emphasize(TRUE, input$sortList, dfobj, Cells, pres, genesets)
       output$CellPlot <- renderPlot(plotImg)
 
@@ -1661,8 +1678,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       )
 
       output$legenddn <- downloadHandler(
-        filename = 'mylegend.png',
-        content = function(file){
+        filename = "mylegend.png",
+        content = function(file) {
           buildLegend(res, img = TRUE, name = file, GroupInfo = GroupInfo)
         }
       )
@@ -1673,7 +1690,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       if (input$Emphasize == 0) { # prevent default click state
         return(NULL)
       }
-      shinyjs::show('legenddn')
+      shinyjs::show("legenddn")
       plotImg <- emphasize(FALSE, input$sortList, dfobj, Cells, pres, genesets)
       output$CellPlot <- renderPlot(plotImg)
 
@@ -1691,8 +1708,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       )
 
       output$legenddn <- downloadHandler(
-        filename = 'mylegend.png',
-        content = function(file){
+        filename = "mylegend.png",
+        content = function(file) {
           buildLegend(res, img = TRUE, name = file, GroupInfo = GroupInfo)
         }
       )
@@ -1711,8 +1728,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       )
     })
 
-    observeEvent(input$freqbp,{
-      if(input$freqbp == 0){
+    observeEvent(input$freqbp, {
+      if (input$freqbp == 0) {
         return(NULL)
       }
 
@@ -1728,8 +1745,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       )
     })
 
-    observeEvent(input$orbp,{
-      if(input$orbp == 0){
+    observeEvent(input$orbp, {
+      if (input$orbp == 0) {
         return(NULL)
       }
 
@@ -1753,7 +1770,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
 
 buildLegend <- function(sortList, img = FALSE, name = NULL, GroupInfo) {
-
   colV <- getColv(GroupInfo)
 
   rlobj <- data.frame(stringsAsFactors = FALSE)
@@ -1767,13 +1783,13 @@ buildLegend <- function(sortList, img = FALSE, name = NULL, GroupInfo) {
 
   colnames(rlobj) <- c("Pathway", "Group")
 
-  if(img){
+  if (img) {
     png(name)
-    plot(NULL ,xaxt='n',yaxt='n',bty='n',ylab='',xlab='', xlim = 0:1, ylim = 0:1)
+    plot(NULL, xaxt = "n", yaxt = "n", bty = "n", ylab = "", xlab = "", xlim = 0:1, ylim = 0:1)
     legend(
-      'center',
+      "center",
       legend = rlobj$Pathway,
-      pch = 15, pt.cex = 2, cex = 1.2, bty='n',
+      pch = 15, pt.cex = 2, cex = 1.2, bty = "n",
       col = colV[rlobj$Group]
     )
     dev.off()
