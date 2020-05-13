@@ -10,12 +10,12 @@ DownloadData <- function() {
 
   filelist <- c(
     # Gene-sets
-    "c2v7.RData",
+    "c2v71.RData",
     "humanGO.RData",
     "humanGOBP.RData",
     "humanGOCC.RData",
     "humanGOMF.RData",
-    "keggv7.RData",
+    "humanKEGG.RData",
     "mouseGO.RData",
     "mouseGOBP.RData",
     "mouseGOCC.RData",
