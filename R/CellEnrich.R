@@ -54,8 +54,15 @@ getTU <- function(CountData, GroupInfo, plotOption) {
   return(dfobj)
 }
 
+gnm <- function(v){
+  out <- scMerge:::gammaNormMix(as.matrix(v), plot = FALSE)
+  mat_prob = matrix(out$probExpressed, nrow(v), ncol(v))
+  mat_discretised = 1*(mat_prob > 0.5)
+  return(mat_discretised)
+}
+
 findSigGenes <- function(v, method = "median", Name) {
-  if (!method %in% c("median", "mean", "zero", "GSVA")) stop("wrong method")
+  if (!method %in% c("median", "scMerge")) stop("wrong method")
   # it's already matrix
   # v <- as.matrix(v)
   cat("findSigGenes started\n")
@@ -64,62 +71,49 @@ findSigGenes <- function(v, method = "median", Name) {
 
   res <- list()
 
-  # 100 : 0.8 seconds
-  # 200 : 1.12
-  # 250 : 1.36. find 20000 gene will take less than minute
-
-  cat("scaling\n")
-
-  idx <- floor(nrow(v) / 250)
-  v2 <- c()
-  for (i in 1:idx) {
-    thisIdx <- 1:250 + 250 * (i - 1)
-    vv <- as.matrix(v[thisIdx, ]) + 1
-    meds <- apply(vv, 1, median)
-    vv <- as(log(sweep(vv, 1, meds, "/")), "dgCMatrix")
-    v2 <- rbind(v2, vv) # use rbind, not assign
-  }
-
-  if (nrow(v) %% 250 != 0) {
-    thisIdx <- (idx * 250 + 1):nrow(v)
-    vv <- as.matrix(v[thisIdx, ]) + 1
-    meds <- apply(vv, 1, median)
-    vv <- log(sweep(vv, 1, meds, "/"))
-    v2 <- rbind(v2, vv)
-  }
-
-  v <- v2
-  rm(v2)
-
-  cat("define Lists\n")
-
-  med2 <- function(v) {
-    v <- v[which(v > 0)]
-    return(median(v) / 2)
-  }
-
-  mean2 <- function(v) {
-    v <- v[which(v > 0)]
-    return(mean(v) / 2)
-  }
-
-  if (method == "median") {
-    for (i in 1:ncol(v)) {
-      # res[[i]] <- which(v[, i] > median(v[, i]))
-      res[[i]] <- which(v[, i] > med2(v[, i]))
-      # write(length(which(v[, i] > median(v[, i]))), file='med1.txt', append = TRUE)
-      # write(length(res[[i]]), file='med2.txt', append = TRUE)
+  if(method=='scMerge'){
+    v <- gnm(v)
+    for(i in 1:ncol(v)){
+      res[[i]] <- which(v[, i] > 0)
     }
+
   }
-  if (method == "zero") {
-    for (i in 1:ncol(v)) {
-      res[[i]] <- which(v[, i] > 1)
+  else{
+
+    cat("scaling\n")
+
+    idx <- floor(nrow(v) / 250)
+    v2 <- c()
+    for (i in 1:idx) {
+      thisIdx <- 1:250 + 250 * (i - 1)
+      vv <- as.matrix(v[thisIdx, ]) + 1
+      meds <- apply(vv, 1, median)
+      vv <- as(log(sweep(vv, 1, meds, "/")), "dgCMatrix")
+      v2 <- rbind(v2, vv) # use rbind, not assign
     }
-  }
-  if (method == "mean") {
-    for (i in 1:ncol(v)) {
-      # res[[i]] <- which(v[, i] > mean(v[, i]))
-      res[[i]] <- which(v[, i] > mean2(v[, i]))
+
+    if (nrow(v) %% 250 != 0) {
+      thisIdx <- (idx * 250 + 1):nrow(v)
+      vv <- as.matrix(v[thisIdx, ]) + 1
+      meds <- apply(vv, 1, median)
+      vv <- log(sweep(vv, 1, meds, "/"))
+      v2 <- rbind(v2, vv)
+    }
+
+    v <- v2
+    rm(v2)
+
+    cat("define Lists\n")
+
+    med2 <- function(v) {
+      v <- v[which(v > 0)]
+      return(median(v) / 2)
+    }
+
+    if (method == "median") {
+      for (i in 1:ncol(v)) {
+        res[[i]] <- which(v[, i] > med2(v[, i]))
+      }
     }
   }
 
@@ -525,7 +519,7 @@ CellEnrichUI <- function() {
                 material_radio_button(
                   input_id = "FCoption",
                   label = "Select FoldChange Option",
-                  choices = c("median", "mean", "zero"),
+                  choices = c("median", "scMerge"),
                   selected = "median",
                   color = "#1976d2"
                 ),
@@ -1205,7 +1199,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       colnames(presTab) <- colnames(CountData)
       rownames(presTab) <- names(genesets)
 
-
       pres <<- pres
 
       # pres : which gene-sets are significant for each cells.
@@ -1231,6 +1224,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       OR <<- getOddRatio(GroupInfo, pres, pres2, genesets, input$ORratio)
 
+      # OR -> # Group / PATHWAY / ODDRATIO
 
       # QVCUTOFF <- 4
 
@@ -1265,7 +1259,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           write.csv(presTab, file)
         }
       )
-
 
       CellPathwayDF <- CellPathwayDF %>%
         inner_join(OR)
@@ -1311,28 +1304,35 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         tcp <- tcp[tcd]
 
         genes <- names(tcp)
-        Count <- unname(tcp)
+        Count <- as.numeric(unname(tcp))
+
         additive <- data.frame(cbind(genes, Count, Group = thisCell))
+        additive$Count <- as.numeric(additive$Count)
+        additive <- additive %>% arrange(desc(Count))
+        additive <- additive[1:min(nrow(additive), 20),]
 
         # ------ first add
         if (ncol(CellMarkers) == 0) {
-          CellMarkers <- rbind(CellMarkers, data.frame(cbind(genes, Count, Group = thisCell), stringsAsFactors = FALSE))
+          CellMarkers <- additive
         }
         else {
           if (ncol(CellMarkers) == ncol(additive)) {
-            CellMarkers <- rbind(CellMarkers, data.frame(cbind(genes, Count, Group = thisCell), stringsAsFactors = FALSE))
+            CellMarkers <- rbind(CellMarkers, additive)
           }
         }
       }
 
       if (nrow(CellMarkers)) {
-        CellMarkers <- CellMarkers %>%
-          inner_join(s2) %>%
-          filter(Top < 10)
+
+        # CellMarkers <- Genes Count Group
+
+        #CellMarkers <- CellMarkers %>%
+          #inner_join(s2) %>%
+          #filter(Top < 10)
 
         CellMarkers$Group <- as.factor(CellMarkers$Group)
         CellMarkers$Count <- as.numeric(CellMarkers$Count)
-        CellMarkers$FDR <- as.numeric(CellMarkers$FDR)
+        # CellMarkers$FDR <- as.numeric(CellMarkers$FDR)
 
         output$markerL2 <- DT::renderDataTable(
           DT::datatable(CellMarkers,
@@ -1342,7 +1342,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
               autoWidth = TRUE,
               dom = "ltp",
               # lengthChange = FALSE,
-              columnDefs = list(list(className = "dt-center", targets = 0:4))
+              columnDefs = list(list(className = "dt-center", targets = 0:2))
             ),
             selection = "none",
           )
