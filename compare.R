@@ -115,75 +115,30 @@ genes <- c('GP9','GNG11','PF4','ITGA2B','PTCRA',
 
 # compareplot
 
-# cellenrich
-# fisher
-# intersect
+# CellEnrich
+# Fisher
+# intersect CellEnrich <-> Fisher
+# scMerge
+# intersect scMerge <-> Fisher
 
-# pbmc 0.3 mean
-
-int <- data.frame(
-  val = c(
-    25, 5, 3,
-    28, 15, 6,
-    12, 4, 1,
-    37, 10, 5,
-    35, 7, 1,
-    7, 25, 1,
-    1, 10, 1,
-    20, 25, 7,
-    2, 5, 0
-  ),
-  method = rep(c('CellEnrich', 'Fisher','Overlap')),
-  group = rep(c('B','CD14+ Mono','CD8 T','DC','FCGR3A+ Mono','Memory CD4 T','Naive CD4 T','NK','Platelet'), each = 3)
-)
-
-ggplot(int, aes(x = group, y= val, fill = method)) +
-  geom_bar(stat = 'identity', position = 'dodge') +
-  xlab('Group') +
-  ylab('Number of Pathway') +
-  ggtitle(label = 'pbmc OddRatio 0.3 mean')
-
-# pbmc 0.1 mean
+# pbmc 0.3 median 2
 
 int <- data.frame(
   val = c(
-    26, 5, 3,
-    42, 15, 8,
-    26, 4, 1,
-    48, 7, 4,
-    49, 7, 1,
+    24, 5, 2,
+    29, 15, 6,
+    6, 4, 1,
+    38, 7, 4,
+    35, 7, 0,
     8, 25, 1,
     1, 10, 1,
-    31, 25, 7,
-    15, 5, 1
+    13, 25, 3,
+    9, 5, 1
   ),
   method = rep(c('CellEnrich', 'Fisher','Overlap')),
   group = rep(c('B','CD14+ Mono','CD8 T','DC','FCGR3A+ Mono','Memory CD4 T','Naive CD4 T','NK','Platelet'), each = 3)
 )
 
-ggplot(int, aes(x = group, y= val, fill = method)) +
-  geom_bar(stat = 'identity', position = 'dodge') +
-  xlab('Group') +
-  ylab('Number of Pathway') +
-  ggtitle(label = 'pbmc OddRatio 0.1 mean')
-
-# pbmc 0.3 median
-
-int <- data.frame(
-  val = c(
-    25, 5, 3,
-    28, 15, 6,
-    12, 4, 1,
-    37, 7, 4,
-    35, 7, 1,
-    8, 25, 1,
-    1, 10, 1,
-    20, 25, 7,
-    11, 5, 1
-  ),
-  method = rep(c('CellEnrich', 'Fisher','Overlap')),
-  group = rep(c('B','CD14+ Mono','CD8 T','DC','FCGR3A+ Mono','Memory CD4 T','Naive CD4 T','NK','Platelet'), each = 3)
-)
 
 ggplot(int, aes(x = group, y= val, fill = method)) +
   geom_bar(stat = 'identity', position = 'dodge') +
@@ -203,7 +158,25 @@ int <- data.frame(
     9, 25, 1,
     1, 10, 1,
     31, 25, 7,
-    25, 25, 1
+    25, 5, 1
+  ),
+  method = rep(c('CellEnrich', 'Fisher','Overlap')),
+  group = rep(c('B','CD14+ Mono','CD8 T','DC','FCGR3A+ Mono','Memory CD4 T','Naive CD4 T','NK','Platelet'), each = 3)
+)
+
+# pbmc 0.1 median 2
+
+int <- data.frame(
+  val = c(
+    26, 5, 2,
+    42, 15, 7,
+    18, 4, 1,
+    47, 7, 4,
+    48, 7, 0,
+    11, 25, 1,
+    1, 10, 1,
+    23, 25, 3,
+    26, 5, 1
   ),
   method = rep(c('CellEnrich', 'Fisher','Overlap')),
   group = rep(c('B','CD14+ Mono','CD8 T','DC','FCGR3A+ Mono','Memory CD4 T','Naive CD4 T','NK','Platelet'), each = 3)
@@ -324,7 +297,10 @@ genes <- c('PTGS1','BTK','HPGDS','KIT','CPA3',
 genes <- c('ITGB2','C1QC','RUNX3','CD86','CCR1',
            'HCK','C1QB','LCP2','PIK3R5','BCL2A1',
            'C1QA','CSF1R','FPR3','DOCK2','LAPTM5',
-           'VSIG4','TYROBP','HCLS1','FCGR2A','PTPRC','ACP5','SDS','SIRPA','ALOX5AP','HLA-DRA','TNFRSF1B','WIPF1','VIM','CD74','LITAF')
+           'VSIG4','TYROBP','HCLS1','FCGR2A','PTPRC',
+           'ACP5','SDS','SIRPA','ALOX5AP','HLA-DRA',
+           'TNFRSF1B','WIPF1','VIM','CD74','LITAF')
+
 # quiescent_stellate
 genes <- c('WNT16','PTPRZ1','EDNRB','UCN2','GNG11',
            'ITGB3','IFI16','SOX2','HEPH','ZEB2',
@@ -377,6 +353,27 @@ int <- data.frame(
   group = rep(c('acinar', 'activated_stellate', 'alpha', 'beta', 'delta', 'ductal', 'endothelial', 'epsilon', 'gamma', 'macrophage', 'mast', 'quiescent_stellate','schwann'),each = 3)
 )
 
+# pancreas 0.3 mean - 2
+int <- data.frame(
+  val = c(
+    36, 10, 1,
+    63, 1, 0,
+    22, 4, 0,
+    27, 3, 1,
+    1, 5, 0,
+    53, 6, 0,
+    71, 3, 2,
+    30, 11, 0,
+    36, 10, 0,
+    78, 1, 1,
+    26, 10, 2,
+    71, 8, 2,
+    46, 7, 0
+  ),
+  method = rep(c('CellEnrich','Fisher','Overlap')),
+  group = rep(c('acinar', 'activated_stellate', 'alpha', 'beta', 'delta', 'ductal', 'endothelial', 'epsilon', 'gamma', 'macrophage', 'mast', 'quiescent_stellate','schwann'),each = 3)
+)
+
 ggplot(int, aes(x = group, y= val, fill = method)) +
   geom_bar(stat = 'identity', position = 'dodge') +
   xlab('Group') +
@@ -401,6 +398,29 @@ int <- data.frame(
    29, 10, 2,
    90, 8, 2,
    67, 7, 0
+  ),
+  method = rep(c('CellEnrich','Fisher','Overlap')),
+  group = rep(c('acinar', 'activated_stellate', 'alpha', 'beta', 'delta', 'ductal', 'endothelial', 'epsilon', 'gamma', 'macrophage', 'mast', 'quiescent_stellate','schwann'),each = 3)
+)
+
+
+# pancreas 0.3 median - 2
+
+int <- data.frame(
+  val = c(
+    47, 10, 1,
+    73, 1, 0,
+    22, 4, 0,
+    25, 3, 0,
+    1, 5, 0,
+    55, 6, 0,
+    74, 3, 3,
+    27, 11, 0,
+    33, 10, 0,
+    81, 1, 1,
+    22, 10, 2,
+    79, 8, 2,
+    47, 7, 0
   ),
   method = rep(c('CellEnrich','Fisher','Overlap')),
   group = rep(c('acinar', 'activated_stellate', 'alpha', 'beta', 'delta', 'ductal', 'endothelial', 'epsilon', 'gamma', 'macrophage', 'mast', 'quiescent_stellate','schwann'),each = 3)

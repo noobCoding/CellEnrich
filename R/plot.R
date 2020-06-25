@@ -78,8 +78,6 @@ Vibrio cholerae infection
 Viral myocarditis
 ')
 
-}
-
 scM01_CD8T <- myf('Natural killer cell mediated cytotoxicity
 Human immunodeficiency virus 1 infection
 Th1 and Th2 cell differentiation
@@ -265,7 +263,7 @@ Vasopressin-regulated water reabsorption
 Vibrio cholerae infection
 Viral carcinogenesis
 ')
-
+}
 
 scM <- data.frame()
 scM <- rbind(scM, data.frame(Pathway = scM01_B, Cell='B'))
