@@ -1,3 +1,6 @@
+library(dplyr)
+library(ggplot2)
+
 myf <- function(text){
   return(strsplit(text, '\n')[[1]])
 }
