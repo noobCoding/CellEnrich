@@ -54,15 +54,15 @@ getTU <- function(CountData, GroupInfo, plotOption) {
   return(dfobj)
 }
 
-gnm <- function(v){
+gnm <- function(v) {
   out <- scMerge:::gammaNormMix(as.matrix(v), plot = FALSE)
-  mat_prob = matrix(out$probExpressed, nrow(v), ncol(v))
-  mat_discretised = 1*(mat_prob > 0.5)
+  mat_prob <- matrix(out$probExpressed, nrow(v), ncol(v))
+  mat_discretised <- 1 * (mat_prob > 0.5)
   return(mat_discretised)
 }
 
 findSigGenes <- function(v, method = "median", Name) {
-  if (!method %in% c("median", "scMerge")) stop("wrong method")
+  if (!method %in% c("median", "scMerge", "Fisher")) stop("wrong method")
   # it's already matrix
   # v <- as.matrix(v)
   cat("findSigGenes started\n")
@@ -70,15 +70,17 @@ findSigGenes <- function(v, method = "median", Name) {
   rownames(v) <- colnames(v) <- NULL
 
   res <- list()
+  if (method == "Fisher") {
+    return(res)
+  }
 
-  if(method=='scMerge'){
+  if (method == "scMerge") {
     v <- gnm(v)
-    for(i in 1:ncol(v)){
+    for (i in 1:ncol(v)) {
       res[[i]] <- which(v[, i] > 0)
     }
-
   }
-  else{
+  else { # median
 
     cat("scaling\n")
 
@@ -211,10 +213,12 @@ buildCellPathwayDF <- function(GroupInfo, pres, genesets) {
     }
   }
 
-  colnames(CellPathwayDF) <- c("Cell", "Geneset", "Count")
 
+  colnames(CellPathwayDF) <- c("Cell", "Geneset", "Count")
   CellPathwayDF$Cell <- as.character(CellPathwayDF$Cell)
   CellPathwayDF$Geneset <- names(genesets)[as.numeric(as.character(CellPathwayDF$Geneset))]
+
+
   CellPathwayDF$Count <- as.numeric(as.character(CellPathwayDF$Count))
 
   # ------ add length column
@@ -237,28 +241,55 @@ pathwayPvalue <- function(GroupInfo, pres, pres2, genesets) {
   Cells <- unique(GroupInfo)
   total <- length(GroupInfo)
 
-  for (i in 1:length(Cells)) {
-    thisCell <- Cells[i]
-    thisCellIdx <- which(GroupInfo == thisCell)
+  if (length(pres) == length(Cells)) { # FISHER
+    for (i in 1:length(Cells)) {
+      thisCell <- Cells[i]
+      thisCellIdx <- which(GroupInfo == thisCell)
 
-    k <- length(thisCellIdx)
+      k <- length(thisCellIdx)
 
-    thisCellPathways <- table(unlist(pres[thisCellIdx]))
-    if (nrow(thisCellPathways) < 1) {
-      next
+      thisCellPathways <- table(unlist(pres[thisCellIdx]))
+      if (nrow(thisCellPathways) < 1) {
+        next
+      }
+      pv <- c()
+
+      for (j in 1:length(thisCellPathways)) {
+        thisPathway <- names(thisCellPathways)[j]
+        q <- unname(thisCellPathways)[j] # selected white ball
+        m <- pres2[thisPathway] # total white ball
+        pv[j] <- 1 - phyper(q - 1, m, total - m, k)
+      }
+      names(pv) <- names(thisCellPathways)
+
+      res <- rbind(res, cbind(thisCell, names(pv), unname(pv)))
     }
-    pv <- c()
-
-    for (j in 1:length(thisCellPathways)) {
-      thisPathway <- names(thisCellPathways)[j]
-      q <- unname(thisCellPathways)[j] # selected white ball
-      m <- pres2[names(genesets)[as.numeric(thisPathway)]] # total white ball
-      pv[j] <- 1 - phyper(q - 1, m, total - m, k)
-    }
-    names(pv) <- names(genesets)[as.numeric(names(thisCellPathways))]
-
-    res <- rbind(res, cbind(thisCell, names(pv), unname(pv)))
   }
+  else {
+    for (i in 1:length(Cells)) {
+      thisCell <- Cells[i]
+      thisCellIdx <- which(GroupInfo == thisCell)
+
+      k <- length(thisCellIdx)
+
+      thisCellPathways <- table(unlist(pres[thisCellIdx]))
+      if (nrow(thisCellPathways) < 1) {
+        next
+      }
+      pv <- c()
+
+      for (j in 1:length(thisCellPathways)) {
+        thisPathway <- names(thisCellPathways)[j]
+        q <- unname(thisCellPathways)[j] # selected white ball
+        m <- pres2[names(genesets)[as.numeric(thisPathway)]] # total white ball
+        pv[j] <- 1 - phyper(q - 1, m, total - m, k)
+      }
+      names(pv) <- names(genesets)[as.numeric(names(thisCellPathways))]
+
+      res <- rbind(res, cbind(thisCell, names(pv), unname(pv)))
+    }
+  }
+
   res <- data.frame(res, stringsAsFactors = FALSE)
   colnames(res) <- c("Cell", "Geneset", "Qvalue")
 
@@ -287,6 +318,7 @@ getOddRatio <- function(GroupInfo, pres, pres2, genesets, ratio) {
   res <- data.frame(stringsAsFactors = FALSE)
   Cells <- unique(GroupInfo)
   total <- length(GroupInfo)
+
   for (i in 1:length(Cells)) {
     thisCell <- Cells[i]
     thisCellIdx <- which(GroupInfo == thisCell)
@@ -320,6 +352,8 @@ getOddRatio <- function(GroupInfo, pres, pres2, genesets, ratio) {
       )
     )
   }
+
+
 
   colnames(res) <- c("Cell", "Geneset", "OddRatio")
 
@@ -439,7 +473,8 @@ groupTable <- function(pres, genesets, dfobj, pres2) {
   cat("groupTable\n")
   # for pres2
   genesetIdx <- sapply(names(pres2), function(i) {
-    which(i == names(genesets))
+    v <- which(i == names(genesets))
+    return(v[1])
   }, USE.NAMES = FALSE)
   pres2Idx <- pres2
   names(pres2Idx) <- genesetIdx
@@ -464,6 +499,8 @@ groupTable <- function(pres, genesets, dfobj, pres2) {
       # n <- tot - m # total black ball
       round(1 - phyper(q - 1, m, tot - m, k), 4)
     })
+
+
     gt <- gt[which(gt < 0.25)] # pvalue 0.25
     if (length(gt)) {
       res <- rbind(res, cbind(groups[i], names(gt), unname(gt)))
@@ -487,7 +524,7 @@ CellEnrichUI <- function() {
   require(highcharter)
   material_page(
     shinyjs::useShinyjs(),
-
+    shinyFeedback::useShinyFeedback(feedback = TRUE, toastr = TRUE),
     # dynamic datatable full width
 
     tags$head(tags$style(type = "text/css", ".display.dataTable.no-footer{width : 100% !important;}")),
@@ -519,7 +556,7 @@ CellEnrichUI <- function() {
                 material_radio_button(
                   input_id = "FCoption",
                   label = "Select FoldChange Option",
-                  choices = c("median", "scMerge"),
+                  choices = c("median", "scMerge", "Fisher"),
                   selected = "median",
                   color = "#1976d2"
                 ),
@@ -590,7 +627,7 @@ CellEnrichUI <- function() {
                     "Mouse-GO-CC",
                     "Mouse-GO-MF"
                   ),
-                  selected = NULL
+                  selected = "Human-KEGG"
                 )
               ),
               width = 4
@@ -719,7 +756,7 @@ CellEnrichUI <- function() {
             shiny::downloadButton("tbldn", "Save", icon = "save", style = "background-color : #616161 !important")
           ),
         ),
-        uiOutput("dynamicTable"),
+        shiny::uiOutput("dynamicTable"),
         depth = 3
       ),
       style = "margin : 1em; border : solid 0.5em #1976d2"
@@ -771,6 +808,7 @@ emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres, genesets) {
         next
       }
       rn <- thisCellsIdx
+
       res <- c()
       for (j in 1:length(rn)) {
         if (thisGeneset %in% pres[[rn[j]]]) {
@@ -798,7 +836,7 @@ emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres, genesets) {
   colnames(dfobj_new) <- c("x", "y", "col")
 
   # define ggobj2 element
-
+  cat("uniquecol")
   UniqueCol <- briterhex(scales::hue_pal()(length(Cells)))
   names(UniqueCol) <- Cells
 
@@ -904,6 +942,7 @@ solvedButton <- function(inputId, label, style = NULL, onClick = NULL, ...) {
 #' @import Rtsne
 #' @import dplyr
 #' @rawNamespace import(shiny, except = dataTableOutput)
+#' @import shiny
 #' @import shinymaterial
 #' @import ggplot2
 #' @import uwot
@@ -916,6 +955,7 @@ solvedButton <- function(inputId, label, style = NULL, onClick = NULL, ...) {
 #' @import sortable
 #' @import scran
 #' @import ggrepel
+#' @import shinyFeedback
 #'
 #' @export
 
@@ -1056,6 +1096,23 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
     observeEvent(input$StartCellEnrich, {
       pt <- proc.time()
 
+      shinyFeedback::showToast(
+        type = "error",
+        message = "Emphasize / Biplot will not be available with Fisher",
+        .options = list(timeOut = 10000)
+      )
+
+      if (input$FCoption == "Fisher") {
+        shinyjs::runjs('$("#colorbtn").attr("disabled",true)')
+        shinyjs::runjs('$("#freqbtn").attr("disabled",true)')
+        shinyjs::runjs('$("#sigbtn").attr("disabled",true)')
+        shinyjs::runjs('$("#Emphasize").attr("disabled",true)')
+        shinyjs::runjs('$("#freqbp").attr("disabled",true)')
+        shinyjs::runjs('$("#orbp").attr("disabled",true)')
+      }
+
+
+
       if (is.null(genesets)) {
         if (input$genesetOption == "User-Geneset") {
           shiny::showNotification("Geneset not given ...", type = "error", duration = 10)
@@ -1133,6 +1190,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       cat("running gc\n")
       gc()
 
+
       # ------ Find Significant Genes with Fold Change
       if (input$FCoption != "GSVA") {
         # ------ need to build GSVA CASE
@@ -1144,7 +1202,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       cat("s Finished\n")
 
       # ------ Find Significant Genes with findMarkers
-      require(dplyr)
+
       s2 <- findSigGenesGroup(CountData, GroupInfo, q0, TopCutoff = 5)
 
       rc <- rownames(CountData)
@@ -1171,32 +1229,96 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           selection = "none",
         )
       )
+      tmp_df <- data.frame()
+
+      cat("biobj \n")
+      biobj <- getbiobj(genes, genesets)
+
+      if (length(s) == 0) {
+        tmp_cells <- unique(s2$Group)
+        tmp_pres <- matrix(0, length(genesets), length(tmp_cells))
+        tG <- table(GroupInfo)
+        # define s
+        for (i in 1:length(tmp_cells)) {
+          tmp_genes <- s2 %>%
+            filter(Group == tmp_cells[i]) %>%
+            dplyr::select(genes) %>%
+            unlist() %>%
+            unname()
+
+          tmp_pv <- getHyperPvalue(tmp_genes, genesets, A, lgs, q0, biobj)
+          sigidx <- which(p.adjust(tmp_pv, "fdr") < q0)
+          tmp_pres[sigidx, i] <- unname(tG[tmp_cells[i]])
+          tmp_pv[which(tmp_pv < 1e-20)] <- 1e-20
+
+          tmp_genes <- sapply(tmp_genes, function(i) {
+            which(rc == i)
+          }, USE.NAMES = FALSE)
+
+          s[[i]] <- tmp_genes
+
+          names(s)[i] <- tmp_cells[i]
+        }
+
+        colnames(tmp_pres) <- tmp_cells
+        rownames(tmp_pres) <- names(genesets)
+
+        # fisher ODD RATIO
+        ors <- rowSums(tmp_pres) / sum(tG)
+        ors[which(ors != 0)] <- 1 / ors[which(ors != 0)]
+
+        for (i in 1:ncol(tmp_pres)) {
+          pathways <- names(which(tmp_pres[, i] != 0))
+          tmp_df <- rbind(
+            tmp_df,
+            data.frame(
+              cell = colnames(tmp_pres)[i],
+              pathway = pathways,
+              oddratio = unname(ors[pathways])
+            )
+          )
+        }
+      }
 
       # ------ Hypergeometric pvalue calculation
       lgs <- getlgs(genesets)
       lens <- length(s)
       lens100 <- round(lens / 100)
 
-      biobj <- getbiobj(genes, genesets)
-
       pres <- list()
 
+      cat("pres declare\n")
       presTab <- c()
 
-      w$start()
-      for (i in 1:lens) {
-        if (i %% lens100 == 0) w$inc(1)
-        prespv <- getHyperPvalue(rc[s[[i]]], genesets, A, lgs, q0, biobj)
+      if (length(s) >= 100) {
+        w$start()
+        for (i in 1:lens) {
+          if (i %% lens100 == 0) w$inc(1)
+          prespv <- getHyperPvalue(rc[s[[i]]], genesets, A, lgs, q0, biobj)
 
-        pres[[i]] <- which(p.adjust(prespv, "fdr") < q0)
+          pres[[i]] <- which(p.adjust(prespv, "fdr") < q0)
 
-        prespv[which(prespv < 1e-20)] <- 1e-20
+          prespv[which(prespv < 1e-20)] <- 1e-20
 
-        presTab <- cbind(presTab, -log10(prespv))
+          presTab <- cbind(presTab, -log10(prespv))
+        }
+        w$close()
+        colnames(presTab) <- colnames(CountData)
       }
-      w$close()
+      else {
+        for (i in 1:lens) {
+          prespv <- getHyperPvalue(rc[s[[i]]], genesets, A, lgs, q0, biobj)
 
-      colnames(presTab) <- colnames(CountData)
+          pres[[i]] <- which(p.adjust(prespv, "fdr") < q0)
+
+          prespv[which(prespv < 1e-20)] <- 1e-20
+
+          presTab <- cbind(presTab, -log10(prespv))
+        }
+        colnames(presTab) <- names(s)
+      }
+
+      cat("pres defined\n")
       rownames(presTab) <- names(genesets)
 
       pres <<- pres
@@ -1214,15 +1336,23 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       cat("pres2\n")
 
       pres2 <- sort(table(unlist(pres)), decreasing = T)
-      names(pres2) <- names(genesets)[as.numeric(names(pres2))]
+      if (length(s) != 0) {
+        names(pres2) <- names(genesets)[as.numeric(names(pres2))]
+      }
       pres2 <<- pres2
 
       # 2625*4
       PP <- pathwayPvalue(GroupInfo, pres, pres2, genesets) # qvalue cutoff removed
-
-      # OR <- getOddRatio(GroupInfo, pres, pres2, genesets, 0.1)
-
-      OR <<- getOddRatio(GroupInfo, pres, pres2, genesets, input$ORratio)
+      if (nrow(tmp_df) > 0) {
+        OR <- tmp_df
+        colnames(OR) <- c("Cell", "Geneset", "OddRatio")
+        OR <- OR %>% filter(OddRatio > 1)
+        OR <<- OR
+      }
+      else {
+        # OR <- getOddRatio(GroupInfo, pres, pres2, genesets, 0.1)
+        OR <<- getOddRatio(GroupInfo, pres, pres2, genesets, input$ORratio)
+      }
 
       # OR -> # Group / PATHWAY / ODDRATIO
 
@@ -1231,19 +1361,17 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       # group / pathway /
       CellPathwayDFP <- CellPathwayDF %>%
         inner_join(PP) %>%
-        select(Cell, Geneset, Qvalue) %>%
+        dplyr::select(Cell, Geneset, Qvalue) %>%
         filter(Qvalue > 4)
 
-      ggs <- unique(CellPathwayDFP %>% select(Geneset))[, 1]
-      ces <- sort(unique(CellPathwayDFP %>% select(Cell))[, 1])
+      ggs <- unique(CellPathwayDFP %>% dplyr::select(Geneset))[, 1]
+      ces <- sort(unique(CellPathwayDFP %>% dplyr::select(Cell))[, 1])
 
       nr <- length(ggs) # nrow
       nc <- length(ces) # ncol
 
       output$tbldn <- downloadHandler(
-        filename = function() {
-          "mytable.csv"
-        },
+        filename = "mytable.csv",
         content = function(file) {
           # pathway - cell ? -log pvalue
           # outputFile = matrix(0,nr,nc)
@@ -1275,14 +1403,14 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         thisCell <- Cells[i]
         thisCellPathways <- CellPathwayDF %>%
           filter(Cell == thisCell) %>%
-          select(Geneset)
+          dplyr::select(Geneset)
 
         # s2 <- findSigGenesGroup(CountData, GroupInfo, q0, TopCutoff = 5)
         # find markers
 
         thisCellDEs <- s2 %>%
           filter(Group == thisCell) %>%
-          select(genes)
+          dplyr::select(genes)
 
         tcd <- thisCellDEs[, 1] # ThisCellDES
         tcp <- thisCellPathways[, 1] # ThisCellPathways
@@ -1309,7 +1437,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         additive <- data.frame(cbind(genes, Count, Group = thisCell))
         additive$Count <- as.numeric(additive$Count)
         additive <- additive %>% arrange(desc(Count))
-        additive <- additive[1:min(nrow(additive), 20),]
+        additive <- additive[1:min(nrow(additive), 20), ]
 
         # ------ first add
         if (ncol(CellMarkers) == 0) {
@@ -1326,9 +1454,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
         # CellMarkers <- Genes Count Group
 
-        #CellMarkers <- CellMarkers %>%
-          #inner_join(s2) %>%
-          #filter(Top < 10)
+        # CellMarkers <- CellMarkers %>%
+        # inner_join(s2) %>%
+        # filter(Top < 10)
 
         CellMarkers$Group <- as.factor(CellMarkers$Group)
         CellMarkers$Count <- as.numeric(CellMarkers$Count)
@@ -1399,9 +1527,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       )
 
       output$imgdn <- downloadHandler(
-        filename = function() {
-          "myfigure.png"
-        },
+        filename = "myfigure.png",
         content = function(file) {
           ggsave(file, CellScatter, device = "png")
         }
@@ -1411,17 +1537,16 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       # generate dynamic table
 
+      cat("dynT\n")
+
       output$dynamicTable <- renderUI({
         numTabs <- length(Cells)
         CardColors <- briterhex(scales::hue_pal()(length(Cells)))
-
         options(useFancyQuotes = FALSE)
-
         tagList(
           material_row(
             lapply(1:numTabs, function(i) {
               item <- paste0("$('#dynamicGroupTable", i, " .selected td')[0].innerText")
-
               material_column(
                 # solved material card
                 shiny::tags$div(
@@ -1459,24 +1584,51 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       # ------ fill dynamic table
       # ordered by Count , not length;
 
-      for (i in 1:length(Cells)) {
-        t <- paste0(
-          "output$dynamicGroupTable", i, " = DT::renderDataTable(",
-          "DT::datatable(",
-          "CellPathwayDF[which(CellPathwayDF[,1]==Cells[", i, "]),-1],", # removed group column
-          "options = list(",
-          "dom = 'ltp',",
-          "scroller = TRUE,",
-          "scrollX = TRUE,",
-          "autoWidth = TRUE,",
-          "lengthChange = FALSE,",
-          "order = list(list(3,'desc'))", # odd ratio based
-          "),",
-          "rownames = FALSE,",
-          "selection = 'single')",
-          ")"
-        )
-        eval(parse(text = t))
+      if (input$FCoption == "Fisher") {
+        cat("FISHER\n")
+        for (i in 1:length(Cells)) {
+          t <- paste0(
+            "output$dynamicGroupTable", i, " = DT::renderDataTable(",
+            "DT::datatable(",
+            "CellPathwayDF[which(CellPathwayDF[,1]==Cells[", i, "]),-1],", # removed group column
+            # "OR[which(OR[,1]==Cells[", i, "]),-1],", # removed group column
+            "options = list(",
+            "dom = 'ltp',",
+            "scroller = TRUE,",
+            "scrollX = TRUE,",
+            "autoWidth = TRUE,",
+            "lengthChange = FALSE,",
+            "order = list(list(3,'desc'))", # odd ratio based
+            "),",
+            "rownames = FALSE,",
+            "selection = 'single')",
+            ")"
+          )
+          eval(parse(text = t))
+        }
+      }
+      else {
+        cat("NOT FISHER\n")
+
+        for (i in 1:length(Cells)) {
+          t <- paste0(
+            "output$dynamicGroupTable", i, " = DT::renderDataTable(",
+            "DT::datatable(",
+            "CellPathwayDF[which(CellPathwayDF[,1]==Cells[", i, "]),-1],", # removed group column
+            "options = list(",
+            "dom = 'ltp',",
+            "scroller = TRUE,",
+            "scrollX = TRUE,",
+            "autoWidth = TRUE,",
+            "lengthChange = FALSE,",
+            "order = list(list(3,'desc'))", # odd ratio based
+            "),",
+            "rownames = FALSE,",
+            "selection = 'single')",
+            ")"
+          )
+          eval(parse(text = t))
+        }
       }
       # StartEnrich Finished
 

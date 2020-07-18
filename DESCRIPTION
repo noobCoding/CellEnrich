@@ -19,6 +19,7 @@ Imports:
     shinyCyJS,
     shiny,
     shinyjs,
+    shinyFeedback,
     sortable,
     DT,
     dplyr,
