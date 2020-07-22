@@ -204,20 +204,30 @@ buildCellPathwayDF <- function(GroupInfo, pres, genesets) {
   Cells <- unique(GroupInfo)
   CellPathwayDF <- data.frame(stringsAsFactors = FALSE)
 
-  for (i in 1:length(Cells)) {
-    thisCell <- Cells[i]
-    tt <- table(unlist(pres[which(thisCell == GroupInfo)]))
+  if(length(pres) == length(Cells)){ # FISHER
+    for (i in 1:length(Cells)) {
+      thisCell <- Cells[i]
+      tt <- table(pres[[i]])
 
-    if (nrow(tt)) {
-      CellPathwayDF <- rbind(CellPathwayDF, cbind(thisCell, names(tt), unname(tt)))
+      if (length(tt)) {
+        CellPathwayDF <- rbind(CellPathwayDF, cbind(thisCell, names(tt), unname(tt)))
+      }
     }
   }
+  else{
+    for (i in 1:length(Cells)) {
+      thisCell <- Cells[i]
+      tt <- table(unlist(pres[which(thisCell == GroupInfo)]))
 
+      if (nrow(tt)) {
+        CellPathwayDF <- rbind(CellPathwayDF, cbind(thisCell, names(tt), unname(tt)))
+      }
+    }
+  }
 
   colnames(CellPathwayDF) <- c("Cell", "Geneset", "Count")
   CellPathwayDF$Cell <- as.character(CellPathwayDF$Cell)
   CellPathwayDF$Geneset <- names(genesets)[as.numeric(as.character(CellPathwayDF$Geneset))]
-
 
   CellPathwayDF$Count <- as.numeric(as.character(CellPathwayDF$Count))
 
@@ -229,8 +239,10 @@ buildCellPathwayDF <- function(GroupInfo, pres, genesets) {
 
   # ------ select genesets with count > 1
 
-  CellPathwayDF <- CellPathwayDF %>%
-    dplyr::filter(Count > 1)
+  if(length(pres) != length(Cells)){
+    CellPathwayDF <- CellPathwayDF %>%
+      dplyr::filter(Count > 1)
+  }
 
   return(CellPathwayDF)
 }
@@ -1096,12 +1108,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
     observeEvent(input$StartCellEnrich, {
       pt <- proc.time()
 
-      shinyFeedback::showToast(
-        type = "error",
-        message = "Emphasize / Biplot will not be available with Fisher",
-        .options = list(timeOut = 10000)
-      )
-
       if (input$FCoption == "Fisher") {
         shinyjs::runjs('$("#colorbtn").attr("disabled",true)')
         shinyjs::runjs('$("#freqbtn").attr("disabled",true)')
@@ -1109,6 +1115,12 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         shinyjs::runjs('$("#Emphasize").attr("disabled",true)')
         shinyjs::runjs('$("#freqbp").attr("disabled",true)')
         shinyjs::runjs('$("#orbp").attr("disabled",true)')
+
+        shinyFeedback::showToast(
+          type = "error",
+          message = "Emphasize / Biplot will not be available with Fisher",
+          .options = list(timeOut = 10000)
+        )
       }
 
 
@@ -1329,6 +1341,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       CellPathwayDF <- buildCellPathwayDF(GroupInfo, pres, genesets)
 
+
       # group / pathway count
 
       # pres2 : for each gene-sets, how many cells are significant that gene-sets.
@@ -1343,6 +1356,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       # 2625*4
       PP <- pathwayPvalue(GroupInfo, pres, pres2, genesets) # qvalue cutoff removed
+
       if (nrow(tmp_df) > 0) {
         OR <- tmp_df
         colnames(OR) <- c("Cell", "Geneset", "OddRatio")
@@ -1392,6 +1406,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         inner_join(OR)
 
       CellPathwayDF <<- CellPathwayDF
+
 
       # l2
       CellMarkers <- data.frame()
@@ -1584,52 +1599,26 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       # ------ fill dynamic table
       # ordered by Count , not length;
 
-      if (input$FCoption == "Fisher") {
-        cat("FISHER\n")
-        for (i in 1:length(Cells)) {
-          t <- paste0(
-            "output$dynamicGroupTable", i, " = DT::renderDataTable(",
-            "DT::datatable(",
-            "CellPathwayDF[which(CellPathwayDF[,1]==Cells[", i, "]),-1],", # removed group column
-            # "OR[which(OR[,1]==Cells[", i, "]),-1],", # removed group column
-            "options = list(",
-            "dom = 'ltp',",
-            "scroller = TRUE,",
-            "scrollX = TRUE,",
-            "autoWidth = TRUE,",
-            "lengthChange = FALSE,",
-            "order = list(list(3,'desc'))", # odd ratio based
-            "),",
-            "rownames = FALSE,",
-            "selection = 'single')",
-            ")"
-          )
-          eval(parse(text = t))
-        }
+     for (i in 1:length(Cells)) {
+        t <- paste0(
+          "output$dynamicGroupTable", i, " = DT::renderDataTable(",
+          "DT::datatable(",
+          "CellPathwayDF[which(CellPathwayDF[,1]==Cells[", i, "]),-1],", # removed group column
+          "options = list(",
+          "dom = 'ltp',",
+          "scroller = TRUE,",
+          "scrollX = TRUE,",
+          "autoWidth = TRUE,",
+          "lengthChange = FALSE,",
+          "order = list(list(3,'desc'))", # odd ratio based
+          "),",
+          "rownames = FALSE,",
+          "selection = 'single')",
+          ")"
+        )
+        eval(parse(text = t))
       }
-      else {
-        cat("NOT FISHER\n")
 
-        for (i in 1:length(Cells)) {
-          t <- paste0(
-            "output$dynamicGroupTable", i, " = DT::renderDataTable(",
-            "DT::datatable(",
-            "CellPathwayDF[which(CellPathwayDF[,1]==Cells[", i, "]),-1],", # removed group column
-            "options = list(",
-            "dom = 'ltp',",
-            "scroller = TRUE,",
-            "scrollX = TRUE,",
-            "autoWidth = TRUE,",
-            "lengthChange = FALSE,",
-            "order = list(list(3,'desc'))", # odd ratio based
-            "),",
-            "rownames = FALSE,",
-            "selection = 'single')",
-            ")"
-          )
-          eval(parse(text = t))
-        }
-      }
       # StartEnrich Finished
 
       print(proc.time() - pt)
