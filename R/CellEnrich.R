@@ -974,6 +974,11 @@ solvedButton <- function(inputId, label, style = NULL, onClick = NULL, ...) {
 CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
   require(dplyr)
   require(shiny)
+
+  if(!require(ggbiplot)){
+    remotes::install_github('vqv/ggbiplot')
+  }
+
   require(ggbiplot)
   require(ggrepel)
   options(useFancyQuotes = FALSE)

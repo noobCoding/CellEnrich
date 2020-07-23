@@ -6,3 +6,6 @@ inst/doc
 pancreas.R
 pancreasClustInfo.RData
 pancreasData.RData
+mixture.csv
+tmp.csv
+TIDYCELLENRICH.csv
