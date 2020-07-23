@@ -15,11 +15,30 @@ remotes::install_github('unistbig/cellenrich')
 library(CellEnrich)
 ```
 
-## :ship: Example data ( Download them to your working directory )
+## :ship: Example run with PBMC data 
 
-* [PBMC](pbmcData.RData) 
-* and [information](pbmcClustinfo.RData) 
-* with [HumanKEGG Pathways](humanKEGG.RData)
+```R
+# download minimal data to working directory
+
+download.file('https://github.com/jhk0530/CellEnrich/blob/master/pbmcData.RData?raw=true','pbmcData.RData', mode = 'wb')
+download.file('https://github.com/jhk0530/CellEnrich/blob/master/pbmcClustinfo.RData?raw=true','pbmcClustinfo.RData', mode = 'wb')
+download.file('https://github.com/jhk0530/CellEnrich/blob/master/humanKEGG.RData?raw=true', 'humanKEGG.RData', mode = 'wb')
+
+# load library and data
+
+library(CellEnrich)
+load("pbmcClustInfo.RData")
+load("pbmcData.RData")
+
+
+CountData <- pbmcData
+GroupInfo <- pbmcClustInfo
+rm(pbmcData, pbmcClustInfo) # remove .
+
+# Run cellenrich
+CellEnrich(CountData, GroupInfo)
+
+```
 
 ## :paperclip: Dependency
 
