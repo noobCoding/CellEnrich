@@ -31,7 +31,8 @@ Imports:
     shinyjs,
     shinymaterial,
     sortable,
-    SingleCellExperiment
+    SingleCellExperiment,
+    waiter
 Suggests: 
     testthat (>= 2.1.0),
     rmarkdown,
