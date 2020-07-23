@@ -7,7 +7,11 @@ Online manual is available in [here](https://jhk0530.github.io/CellEnrich/)
 ## :wrench: Install
 
 ```R
-devtools::install_github('unistbig/cellenrich')
+if(!require(remotes)){
+  install.packages('remotes') # install devtools if not installed.
+}
+remotes::install_github('vqv/ggbiplot')
+remotes::install_github('unistbig/cellenrich')
 library(CellEnrich)
 ```
 ## :paperclip: Dependency
@@ -34,3 +38,4 @@ library(CellEnrich)
 
 ## :memo: License
 This project is [MIT](https://opensource.org/licenses/MIT) licensed
+
