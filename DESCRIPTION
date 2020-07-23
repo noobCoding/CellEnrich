@@ -15,24 +15,23 @@ Depends:
     R (>= 3.5.0)
 biocViews:
 Imports:
-    SingleCellExperiment,
-    Rtsne,
-    shinyCyJS,
-    shiny,
-    shinyjs,
-    shinyFeedback,
-    sortable,
-    DT,
     dplyr,
+    DT,
+    ggbiplot,
     ggplot2,
-    Seurat,
+    ggrepel,
+    highcharter,
     htmltools,
     magrittr,
+    Rtsne,
+    scMerge,
+    Seurat,
+    shiny,
+    shinyFeedback,
+    shinyjs,
     shinymaterial,
-    highcharter,
-    ggbiplot,
-    ggrepel,
-    scMerge
+    sortable,
+    SingleCellExperiment
 Suggests: 
     testthat (>= 2.1.0),
     rmarkdown,
