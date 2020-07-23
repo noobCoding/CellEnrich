@@ -61,8 +61,8 @@ gnm <- function(v) {
   return(mat_discretised)
 }
 
-findSigGenes <- function(v, method = "median", Name) {
-  if (!method %in% c("median", "scMerge", "Fisher")) stop("wrong method")
+findSigGenes <- function(v, method = "CellEnrich - median", Name) {
+  if (!method %in% c("CellEnrich - median", "CellEnrich - mixture", "Fisher")) stop("wrong method")
   # it's already matrix
   # v <- as.matrix(v)
   cat("findSigGenes started\n")
@@ -74,7 +74,7 @@ findSigGenes <- function(v, method = "median", Name) {
     return(res)
   }
 
-  if (method == "scMerge") {
+  if (method == "CellEnrich - mixture") {
     v <- gnm(v)
     for (i in 1:ncol(v)) {
       res[[i]] <- which(v[, i] > 0)
@@ -112,7 +112,7 @@ findSigGenes <- function(v, method = "median", Name) {
       return(median(v) / 2)
     }
 
-    if (method == "median") {
+    if (method == "CellEnrich - median") {
       for (i in 1:ncol(v)) {
         res[[i]] <- which(v[, i] > med2(v[, i]))
       }
@@ -438,7 +438,7 @@ getCellHistogram <- function(GroupInfo, colV) {
 
   hc <- highchart() %>%
     hc_chart(type = "column", legend = list(enabled = FALSE)) %>%
-    hc_title(text = "Groups") %>%
+    hc_title(text = "Cell Group distribution") %>%
     hc_xAxis(categories = x) %>%
     hc_plotOptions(grouping = FALSE) %>%
     hc_add_series(data = y, colorByPoint = TRUE, showInLegend = FALSE, name = "Count") %>%
@@ -567,14 +567,14 @@ CellEnrichUI <- function() {
               material_card(
                 material_radio_button(
                   input_id = "FCoption",
-                  label = "Select FoldChange Option",
-                  choices = c("median", "scMerge", "Fisher"),
-                  selected = "median",
+                  label = "Methods",
+                  choices = c("CellEnrich - median", "CellEnrich - mixture", "Fisher"),
+                  selected = "CellEnrich - median",
                   color = "#1976d2"
                 ),
                 material_radio_button(
                   input_id = "plotOption",
-                  label = "Select Plot Option",
+                  label = "Scatter Plot",
                   choices = c("t-SNE", "U-MAP"),
                   selected = "t-SNE",
                   color = "#1976d2"
@@ -602,7 +602,7 @@ CellEnrichUI <- function() {
                 ),
                 material_number_box(
                   input_id = "ORratio",
-                  label = "OddRatio Frequency",
+                  label = "Pathway Frequency",
                   min_value = 0,
                   max_value = 0.5,
                   initial_value = 0.1,
@@ -623,7 +623,7 @@ CellEnrichUI <- function() {
               material_card(
                 material_radio_button(
                   input_id = "genesetOption",
-                  label = "Select Gene-set",
+                  label = "Gene-sets",
                   color = "#1976d2",
                   choices = c(
                     "User-Geneset",
@@ -662,7 +662,7 @@ CellEnrichUI <- function() {
     material_row(
       material_column(
         material_card(
-          title = "Group plot / Distribution",
+          title = "",
           depth = 3,
           material_row(
             material_column(
@@ -675,19 +675,20 @@ CellEnrichUI <- function() {
             )
           ),
           material_row(
-            shiny::downloadButton("imgdn", "Save Scatter Plot", icon = "save", style = "background-color : #616161 !important")
+            p('Coloring by'),
+            material_button("colorbtn", "Cell groups", icon = "color_lens", color = "blue darken-2"),
+            material_button("freqbtn", "Frequency", icon = "grain", color = "blue darken-2"),
+            material_button("sigbtn", "Significance", icon = "grade", color = "blue darken-2")
+          ),
+          material_row(
+            shiny::downloadButton("imgdn", "Save the Plot", icon = "save", style = "background-color : #616161 !important")
           ),
           material_row(
             material_card(
-              title = "information",
+              title = "",
               DT::dataTableOutput("legendTable"),
               shiny::downloadButton("legenddn", "Save Legend", icon = "save", style = "background-color : #616161 !important; display:none;")
             )
-          ),
-          material_row(
-            material_button("colorbtn", "toColor", icon = "color_lens", color = "blue darken-2"),
-            material_button("freqbtn", "Frequent", icon = "grain", color = "blue darken-2"),
-            material_button("sigbtn", "Significant", icon = "grade", color = "blue darken-2")
           )
         ),
         width = 12
@@ -698,18 +699,18 @@ CellEnrichUI <- function() {
     # marker table
     material_row(
       material_card(
-        title = "MarkerGenes",
+        title = "Marker Genes",
         material_row(
           material_column(
             material_card(
-              title = "DE from each Cell specific",
+              title = "FindMarker function (scran)",
               DT::dataTableOutput("markerL1")
             ),
             width = 6
           ),
           material_column(
             material_card(
-              title = "DE - Pathway from each Cell specific",
+              title = "Frequently up-regulated in each group",
               DT::dataTableOutput("markerL2")
             ),
             width = 6
@@ -724,7 +725,7 @@ CellEnrichUI <- function() {
       material_card(
         title = "",
         material_card(
-          title = "Pathway biplot", divider = TRUE,
+          title = "Biplot between pathways and cell groups", divider = TRUE,
           material_row(
             material_column(
               plotOutput("biPlot", height = "700px"),
@@ -736,15 +737,15 @@ CellEnrichUI <- function() {
             # ),
             material_column(
               material_row(
-                numericInput("biCount", label = "Pathway Count", value = 5, min = 2, max = 10, step = 1),
+                numericInput("biCount", label = "Pathways uses in each group", value = 5, min = 2, max = 10, step = 1),
                 numericInput("biFont", label = "Label Size", value = 3, min = 1, max = 10, step = 1),
-                numericInput("biX", label = "X area", value = 5, min = 1, max = 10, step = 1),
-                numericInput("biY", label = "Y area", value = 5, min = 1, max = 10, step = 1),
+                numericInput("biX", label = "Range of X-axis", value = 5, min = 1, max = 10, step = 1),
+                numericInput("biY", label = "Range of Y-axis", value = 5, min = 1, max = 10, step = 1),
                 material_row(
                   material_button("freqbp", "Biplot with Frequency", color = "blue darken-2")
                 ),
                 material_row(
-                  material_button("orbp", "Biplot with Odd Ratio", color = "blue darken-2")
+                  material_button("orbp", "Biplot with Odds Ratio", color = "blue darken-2")
                 ) # ,
                 # material_row(
                 # material_button("refreshBiplot", "Refresh Biplot Download Image", color = "blue darken-2")
@@ -756,7 +757,7 @@ CellEnrichUI <- function() {
           ),
         ),
         material_card(
-          title = "Pathway Emphasize", divider = TRUE,
+          title = "Highlighting selected pathways", divider = TRUE,
           # tags$h3("To be recognized by application, Please move element's position"),
           rank_list(text = "Pathways", labels = "Please Clear First", input_id = "sortList", css_id = "mysortableCell"),
           material_row(
@@ -1230,7 +1231,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       # ------ marker l1
       markerl1 <- s2 %>% filter(Top < 10)
       markerl1$Group <- as.factor(markerl1$Group)
-
+      colnames(markerl1)[4] <- "FDR < 0.01"
       shinyjs::runjs("$(.markerP).show()")
 
       output$markerL1 <- DT::renderDataTable(
@@ -1403,7 +1404,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           # outputFile[(tf %>% select(Geneset))[,1],i] = (tf%>% select(Qvalue))[,1]
           # }
           # write.csv(outputFile, file)
-          write.csv(presTab, file)
+          # write.csv(presTab, file)
+          write.csv(CellPathwayDF, file, row.names = FALSE)
         }
       )
 
@@ -1625,6 +1627,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       }
 
       # StartEnrich Finished
+
+      shinyjs::click('ClearList')
+      shinyjs::click('freqbp')
 
       print(proc.time() - pt)
     })
