@@ -17,7 +17,6 @@ biocViews:
 Imports:
     dplyr,
     DT,
-    ggbiplot,
     ggplot2,
     ggrepel,
     highcharter,
@@ -25,13 +24,15 @@ Imports:
     magrittr,
     Rtsne,
     scMerge,
+    scran,
     Seurat,
     shiny,
     shinyFeedback,
     shinyjs,
     shinymaterial,
     sortable,
-    SingleCellExperiment
+    SingleCellExperiment,
+    waiter
 Suggests: 
     testthat (>= 2.1.0),
     rmarkdown,
