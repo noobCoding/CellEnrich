@@ -17,7 +17,6 @@ biocViews:
 Imports:
     dplyr,
     DT,
-    ggbiplot,
     ggplot2,
     ggrepel,
     highcharter,
@@ -25,6 +24,7 @@ Imports:
     magrittr,
     Rtsne,
     scMerge,
+    scran,
     Seurat,
     shiny,
     shinyFeedback,
