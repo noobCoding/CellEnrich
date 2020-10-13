@@ -696,6 +696,30 @@ CellEnrichUI <- function() {
       style = "margin : 1em; border : solid 0.5em #1976d2"
     ),
 
+    # marker table
+    material_row(
+      material_card(
+        title = "Marker Genes",
+        material_row(
+          material_column(
+            material_card(
+              title = "FindMarker function (scran)",
+              DT::dataTableOutput("markerL1")
+            ),
+            width = 6
+          ),
+          material_column(
+            material_card(
+              title = "Frequently up-regulated in each group",
+              DT::dataTableOutput("markerL2")
+            ),
+            width = 6
+          )
+        )
+      ),
+      style = "margin : 1em; border : solid 0.5em #1976d2"
+    ),
+
     # emphasize tables
     material_row(
       material_card(
@@ -732,7 +756,6 @@ CellEnrichUI <- function() {
             )
           ),
         ),
-        
         material_card(
           title = "Highlighting selected pathways", divider = TRUE,
           # tags$h3("To be recognized by application, Please move element's position"),
@@ -748,30 +771,6 @@ CellEnrichUI <- function() {
         ),
         shiny::uiOutput("dynamicTable"),
         depth = 3
-      ),
-      style = "margin : 1em; border : solid 0.5em #1976d2"
-    ),
-   
-    # marker table
-    material_row(
-      material_card(
-        title = "Marker Genes",
-        material_row(
-          material_column(
-            material_card(
-              title = "FindMarker function (scran)",
-              DT::dataTableOutput("markerL1")
-            ),
-            width = 6
-          ),
-          material_column(
-            material_card(
-              title = "Frequently up-regulated in each group",
-              DT::dataTableOutput("markerL2")
-            ),
-            width = 6
-          )
-        )
       ),
       style = "margin : 1em; border : solid 0.5em #1976d2"
     )
@@ -1919,6 +1918,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
   shiny::shinyApp(ui, server, options = list(launch.browser = TRUE))
 }
+
 
 buildLegend <- function(sortList, img = FALSE, name = NULL, GroupInfo) {
   colV <- getColv(GroupInfo)
