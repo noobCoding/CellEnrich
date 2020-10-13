@@ -732,7 +732,6 @@ CellEnrichUI <- function() {
             )
           ),
         ),
-        
         material_card(
           title = "Highlighting selected pathways", divider = TRUE,
           # tags$h3("To be recognized by application, Please move element's position"),
