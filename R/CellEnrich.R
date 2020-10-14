@@ -542,7 +542,7 @@ CellEnrichUI <- function() {
     tags$head(tags$style(type = "text/css", ".display.dataTable.no-footer{width : 100% !important;}")),
 
     # waitress declare
-    use_waitress(color = "#697682", percent_color = "#333333"),
+    use_waitress(color = "#1976d2", percent_color = "#333333"),
     title = paste0(
       "CellEnrich ",
       "<a href = 'https://github.com/jhk0530/cellenrich' target = '_blank'> ", # github link
@@ -559,7 +559,7 @@ CellEnrichUI <- function() {
     material_row(
       material_column(
         material_card(
-          title = "Options",
+          title = shiny::tags$h2("Options"),
           divider = TRUE,
           style = "border : solid 0.5em #1976d2",
           material_row(
@@ -570,14 +570,14 @@ CellEnrichUI <- function() {
                   label = "Methods",
                   choices = c("CellEnrich - median", "CellEnrich - mixture", "Fisher"),
                   selected = "CellEnrich - median",
-                  color = "#1976d2"
+                  color = "#ffffff"
                 ),
                 material_radio_button(
                   input_id = "plotOption",
                   label = "Scatter Plot",
                   choices = c("t-SNE", "U-MAP"),
                   selected = "t-SNE",
-                  color = "#1976d2"
+                  color = "#ffffff"
                 )
               ),
               width = 4
@@ -624,7 +624,7 @@ CellEnrichUI <- function() {
                 material_radio_button(
                   input_id = "genesetOption",
                   label = "Gene-sets",
-                  color = "#1976d2",
+                  color = "#ffffff",
                   choices = c(
                     "User-Geneset",
                     "Human-Curated", # c2
@@ -662,7 +662,7 @@ CellEnrichUI <- function() {
     material_row(
       material_column(
         material_card(
-          title = "",
+          title = shiny::tags$h2("Plot & Bar"),#"Plot & Bar",
           depth = 3,
           material_row(
             material_column(
@@ -681,7 +681,7 @@ CellEnrichUI <- function() {
             material_button("sigbtn", "Odds Ratio", icon = "grade", color = "blue darken-2")
           ),
           material_row(
-            shiny::downloadButton("imgdn", "Save the Plot", icon = "save", style = "background-color : #616161 !important")
+            shiny::downloadButton("imgdn", "Save Plot", icon = "save", style = "background-color : #616161 !important")
           ),
           material_row(
             material_card(
@@ -692,7 +692,7 @@ CellEnrichUI <- function() {
           ),
           material_row(
             material_card(
-              title = "Highlighting selected pathways", divider = TRUE,
+              title = shiny::tags$h2("Highlighting selected pathways"), divider = TRUE,
               # tags$h3("To be recognized by application, Please move element's position"),
               rank_list(text = "Pathways", labels = "Please Clear First", input_id = "sortList", css_id = "mysortableCell"),
               material_row(
@@ -701,7 +701,7 @@ CellEnrichUI <- function() {
                 material_button("ClearList", "Clear List", icon = "clear_all", color = "blue darken-2")
               ),
               material_row(
-                shiny::downloadButton("tbldn", "Save", icon = "save", style = "background-color : #616161 !important")
+                shiny::downloadButton("tbldn", "Save Highlighted Pathways", icon = "save", style = "background-color : #616161 !important")
               ),
             ),
             shiny::uiOutput("dynamicTable"),
@@ -719,7 +719,7 @@ CellEnrichUI <- function() {
         title = "",
         
         material_card(
-          title = "Biplot between pathways and cell groups", divider = TRUE,
+          title = shiny::tags$h5("Biplot between pathways and cell groups"), divider = TRUE,
           material_row(
             material_column(
               plotOutput("biPlot", height = "700px"),
@@ -759,7 +759,7 @@ CellEnrichUI <- function() {
     # marker table
     material_row(
       material_card(
-        title = "Marker Genes",
+        title = shiny::tags$h2("Marker Genes"),
         material_row(
           material_column(
             material_card(
