@@ -689,6 +689,23 @@ CellEnrichUI <- function() {
               DT::dataTableOutput("legendTable"),
               shiny::downloadButton("legenddn", "Save Legend", icon = "save", style = "background-color : #616161 !important; display:none;")
             )
+          ),
+          material_row(
+            material_card(
+              title = "Highlighting selected pathways", divider = TRUE,
+              # tags$h3("To be recognized by application, Please move element's position"),
+              rank_list(text = "Pathways", labels = "Please Clear First", input_id = "sortList", css_id = "mysortableCell"),
+              material_row(
+                # material_button("OrderEmphasize", "Emphasize with Order", icon = "timeline", color = "blue darken-2"),
+                material_button("Emphasize", "Emphasize", icon = "bubble_chart", color = "blue darken-2"),
+                material_button("ClearList", "Clear List", icon = "clear_all", color = "blue darken-2")
+              ),
+              material_row(
+                shiny::downloadButton("tbldn", "Save", icon = "save", style = "background-color : #616161 !important")
+              ),
+            ),
+            shiny::uiOutput("dynamicTable"),
+            depth = 3
           )
         ),
         width = 12
@@ -700,19 +717,6 @@ CellEnrichUI <- function() {
     material_row(
       material_card(
         title = "",
-        material_card(
-          title = "Highlighting selected pathways", divider = TRUE,
-          # tags$h3("To be recognized by application, Please move element's position"),
-          rank_list(text = "Pathways", labels = "Please Clear First", input_id = "sortList", css_id = "mysortableCell"),
-          material_row(
-            # material_button("OrderEmphasize", "Emphasize with Order", icon = "timeline", color = "blue darken-2"),
-            material_button("Emphasize", "Emphasize", icon = "bubble_chart", color = "blue darken-2"),
-            material_button("ClearList", "Clear List", icon = "clear_all", color = "blue darken-2")
-          ),
-          material_row(
-            shiny::downloadButton("tbldn", "Save", icon = "save", style = "background-color : #616161 !important")
-          ),
-        ),
         
         material_card(
           title = "Biplot between pathways and cell groups", divider = TRUE,
@@ -738,15 +742,15 @@ CellEnrichUI <- function() {
                   material_button("orbp", "Biplot with Odds Ratio", color = "blue darken-2")
                 ),
                 material_row(
-                  material_button("refreshBiplot", "Refresh Biplot Download Image", color = "blue darken-2")
+                  shiny::downloadButton("biplotdn", "Save Biplot", icon = "save", style = "background-color : #616161 !important")
                 ),
-                shiny::downloadButton("biplotdn", "Save Biplot", icon = "save", style = "background-color : #616161 !important")
+                
               ),
               width = 2
             )
           ),
         ),
-        shiny::uiOutput("dynamicTable"),
+        #shiny::uiOutput("dynamicTable"),
         depth = 3
       ),
       style = "margin : 1em; border : solid 0.5em #1976d2"
