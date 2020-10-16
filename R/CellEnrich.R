@@ -569,7 +569,7 @@ CellEnrichUI <- function() {
                   input_id = "FCoption",
                   label = shiny::tags$h6("Methods"),
                   choices = c(shiny::tags$h6("CellEnrich - median"), shiny::tags$h6("CellEnrich - mixture"), shiny::tags$h6("Fisher")),
-                  selected = "CellEnrich - median",
+                  selected = shiny::tags$h6("CellEnrich - median"),
                   color = "#1976d2"
                 ),
                 material_radio_button(
