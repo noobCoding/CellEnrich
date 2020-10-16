@@ -550,7 +550,7 @@ CellEnrichUI <- function() {
     ),
     nav_bar_fixed = FALSE,
     nav_bar_color = "blue darken-2",
-    font_color = "#ffffff",
+    font_color = "#1976d2",
     include_fonts = FALSE,
     include_nav_bar = TRUE,
     include_icons = FALSE,
@@ -559,7 +559,7 @@ CellEnrichUI <- function() {
     material_row(
       material_column(
         material_card(
-          title = shiny::tags$h2("Options"),
+          title = shiny::tags$h3("Options"),
           divider = TRUE,
           style = "border : solid 0.5em #1976d2",
           material_row(
@@ -567,17 +567,17 @@ CellEnrichUI <- function() {
               material_card(
                 material_radio_button(
                   input_id = "FCoption",
-                  label = "Methods",
-                  choices = c("CellEnrich - median", "CellEnrich - mixture", "Fisher"),
+                  label = shiny::tags$h6("Methods"),
+                  choices = c(shiny::tags$h6("CellEnrich - median"), shiny::tags$h6("CellEnrich - mixture"), shiny::tags$h6("Fisher")),
                   selected = "CellEnrich - median",
-                  color = "#ffffff"
+                  color = "#1976d2"
                 ),
                 material_radio_button(
                   input_id = "plotOption",
-                  label = "Scatter Plot",
+                  label = shiny::tags$h6("Scatter Plot"),
                   choices = c("t-SNE", "U-MAP"),
                   selected = "t-SNE",
-                  color = "#ffffff"
+                  color = "#1976d2"
                 )
               ),
               width = 4
@@ -624,7 +624,7 @@ CellEnrichUI <- function() {
                 material_radio_button(
                   input_id = "genesetOption",
                   label = "Gene-sets",
-                  color = "#ffffff",
+                  color = "#1976d2",
                   choices = c(
                     "User-Geneset",
                     "Human-Curated", # c2
@@ -662,7 +662,7 @@ CellEnrichUI <- function() {
     material_row(
       material_column(
         material_card(
-          title = shiny::tags$h2("Plot & Bar"),#"Plot & Bar",
+          title = shiny::tags$h3("Plot & Bar"),#"Plot & Bar",
           depth = 3,
           material_row(
             material_column(
@@ -692,7 +692,7 @@ CellEnrichUI <- function() {
           ),
           material_row(
             material_card(
-              title = shiny::tags$h2("Highlighting selected pathways"), divider = TRUE,
+              title = shiny::tags$h3("Highlighting selected pathways"), divider = TRUE,
               # tags$h3("To be recognized by application, Please move element's position"),
               rank_list(text = "Pathways", labels = "Please Clear First", input_id = "sortList", css_id = "mysortableCell"),
               material_row(
@@ -719,7 +719,7 @@ CellEnrichUI <- function() {
         title = "",
         
         material_card(
-          title = shiny::tags$h5("Biplot between pathways and cell groups"), divider = TRUE,
+          title = shiny::tags$h3("Biplot between pathways and cell groups"), divider = TRUE,
           material_row(
             material_column(
               plotOutput("biPlot", height = "700px"),
@@ -759,7 +759,7 @@ CellEnrichUI <- function() {
     # marker table
     material_row(
       material_card(
-        title = shiny::tags$h2("Marker Genes"),
+        title = shiny::tags$h3("Marker Genes"),
         material_row(
           material_column(
             material_card(
