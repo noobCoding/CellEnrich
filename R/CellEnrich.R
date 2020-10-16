@@ -1060,29 +1060,22 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
         # select high in groups
         high <- c()
-        for (i in 1:ncol(tab)) {
-          high <- c(high, names(tab[order(tab[, i], decreasing = TRUE)[1:1], i]))
+        if (TOPN > 1){
+          for (i in 1:ncol(tab)) {
+            high <- c(high, names(tab[order(tab[, i], decreasing = TRUE)[1:TOPN], i]))
+          }
         }
+        else{
+          for (i in 1:ncol(tab)) {
+            high <- c(high, names(tab[order(tab[, i], decreasing = TRUE)[1], i]))
+          }
+        }
+        
         high <- unique(high)
         tab <- tab[high, ]
       }
-
       labels <- rownames(tab)
-      # labels <- paste0('P',sapply(rownames(tab), function(i){which(names(genesets)==i)}, USE.NAMES = FALSE))
-
-      # output$bitable <- renderDataTable(
-      # DT::datatable(
-      # data.frame(pathways = rownames(tab), index = labels),
-      # rownames = FALSE,
-      # options = list(
-      # autoWidth = TRUE,
-      # dom = "ltp",
-      # lengthChange = FALSE
-      # ),
-      # selection = "none"
-      # )
-      # )
-
+      
       model <- prcomp(tab, scale = TRUE)
       BiPlot <<-
         ggbiplot(
