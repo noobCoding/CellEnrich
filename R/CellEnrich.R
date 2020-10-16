@@ -540,11 +540,6 @@ CellEnrichUI <- function() {
     # dynamic datatable full width
 
     tags$head(tags$style(type = "text/css", ".display.dataTable.no-footer{width : 100% !important;} 
-                                             body {
-                                                    !background-color: lightgrey;
-                                                    color: black;
-                                                    font-size: 13px;
-                                                  }
                                                   ")),
 
     # waitress declare
@@ -668,7 +663,7 @@ CellEnrichUI <- function() {
     material_row(
       material_column(
         material_card(
-          title = shiny::tags$h3("Plot & Bar"),#"Plot & Bar",
+          title = shiny::tags$h3("Scatter & Bar"),
           depth = 3,
           material_row(
             material_column(
@@ -737,7 +732,7 @@ CellEnrichUI <- function() {
             # ),
             material_column(
               material_row(
-                numericInput("biCount", label = "Pathways uses in each group", value = 5, min = 2, max = 10, step = 1),
+                numericInput("biCount", label = "Pathways uses in each group", value = 5, min = 1, max = 10, step = 1),
                 numericInput("biFont", label = "Label Size", value = 3, min = 1, max = 10, step = 1),
                 numericInput("biX", label = "Range of X-axis", value = 5, min = 1, max = 10, step = 1),
                 numericInput("biY", label = "Range of Y-axis", value = 5, min = 1, max = 10, step = 1),
@@ -746,11 +741,10 @@ CellEnrichUI <- function() {
                 ),
                 material_row(
                   material_button("orbp", "Biplot with Odds Ratio", color = "blue darken-2")
-                ),
-                material_row(
-                  shiny::downloadButton("biplotdn", "Save Biplot", icon = "save", style = "background-color : #616161 !important")
-                ),
-                
+                )
+              ),
+              material_row(
+                shiny::downloadButton("biplotdn", "Save Biplot", icon = "save", style = "background-color : #616161 !important")
               ),
               width = 2
             )
@@ -996,7 +990,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
   options(useFancyQuotes = FALSE)
 
   server <- function(input, output, session) {
-    buildbiplot <- function(biFont, biX, biY, genesets, TOPN = 5, oddratio = FALSE) {
+    buildbiplot <- function(biFont, biX, biY, genesets, TOPN = 5, oddratio = TRUE) {
       Cells <- sort(unique(GroupInfo))
 
       if (oddratio) {
@@ -1065,10 +1059,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         })), ] # remove zero
 
         # select high in groups
-
         high <- c()
         for (i in 1:ncol(tab)) {
-          high <- c(high, names(tab[order(tab[, i], decreasing = TRUE)[1:TOPN], i]))
+          high <- c(high, names(tab[order(tab[, i], decreasing = TRUE)[1:1], i]))
         }
         high <- unique(high)
         tab <- tab[high, ]
