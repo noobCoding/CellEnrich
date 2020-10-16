@@ -990,7 +990,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
   options(useFancyQuotes = FALSE)
 
   server <- function(input, output, session) {
-    buildbiplot <- function(biFont, biX, biY, genesets, TOPN = 5, oddratio = FALSE) {
+    buildbiplot <- function(biFont, biX, biY, genesets, TOPN = 1, oddratio = FALSE) {
       Cells <- sort(unique(GroupInfo))
 
       if (oddratio) {
@@ -1060,14 +1060,14 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
         # select high in groups
         high <- c()
-        if (TOPN > 1){
+        if (TOPN == 1){
           for (i in 1:ncol(tab)) {
-            high <- c(high, names(tab[order(tab[, i], decreasing = TRUE)[1:TOPN], i]))
+            high <- c(high, names(tab[order(tab[, i], decreasing = TRUE)[1], i]))
           }
         }
         else{
           for (i in 1:ncol(tab)) {
-            high <- c(high, names(tab[order(tab[, i], decreasing = TRUE)[1], i]))
+            high <- c(high, names(tab[order(tab[, i], decreasing = TRUE)[1:TOPN], i]))
           }
         }
         
