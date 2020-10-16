@@ -539,7 +539,13 @@ CellEnrichUI <- function() {
     shinyFeedback::useShinyFeedback(feedback = TRUE, toastr = TRUE),
     # dynamic datatable full width
 
-    tags$head(tags$style(type = "text/css", ".display.dataTable.no-footer{width : 100% !important;}")),
+    tags$head(tags$style(type = "text/css", ".display.dataTable.no-footer{width : 100% !important;} 
+                                             body {
+                                                    !background-color: lightgrey;
+                                                    color: black;
+                                                    font-size: 13px;
+                                                  }
+                                                  ")),
 
     # waitress declare
     use_waitress(color = "#1976d2", percent_color = "#333333"),
@@ -567,14 +573,14 @@ CellEnrichUI <- function() {
               material_card(
                 material_radio_button(
                   input_id = "FCoption",
-                  label = shiny::tags$h6("Methods"),
-                  choices = c(shiny::tags$h6("CellEnrich - median"), shiny::tags$h6("CellEnrich - mixture"), shiny::tags$h6("Fisher")),
-                  selected = shiny::tags$h6("CellEnrich - median"),
+                  label = "Methods",
+                  choices = c("CellEnrich - median", "CellEnrich - mixture", "Fisher"),
+                  selected = "CellEnrich - median",
                   color = "#1976d2"
                 ),
                 material_radio_button(
                   input_id = "plotOption",
-                  label = shiny::tags$h6("Scatter Plot"),
+                  label = "Scatter Plot",
                   choices = c("t-SNE", "U-MAP"),
                   selected = "t-SNE",
                   color = "#1976d2"
