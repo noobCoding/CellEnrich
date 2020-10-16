@@ -990,7 +990,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
   options(useFancyQuotes = FALSE)
 
   server <- function(input, output, session) {
-    buildbiplot <- function(biFont, biX, biY, genesets, TOPN = 5, oddratio = TRUE) {
+    buildbiplot <- function(biFont, biX, biY, genesets, TOPN = 5, oddratio = FALSE) {
       Cells <- sort(unique(GroupInfo))
 
       if (oddratio) {
