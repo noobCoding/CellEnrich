@@ -1062,14 +1062,15 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         high <- c()
         if (TOPN == 1){
           print (TOPN)
+          print (tab)
           for (i in 1:ncol(tab)) {
-            high <- c(high, names(tab[order(-tab[,i]),])[1])
+            high <- c(high, rownames(tab[order(-tab[,i]),])[1])
             print(high)
           }
         }
         else{
           for (i in 1:ncol(tab)) {
-            high <- c(high, names(order(tab[, i], decreasing = TRUE))[1:TOPN])
+            high <- c(high, rownames(order(tab[, i], decreasing = TRUE))[1:TOPN])
           }
         }
         
