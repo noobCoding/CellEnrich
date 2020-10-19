@@ -990,7 +990,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
   options(useFancyQuotes = FALSE)
 
   server <- function(input, output, session) {
-    buildbiplot <- function(biFont, biX, biY, genesets, TOPN = 5, oddratio = FALSE) {
+    buildbiplot <- function(biFont, biX, biY, genesets, TOPN = 5, oddratio = TRUE) {
       Cells <- sort(unique(GroupInfo))
 
       if (oddratio) {
@@ -1070,7 +1070,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         }
         else{
           for (i in 1:ncol(tab)) {
-            high <- c(high, rownames(order(tab[, i], decreasing = TRUE))[1:TOPN])
+            high <- c(high, rownames(tab[order(-tab[, i]),])[1:TOPN])
           }
         }
         
@@ -1884,7 +1884,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         return(NULL)
       }
 
-      output$biPlot <- renderPlot(buildbiplot(input$biFont, input$biX, input$biY, genesets, TOPN = input$biCount))
+      output$biPlot <- renderPlot(buildbiplot(input$biFont, input$biX, input$biY, genesets, TOPN = input$biCount, oddratio = FALSE))
 
       output$biplotdn <- downloadHandler(
         filename = function() {
@@ -1901,7 +1901,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         return(NULL)
       }
 
-      output$biPlot <- renderPlot(buildbiplot(input$biFont, input$biX, input$biY, genesets, TOPN = input$biCount, oddratio = TRUE))
+      output$biPlot <- renderPlot(buildbiplot(input$biFont, input$biX, input$biY, genesets, TOPN = input$biCount))
 
       output$biplotdn <- downloadHandler(
         filename = function() {
