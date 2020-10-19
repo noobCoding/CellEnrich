@@ -990,7 +990,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
   options(useFancyQuotes = FALSE)
 
   server <- function(input, output, session) {
-    buildbiplot <- function(biFont, biX, biY, genesets, TOPN = 5, oddratio = TRUE) {
+    buildbiplot <- function(biFont, biX, biY, genesets, TOPN = 5, oddratio = FALSE) {
       Cells <- sort(unique(GroupInfo))
 
       if (oddratio) {
@@ -1061,11 +1061,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         # select high in groups
         high <- c()
         if (TOPN == 1){
-          print (TOPN)
-          print (tab)
           for (i in 1:ncol(tab)) {
             high <- c(high, rownames(tab[order(-tab[,i]),])[1])
-            print(high)
           }
         }
         else{
@@ -1688,21 +1685,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       # output$CellPlot <- renderPlot(emphasize(FALSE, res, dfobj, Cells, pres, genesets))
     })
 
-    observeEvent(input$refreshBiplot, {
-      if (input$refreshBiplot == 0) {
-        return(NULL)
-      }
-      cat("refreshed\n")
-      output$biplotdn <- downloadHandler(
-        filename = function() {
-          "mybiplot.png"
-        },
-        content = function(file) {
-          ggsave(file, BiPlot, device = "png")
-        }
-      )
-    })
-
     # draw significant colored images
     observeEvent(input$sigbtn, {
       if (input$sigbtn == 0) { # prevent default click state
@@ -1901,8 +1883,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         return(NULL)
       }
 
-      output$biPlot <- renderPlot(buildbiplot(input$biFont, input$biX, input$biY, genesets, TOPN = input$biCount))
-
+      output$biPlot <- renderPlot(buildbiplot(input$biFont, input$biX, input$biY, genesets, TOPN = input$biCount, oddratio = TRUE))
+      
       output$biplotdn <- downloadHandler(
         filename = function() {
           "mybiplot.png"
