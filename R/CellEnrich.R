@@ -697,7 +697,7 @@ CellEnrichUI <- function() {
               # tags$h3("To be recognized by application, Please move element's position"),
               rank_list(text = "Pathways", labels = "Please Clear First", input_id = "sortList", css_id = "mysortableCell"),
               material_row(
-                # material_button("OrderEmphasize", "Emphasize with Order", icon = "timeline", color = "blue darken-2"),
+                material_button("OrderEmphasize", "Emphasize with Order", icon = "timeline", color = "blue darken-2"),
                 material_button("Emphasize", "Emphasize", icon = "bubble_chart", color = "blue darken-2"),
                 material_button("ClearList", "Clear List", icon = "clear_all", color = "blue darken-2")
               ),
