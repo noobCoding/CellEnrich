@@ -124,7 +124,7 @@ findSigGenes <- function(v, method = "CellEnrich - median", Name) {
 }
 
 findSigGenesGroup <- function(Count = NULL, ClustInfo = NULL, q0 = 0.1, TopCutoff = 5) {
-  require(scran)
+  library(scran)
 
   if (is.null(Count)) stop("Count must given")
   if (is.null(ClustInfo)) stop("ClustInfo must given")
@@ -424,8 +424,8 @@ getColv <- function(GroupInfo) {
 
 getCellHistogram <- function(GroupInfo, colV) {
   cat("getCellHistogram\n")
-  # require(ggplot2)
-  require(highcharter)
+  # library(ggplot2)
+  library(highcharter)
   Cells <- unique(sort(GroupInfo))
 
   x <- c()
@@ -449,8 +449,8 @@ getCellHistogram <- function(GroupInfo, colV) {
 
 getCellPlot <- function(dfobj, Cells) {
   cat("getCellPlot\n")
-  require(ggplot2)
-  # require(highcharter)
+  library(ggplot2)
+  # library(highcharter)
 
   colnames(dfobj) <- c("x", "y", "col")
   dfobj <<- dfobj
@@ -532,14 +532,16 @@ groupTable <- function(pres, genesets, dfobj, pres2) {
 
 
 CellEnrichUI <- function() {
-  require(shinymaterial)
-  require(highcharter)
+  library(shinymaterial)
+  library(highcharter)
+  library(sortable)
+
   material_page(
     shinyjs::useShinyjs(),
     shinyFeedback::useShinyFeedback(feedback = TRUE, toastr = TRUE),
     # dynamic datatable full width
 
-    tags$head(tags$style(type = "text/css", ".display.dataTable.no-footer{width : 100% !important;} 
+    tags$head(tags$style(type = "text/css", ".display.dataTable.no-footer{width : 100% !important;}
                                                   ")),
 
     # waitress declare
@@ -648,7 +650,7 @@ CellEnrichUI <- function() {
           ),
           solvedButton(
             inputId = "StartCellEnrich",
-            label = "Run",
+            label = "Start",
             style = "margin-left:45%; background-color: #1976d2",
             onClick = 'console.log("CellEnrich");'
           ),
@@ -694,10 +696,10 @@ CellEnrichUI <- function() {
           material_row(
             material_card(
               title = shiny::tags$h3("Highlighting selected pathways"), divider = TRUE,
-              # tags$h3("To be recognized by application, Please move element's position"),
-              rank_list(text = "Pathways", labels = "Please Clear First", input_id = "sortList", css_id = "mysortableCell"),
+              #tags$h3("To be recognized by application, Please move element's position"),
+              rank_list(text = "Pathways", labels = "Please change element's positions at least once!", input_id = "sortList", css_id = "mysortableCell"),
               material_row(
-                #material_button("OrderEmphasize", "Emphasize with Order", icon = "timeline", color = "blue darken-2"),
+                # material_button("OrderEmphasize", "Emphasize with Order", icon = "timeline", color = "blue darken-2"),
                 material_button("Emphasize", "Emphasize", icon = "bubble_chart", color = "blue darken-2"),
                 material_button("ClearList", "Clear List", icon = "clear_all", color = "blue darken-2")
               ),
@@ -718,7 +720,7 @@ CellEnrichUI <- function() {
     material_row(
       material_card(
         title = "",
-        
+
         material_card(
           title = shiny::tags$h3("Biplot between pathways and cell groups"), divider = TRUE,
           material_row(
@@ -755,7 +757,7 @@ CellEnrichUI <- function() {
       ),
       style = "margin : 1em; border : solid 0.5em #1976d2"
     ),
-    
+
     # marker table
     material_row(
       material_card(
@@ -882,7 +884,8 @@ emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres, genesets) {
       y <- mean(as.numeric(dfobj_new$y[cellValues[[i]]]))
 
       dfobj_new <- rbind(dfobj_new, c(x, y, "meanPoint"))
-      colV <- c(colV, "#000000")
+      colV <- c(colV, "#aaaa00")
+      # colV <- c(colV, UniqueCol[i])
 
       dfobj_path <- rbind(dfobj_path, c(x, y))
     }
@@ -909,8 +912,8 @@ emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres, genesets) {
         " + geom_curve( aes(x = ", "x[newIdx[", i,
         "]], y = y[newIdx[", i, "]], xend = x[newIdx[", i + 1,
         "]], yend = y[newIdx[", i + 1, ']]), size = 0.5, linetype = "longdash",',
-        "curvature = 0.1, colour = '#000000', ", 'arrow = arrow(length = unit(0.1,"inches")))'
-        # "curvature = 0.1, colour = colV[newIdx[", i, ']], arrow = arrow(length = unit(0.1,"inches")))'
+        # "curvature = 0.1, colour = '#000000', ", 'arrow = arrow(length = unit(0.1,"inches")))'
+        "curvature = 0.1, colour = colV[newIdx[", i, ']], arrow = arrow(length = unit(0.1,"inches")))'
       )
       graphString <- paste(graphString, newCurve, sep = "")
     }
@@ -926,7 +929,7 @@ sortItem <- function(label, tableName) {
   options(useFancyQuotes = FALSE)
   paste0(
     "$('#", tableName, "')",
-    ".append(", "`<div class=", "'rank-list-item'", " draggable='true'",
+    ".append(", "`<div class=", "'rank-list-item'", " draggable='false'",
     " style = 'transform: translateZ(0px);'>` + ", label, " + `</div>`)"
   )
 }
@@ -978,15 +981,15 @@ solvedButton <- function(inputId, label, style = NULL, onClick = NULL, ...) {
 #' @export
 
 CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
-  require(dplyr)
-  require(shiny)
+  library(dplyr)
+  library(shiny)
 
   if(!require(ggbiplot)){
     remotes::install_github('vqv/ggbiplot')
   }
 
-  require(ggbiplot)
-  require(ggrepel)
+  library(ggbiplot)
+  library(ggrepel)
   options(useFancyQuotes = FALSE)
 
   server <- function(input, output, session) {
@@ -1070,12 +1073,12 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
             high <- c(high, rownames(tab[order(-tab[, i]),])[1:TOPN])
           }
         }
-        
+
         high <- unique(high)
         tab <- tab[high, ]
       }
       labels <- rownames(tab)
-      
+
       model <- prcomp(tab, scale = TRUE)
       BiPlot <<-
         ggbiplot(
@@ -1138,6 +1141,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       # ------ Hide Start Button
 
       shinyjs::hide("StartCellEnrich")
+      shinyjs::runjs('$("#Emphasize").attr("disabled",true)')
+      shinyjs::runjs('$("#OrderEmphasize").attr("disabled",true)')
 
       # ------ Load Genesets
 
@@ -1188,7 +1193,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       A <<- getBackgroundGenes(genesets)
 
       # ------ Calculate t-SNE / U-MAP First
-      # require(Matrix)
+      # library(Matrix)
 
       # dfobj <- getTU(CountData, GroupInfo, 't-SNE')
       dfobj <- getTU(CountData, GroupInfo, input$plotOption)
@@ -1450,12 +1455,14 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         tcd <- intersect(names(tcp), tcd)
         tcp <- tcp[tcd]
 
+
+
         genes <- names(tcp)
         Count <- as.numeric(unname(tcp))
 
         additive <- data.frame(cbind(genes, Count, Group = thisCell))
         additive$Count <- as.numeric(additive$Count)
-        additive <- additive %>% arrange(desc(Count))
+        additive <- additive %>% arrange(dplyr::desc(Count))
         additive <- additive[1:min(nrow(additive), 20), ]
 
         # ------ first add
@@ -1589,6 +1596,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                           "; $('#toSortButton", i, "').attr('disabled', true);"
                         )
                       ),
+
                       style = "position:absolute; top:1em; right:1em;background-color: #1976d2"
                     )
                   )
@@ -1711,7 +1719,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
               }
             }
           }
-
           res <- c(res, paste0(thisCellData$Geneset, " @", thisCellData$Cell))
         }
       }
@@ -1819,10 +1826,17 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
     })
 
     # Emphasize without order
+    observe ({
+      input$sortList
+      shinyjs::runjs('$("#Emphasize").attr("disabled",false)')
+      shinyjs::runjs('$("#OrderEmphasize").attr("disabled",false)')
+    })
+
     observeEvent(input$Emphasize, {
       if (input$Emphasize == 0) { # prevent default click state
         return(NULL)
       }
+
       shinyjs::show("legenddn")
       plotImg <- emphasize(FALSE, input$sortList, dfobj, Cells, pres, genesets)
       output$CellPlot <- renderPlot(plotImg)
@@ -1884,7 +1898,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       }
 
       output$biPlot <- renderPlot(buildbiplot(input$biFont, input$biX, input$biY, genesets, TOPN = input$biCount, oddratio = TRUE))
-      
+
       output$biplotdn <- downloadHandler(
         filename = function() {
           "mybiplot.png"
@@ -1897,6 +1911,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
   }
 
   ui <- CellEnrichUI()
+
 
   shiny::shinyApp(ui, server, options = list(launch.browser = TRUE))
 }
