@@ -17,6 +17,7 @@ biocViews:
 Imports:
     dplyr,
     DT,
+    farver,
     ggplot2,
     ggrepel,
     highcharter,
@@ -30,6 +31,7 @@ Imports:
     shinyFeedback,
     shinyjs,
     shinymaterial,
+    slingshot,
     sortable,
     SingleCellExperiment,
     waiter
