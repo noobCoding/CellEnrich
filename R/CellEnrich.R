@@ -890,7 +890,7 @@ emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres, genesets, seu,
 
   rownames(dfobj_new) <- NULL
   graphString <- "ggobj2 <-  ggplot(dfobj_new, aes(x = x, y = y)) + geom_point(colour = colV) +
-                              theme_void()"
+                              theme_dark()"
                              # theme(panel.background = element_rect(fill = 'gray26', colour = 'gray26'),
                              # panel.grid.major = element_blank(),
                              # panel.grid.minor = element_blank())"
@@ -1057,7 +1057,7 @@ emphasizePathway <- function(inputObj, dfobj, Cells, pres, genesets, seu, presTa
 
   rownames(dfobj_new) <- NULL
   graphString <- "ggobj2 <-  ggplot(dfobj_new, aes(x = x, y = y)) + geom_point(colour = colV) +
-                             theme_void()"
+                             theme_dark()"
                              # theme(panel.background = element_rect(fill = 'gray26', colour = 'gray26'),
                              # panel.grid.major = element_blank(),
                              # panel.grid.minor = element_blank())"
