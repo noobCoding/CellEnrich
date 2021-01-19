@@ -676,7 +676,7 @@ CellEnrichUI <- function() {sd
           ),
           material_row(
             material_card(
-              title = shiny::tags$h4("Highlighting selected pathways"), divider = TRUE,
+              title = shiny::tags$h4("Highlighted  pathways"), divider = TRUE,
               #tags$h4("To be recognized by application, Please move element's position"),
               my_ranklist<-rank_list(text = "", labels = "Please drag&drop to change pathway positions at least once!",
                                      input_id = "sortList", css_id = "mysortableCell"),
@@ -890,7 +890,7 @@ emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres, genesets, seu,
 
   rownames(dfobj_new) <- NULL
   graphString <- "ggobj2 <-  ggplot(dfobj_new, aes(x = x, y = y)) + geom_point(colour = colV) +
-                              theme_dark()"
+                              theme_void()"
                              # theme(panel.background = element_rect(fill = 'gray26', colour = 'gray26'),
                              # panel.grid.major = element_blank(),
                              # panel.grid.minor = element_blank())"
@@ -1057,7 +1057,7 @@ emphasizePathway <- function(inputObj, dfobj, Cells, pres, genesets, seu, presTa
 
   rownames(dfobj_new) <- NULL
   graphString <- "ggobj2 <-  ggplot(dfobj_new, aes(x = x, y = y)) + geom_point(colour = colV) +
-                             theme_dark()"
+                             theme_void()"
                              # theme(panel.background = element_rect(fill = 'gray26', colour = 'gray26'),
                              # panel.grid.major = element_blank(),
                              # panel.grid.minor = element_blank())"
@@ -2115,10 +2115,10 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       }
 
       output$legendTable <- DT::renderDataTable(
-        buildGradientLegend(res, GroupInfo = GroupInfo, dfobj = dfobj, Cells = Cells)
+        buildGradientLegend(res, Cells = Cells)
       )
 
-      plotImg <- emphasize(TRUE, res, dfobj, Cells, pres, genesets, seu, presTab)
+      plotImg <- emphasize(FALSE, res, dfobj, Cells, pres, genesets, seu, presTab)
       output$SlingShot <- renderPlot(emphasizeSlingShot(res, dfobj, Cells, pres, genesets, seu, presTab))
       output$Comparison <- renderPlot(emphasizePathway(res, dfobj, Cells, pres, genesets, seu, presTab))
 
@@ -2135,7 +2135,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       output$legenddn <- downloadHandler(
         filename = "mylegend.png",
         content = function(file) {
-          buildGradientLegend(res, img = TRUE, name = file, GroupInfo = GroupInfo, dfobj = dfobj, Cells = Cells)
+          buildGradientLegend(res, img = TRUE, name = file, Cells = Cells)
         }
       )
 
@@ -2175,10 +2175,10 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       }
 
       output$legendTable <- DT::renderDataTable(
-        buildGradientLegend(res, GroupInfo = GroupInfo, dfobj = dfobj, Cells = Cells)
+        buildGradientLegend(res, Cells = Cells)
       )
 
-      plotImg <- emphasize(TRUE, res, dfobj, Cells, pres, genesets, seu, presTab)
+      plotImg <- emphasize(FALSE, res, dfobj, Cells, pres, genesets, seu, presTab)
       output$SlingShot <- renderPlot(emphasizeSlingShot(res, dfobj, Cells, pres, genesets, seu, presTab))
       output$Comparison <- renderPlot(emphasizePathway(res, dfobj, Cells, pres, genesets, seu, presTab))
 
@@ -2260,13 +2260,13 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       res<-input$sortList
 
       shinyjs::show("legenddn")
-      plotImg <- emphasize(TRUE, res, dfobj, Cells, pres, genesets, seu, presTab)
+      plotImg <- emphasize(FALSE, res, dfobj, Cells, pres, genesets, seu, presTab)
       output$CellPlot <- renderPlot(plotImg)
       output$SlingShot <- renderPlot(emphasizeSlingShot(res, dfobj, Cells, pres, genesets, seu, presTab))
       output$Comparison <- renderPlot(emphasizePathway(res, dfobj, Cells, pres, genesets, seu, presTab))
 
       output$legendTable <- DT::renderDataTable(
-        buildGradientLegend(res, GroupInfo = GroupInfo, dfobj = dfobj, Cells = Cells)
+        buildGradientLegend(res, Cells = Cells)
       )
 
       output$imgdn <- downloadHandler(
@@ -2355,7 +2355,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       }
 
       res <- input$sortList
-      # output$biPlot <- renderPlot(buildbiplot(input$biFont, input$biX, input$biY, genesets, TOPN = input$biCount, oddratio = FALSE))
+      output$biPlot <- renderPlot(buildbiplot(input$biFont, input$biX, input$biY, genesets, TOPN = input$biCount, oddratio = FALSE))
       output$SlingShot <- renderPlot(emphasizeSlingShot(res, dfobj, Cells, pres, genesets, seu, presTab))
       output$Comparison <- renderPlot(emphasizePathway(res, dfobj, Cells, pres, genesets, seu, presTab))
       # output$slingDownload <- downloadHandler(
@@ -2372,16 +2372,13 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
   ui <- CellEnrichUI()
 
-
   shiny::shinyApp(ui, server, options = list(launch.browser = TRUE))
 }
 
-buildGradientLegend <- function(sortList, img = FALSE, name = NULL, GroupInfo, dfobj, Cells) {
+buildGradientLegend <- function(sortList, img = FALSE, name = NULL, Cells) {
   colV <- getColv(Cells)
-  print (colV)
 
   rlobj <- data.frame(stringsAsFactors = FALSE)
-
   for (i in 1:length(sortList)) {
     kk <- strsplit(sortList[[i]], " @")[[1]]
     Scale <- ""
@@ -2389,9 +2386,6 @@ buildGradientLegend <- function(sortList, img = FALSE, name = NULL, GroupInfo, d
     Group <- kk[2]
     rlobj <- rbind(rlobj, cbind(Scale, Pathway, Group))
   }
-
-  print (rlobj)
-
   colnames(rlobj) <- c("Scale", "Pathway", "Group")
 
   if (img) {
