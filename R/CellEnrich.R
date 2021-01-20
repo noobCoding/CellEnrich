@@ -1152,148 +1152,6 @@ emphasizeSlingShot <- function(inputObj, dfobj, Cells, pres, genesets, seu, pres
   now_obj <- cbind(dfobj_new$x, dfobj_new$y)
   colnames(now_obj) <- c("x", "y")
 
-  ## Get -log10(p_value) of a cell based on which genesets are chosen
-  # cellidx <- unlist(cellValues, use.names = FALSE)
-
-  # cell_pval <- c()
-  # cellidx <- unlist(cellValues, use.names = FALSE)
-  # for (cell in cellidx){
-  #   sgs <- names(genesets)[pres[[cell]]]
-  #   for (i in 1:nrow(rlobj)) {
-  #     thisGeneset <- which(sgs == rlobj[i, 1]) # index
-  #     if (length(thisGeneset) > 1) {
-  #       thisGeneset <- thisGeneset[1]
-  #     }
-  #     if (length(thisGeneset) > 0){
-  #       gid <- which(names(genesets) == sgs[thisGeneset])
-  #       tmp<- presTab[gid, cell]
-  #       cell_pval<- c(cell_pval, tmp)
-  #       break
-  #     }
-  #   }
-  # }
-  #
-  # # scale to [0, 1]
-  # pval_scaling <- function(x){(x-min(x))/(max(x)-min(x))}
-  # cell_pval <- pval_scaling(cell_pval)
-  # cell_pval<-ifelse(is.nan(cell_pval),0. ,cell_pval)
-  #
-  # for (i in 1:length(cellidx)){
-  #   # colV[cellidx[i]]<- col2hcl(colV[cellidx[i]],
-  #   #                            c=min(100, 100*cell_pval[i]),
-  #   #                            l=min(100, 100*cell_pval[i]))
-  #
-  #   tmp <- decode_colour(colV[cellidx[i]], to="hcl")
-  #   # tmp[2] <- min (100, 10 + tmp[2] * cell_pval[i])
-  #   # tmp[3] <- min (100, tmp[3] + (1 - cell_pval[i]) * 100)
-  #   tmp[3] <- min (100, 10 +  tmp[3] * cell_pval[i])
-  #   colV[cellidx[i]] <- encode_colour(tmp, from = 'hcl')
-  # }
-
-  # rownames(dfobj_new) <- NULL
-  # graphString <- "ggobj2 <- ggplot(dfobj_new, aes(x = x, y = y)) + geom_point(colour = colV) +
-  #                           # theme(panel.background = element_rect(fill = 'white', colour = 'white')
-  #                           theme_dark()"
-  #
-  # # add mean point to path
-  # lineages <- list()
-  # for (i in 1:length(sds@lineages)){
-  #   vertex <- unlist(sds@lineages[i],  use.names = FALSE)
-  #   for (j in 1:(length(vertex)-1)){
-  #     lineages[[length(lineages)+1]] <- c(vertex[j], vertex[j+1])
-  #   }
-  # }
-  # lineages <- unique(lineages)
-  # # print(lineages)
-  #
-  # vertice <- unlist(lineages[1], use.names = FALSE)
-  # for (i in 2:length(lineages)) {
-  #   tmp <- unlist(lineages[i], use.names = FALSE)
-  #   # if (tmp[1] != vertice[length(vertice)]){  # different from the last vertex
-  #   #   vertice <- c(vertice, tmp[1])
-  #   # }
-  #   vertice <- c(vertice, tmp[1])
-  #   vertice <- c(vertice, tmp[2])
-  # }
-  # # print (vertice)
-
-  # dfobj_path <- data.frame()
-  # for (i in 1:length(vertice)) {
-  #   x <- mean(as.numeric(dfobj_new$x[ cellValues[[ vertice[i] ]] ]))
-  #   y <- mean(as.numeric(dfobj_new$y[ cellValues[[ vertice[i] ]] ]))
-  #
-  #   dfobj_new <- rbind(dfobj_new, c(x, y, vertice[i] ))
-  #   # colV <- c(colV, "#ffff00")
-  #   colV <- c(colV, UniqueCol[i])
-  #
-  #   dfobj_path <- rbind(dfobj_path, c(x, y, vertice[i]))
-  # }
-  # colnames(dfobj_path) <- c("x", "y", "lineage")
-  # print(dfobj_path)
-
-  # n <- nrow(df) - 1
-  # new_data <- data.frame(X = c(rep(df$X[1], n), df$X[-1]),
-  #                        Y = c(rep(df$Y[1], n), df$Y[-1]))
-  # new_data$grp <- as.factor(rep(1:n, times = 2))
-  # new_data
-  # ##     X  Y grp
-  # ## 1 100 50   1
-  # ## 2 100 50   2
-  # ## 3 100 50   3
-  # ## 4 100 50   4
-  # ## 5  80 60   1
-  # ## 6  70 90   2
-  # ## 7 110 60   3
-  # ## 8  30 20   4
-  # Now, the plot can be created directly with ggplot:
-  # library(ggplot2)
-  # ggplot(new_data, aes(X, Y, group = grp)) +
-  #   geom_point() + geom_line()
-
-  # newCurve <- paste(
-  #         " + geom_line(dfobj_path, aes(x=dfobj_path$x, y=dfobj_path$y, group=dfobj_path$lineage))"
-  #       )
-  # graphString <- paste(graphString, newCurve, sep = "")
-
-  # newIdx <- (nrow(dfobj) + 1):nrow(dfobj_new)
-  # cellValues <- c(unname(unlist(cellValues)), newIdx)
-  #
-  # dfobj_new$x <- round(as.numeric(dfobj_new$x), 4)
-  # dfobj_new$y <- round(as.numeric(dfobj_new$y), 4)
-  #
-  # newstart <- 1
-  # finish <- FALSE
-  #
-  # while (TRUE){
-  #   for (i in newstart:(length(newIdx) - 1)) { # add curve
-  #     print ('i')
-  #     print (i)
-  #     if (i > (newstart + 1)){
-  #       print (vertice[i])
-  #       print (vertice[newstart:(i-1)])
-  #       if (vertice[i] %in% vertice[newstart:(i-1)]) {
-  #         newstart <- i
-  #         print ("newstart")
-  #         print (newstart)
-  #         break
-  #       }
-  #     }
-  #     newCurve <- paste(
-  #       " + geom_curve( aes(x = ", "x[newIdx[", i,
-  #       "]], y = y[newIdx[", i, "]], xend = x[newIdx[", i + 1,
-  #       "]], yend = y[newIdx[", i + 1, ']]), size = 0.5, linetype = "longdash",',
-  #       # "curvature = 0.1, colour = '#000000', ", 'arrow = arrow(length = unit(0.1,"inches")))'
-  #       "curvature = 0.1, colour = colV[newIdx[", i, ']], arrow = arrow(length = unit(0.1,"inches")))'
-  #     )
-  #     graphString <- paste(graphString, newCurve, sep = "")
-  #     if (i == (length(newIdx) - 1)) finish<-TRUE
-  #   }
-  #
-  #   if (finish) break
-  # }
-  # eval(parse(text = graphString))
-  # return(ggobj2)
-
   myslingshot <-
     list (plot(now_obj, col = colV, pch = 16, cex = 0.8),
           # plot(reducedDim(sds), col = colV, pch = 16, cex = 0.5),
@@ -1301,15 +1159,6 @@ emphasizeSlingShot <- function(inputObj, dfobj, Cells, pres, genesets, seu, pres
           lines(sds, lwd = 1.5, type = 'lineages', col='red4'))
 
   return(myslingshot)
-
-
-  # dfobj_new$col <- colV
-  # rownames(dfobj_new) <- NULL
-  #
-  # graphString <- "ggobj2 <- ggplot(dfobj_new, aes(x = x, y = y)) + geom_point(colour = colV)"
-  #
-  # eval(parse(text = graphString))
-  # return(ggobj2)
 }
 
 sortItem <- function(label, tableName) {
@@ -1488,36 +1337,36 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
     }
 
     buildSlingShot <- function(seu, plotOption) {
-      # library(slingshot)
-      # # TSNE
-      # if (plotOption == "t-SNE") {
-      #   sds <- getLineages(Embeddings(seu, "tsne"), clusterLabels = seu$seurat_clusters)
-      # }
-      #
-      # # UMAP
-      # if (plotOption == "U-MAP") {
-      #   sds <- getLineages(Embeddings(seu, "umap"), clusterLabels = seu$seurat_clusters)
-      # }
-      #
-      # cell_pal <- function(cell_vars, pal_fun,...) {
-      #   if (is.numeric(cell_vars)) {
-      #     pal <- pal_fun(100, ...)
-      #     return(pal[cut(cell_vars, breaks = 100)])
-      #   } else {
-      #     categories <- sort(unique(cell_vars))
-      #     pal <- setNames(pal_fun(length(categories), ...), categories)
-      #     return(pal[cell_vars])
-      #   }
-      # }
-      # cell_colors <- cell_pal(seu$cell_type, hue_pal())
-      # # cell_colors_clust <- cell_pal(seu$seurat_clusters,  brewer_pal("qual", "Set1"))
-      #
-      # myslingshot <<-
-      #   list (plot(reducedDim(sds), col = cell_colors, pch = 16, cex = .75),
-      #         # lines(sds, lwd = 2, col = 'black'),
-      #         lines(sds, lwd = 1.5, type = 'lineages', col='red4'))
-      #
-      # return(myslingshot)
+      library(slingshot)
+      # TSNE
+      if (plotOption == "t-SNE") {
+        sds <- getLineages(Embeddings(seu, "tsne"), clusterLabels = seu$seurat_clusters)
+      }
+
+      # UMAP
+      if (plotOption == "U-MAP") {
+        sds <- getLineages(Embeddings(seu, "umap"), clusterLabels = seu$seurat_clusters)
+      }
+
+      cell_pal <- function(cell_vars, pal_fun,...) {
+        if (is.numeric(cell_vars)) {
+          pal <- pal_fun(100, ...)
+          return(pal[cut(cell_vars, breaks = 100)])
+        } else {
+          categories <- sort(unique(cell_vars))
+          pal <- setNames(pal_fun(length(categories), ...), categories)
+          return(pal[cell_vars])
+        }
+      }
+      cell_colors <- cell_pal(seu$cell_type, hue_pal())
+      # cell_colors_clust <- cell_pal(seu$seurat_clusters,  brewer_pal("qual", "Set1"))
+
+      myslingshot <<-
+        list (plot(reducedDim(sds), col = cell_colors, pch = 16, cex = .75),
+              # lines(sds, lwd = 2, col = 'black'),
+              lines(sds, lwd = 1.5, type = 'lineages', col='red4'))
+
+      return(myslingshot)
     }
 
 
@@ -2387,6 +2236,8 @@ buildGradientLegend <- function(sortList, img = FALSE, name = NULL, Cells) {
     rlobj <- rbind(rlobj, cbind(Scale, Pathway, Group))
   }
   colnames(rlobj) <- c("Scale", "Pathway", "Group")
+  # currentGroup <- as.vector(rlobj$Group)
+  currentGroup <- rlobj$Group
 
   if (img) {
     png(name)
@@ -2395,7 +2246,7 @@ buildGradientLegend <- function(sortList, img = FALSE, name = NULL, Cells) {
       "center",
       legend = rlobj$Pathway,
       pch = 15, pt.cex = 2, cex = 1.2, bty = "n",
-      col = colV[as.vector(rlobj$Group)]
+      col = colV[currentGroup]
     )
     dev.off()
     return()
@@ -2403,7 +2254,7 @@ buildGradientLegend <- function(sortList, img = FALSE, name = NULL, Cells) {
 
   rlobj$Pathway <- paste0(
     sapply(
-      colV[as.vector(rlobj$Group)],
+      colV[myGroup],
       function(i) {
         paste0('<div style="background: ', i, '; display: inline-block; width: 1em;height: 1em;"></div>')
       }
@@ -2413,7 +2264,7 @@ buildGradientLegend <- function(sortList, img = FALSE, name = NULL, Cells) {
 
   rlobj$Scale <- paste0(
     sapply(
-      colV[as.vector(rlobj$Group)],
+      colV[currentGroup],
       function(i) {
         paste0(
           '<a style="color:black">low </a>',
@@ -2447,7 +2298,6 @@ buildLegend <- function(sortList, img = FALSE, name = NULL, GroupInfo) {
   colV <- getColv(GroupInfo)
 
   rlobj <- data.frame(stringsAsFactors = FALSE)
-
   for (i in 1:length(sortList)) {
     kk <- strsplit(sortList[[i]], " @")[[1]]
     Pathway <- kk[1]
@@ -2456,6 +2306,7 @@ buildLegend <- function(sortList, img = FALSE, name = NULL, GroupInfo) {
   }
 
   colnames(rlobj) <- c("Pathway", "Group")
+  currentGroup <- rlobj$Group
 
   if (img) {
     png(name)
@@ -2464,7 +2315,7 @@ buildLegend <- function(sortList, img = FALSE, name = NULL, GroupInfo) {
       "center",
       legend = rlobj$Pathway,
       pch = 15, pt.cex = 2, cex = 1.2, bty = "n",
-      col = colV[as.vector(rlobj$Group)]
+      col = colV[currentGroup]
     )
     dev.off()
     return()
@@ -2472,7 +2323,7 @@ buildLegend <- function(sortList, img = FALSE, name = NULL, GroupInfo) {
 
   rlobj$Pathway <- paste0(
     sapply(
-      colV[as.vector(rlobj$Group)],
+      colV[currentGroup],
       function(i) {
         paste0('<div style="background: ', i, '; display: inline-block; width: 1em;height: 1em;"></div>')
       }
