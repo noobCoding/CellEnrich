@@ -383,7 +383,9 @@ briterhex <- function(colors) {
 getColv <- function(GroupInfo) {
   Cells <- unique(sort(GroupInfo))
 
-  UniqueCol <- briterhex(scales::hue_pal()(length(Cells)))
+  UniqueCol <- briterhex(scales::hue_pal(h = c(0, 360) + 15,
+                                         c = 100, l = 65, h.start = 0,
+                                         direction = 1)(length(Cells)))
   # print(UniqueCol)
   # "#FF998D" "#FFBD00" "#BFDD00" "#00F148" "#00FACE" "#00F0FF" "#7ECAFF" "#FF94FF" "#FF7EFD"
   names(UniqueCol) <- Cells
@@ -434,7 +436,8 @@ getCellPlot <- function(dfobj, Cells) {
   dfobj <<- dfobj
 
 
-  UniqueCol <- briterhex(scales::hue_pal()(length(Cells)))
+  UniqueCol <- briterhex(scales::hue_pal(h = c(0, 360) + 15, c = 100, l = 65, h.start = 0,
+                                         direction = 1)(length(Cells)))
   names(UniqueCol) <- Cells
 
   colV <- unname(UniqueCol[dfobj$col])
@@ -513,7 +516,7 @@ CellEnrichUI <- function() {sd
     use_waitress(color = "#1976d2", percent_color = "#333333"),
     title = paste0(
       "CellEnrich ",
-      "<a href = 'https://github.com/jhk0530/cellenrich' target = '_blank'> ", # github link
+      "<a href = 'https://github.com/noobCoding/cellenrich' target = '_blank'> ", # github link
       "<i class='material-icons' style = 'font-size:1.3em;'>info</i> </a>" # icon tag
     ),
     nav_bar_fixed = FALSE,
@@ -832,7 +835,8 @@ emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres, genesets, seu,
   colnames(dfobj_new) <- c("x", "y", "col")
 
   # define ggobj2 element
-  UniqueCol <- briterhex(scales::hue_pal()(length(Cells)))
+  UniqueCol <- briterhex(scales::hue_pal(h = c(0, 360) + 15, c = 100, l = 65, h.start = 0,
+                                         direction = 1)(length(Cells)))
   names(UniqueCol) <- Cells
   colV <- unname(UniqueCol[dfobj_new$col])
 
@@ -890,12 +894,9 @@ emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres, genesets, seu,
 
   rownames(dfobj_new) <- NULL
   graphString <- "ggobj2 <-  ggplot(dfobj_new, aes(x = x, y = y)) + geom_point(colour = colV) +
-                              theme_dark()"
-                             # theme(panel.background = element_rect(fill = 'gray26', colour = 'gray26'),
-                             # panel.grid.major = element_blank(),
-                             # panel.grid.minor = element_blank())"
-                             # panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = 'gray'),
-                                   # panel.grid.minor = element_line(size = 0.25, linetype = 'solid', colour = 'gray'))
+                             theme(panel.background = element_rect(fill = 'gray95', colour = 'gray95'),
+                             panel.grid.major = element_line(size = 0.25, linetype = 'solid', colour = 'white'),
+                             panel.grid.minor = element_line(size = 0.25, linetype = 'solid', colour = 'white'))"
 
   if (path) { # add mean point to path
     dfobj_path <- data.frame()
@@ -996,7 +997,8 @@ emphasizePathway <- function(inputObj, dfobj, Cells, pres, genesets, seu, presTa
   colnames(dfobj_new) <- c("x", "y", "col")
 
   # define ggobj2 element
-  UniqueCol <- briterhex(scales::hue_pal()(length(Cells)))
+  UniqueCol <- briterhex(scales::hue_pal(h = c(0, 360) + 15, c = 100, l = 65, h.start = 0,
+                                         direction = 1)(length(Cells)))
   names(UniqueCol) <- Cells
   colV <- unname(UniqueCol[dfobj_new$col])
   colV[-unlist(cellValues, use.names = FALSE)] <- "#95A5A6" # gray color
@@ -1057,12 +1059,9 @@ emphasizePathway <- function(inputObj, dfobj, Cells, pres, genesets, seu, presTa
 
   rownames(dfobj_new) <- NULL
   graphString <- "ggobj2 <-  ggplot(dfobj_new, aes(x = x, y = y)) + geom_point(colour = colV) +
-                             theme_dark()"
-                             # theme(panel.background = element_rect(fill = 'gray26', colour = 'gray26'),
-                             # panel.grid.major = element_blank(),
-                             # panel.grid.minor = element_blank())"
-  # panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = 'gray'),
-  # panel.grid.minor = element_line(size = 0.25, linetype = 'solid', colour = 'gray'))
+                             theme(panel.background = element_rect(fill = 'gray95', colour = 'gray95'),
+                             panel.grid.major = element_line(size = 0.25, linetype = 'solid', colour = 'white'),
+                             panel.grid.minor = element_line(size = 0.25, linetype = 'solid', colour = 'white'))"
   eval(parse(text = graphString))
   return(ggobj2)
 }
@@ -1138,7 +1137,8 @@ emphasizeSlingShot <- function(inputObj, dfobj, Cells, pres, genesets, seu, pres
   # print (length(sds@lineages))
 
   # define ggobj2 element
-  UniqueCol <- briterhex(scales::hue_pal()(length(Cells)))
+  UniqueCol <- briterhex(scales::hue_pal(h = c(0, 360) + 15, c = 100, l = 65, h.start = 0,
+                                         direction = 1)(length(Cells)))
   names(UniqueCol) <- Cells
   colV <- unname(UniqueCol[dfobj_new$col])
   colV[-unlist(cellValues, use.names = FALSE)] <- "#95A5A6" # gray color
@@ -1542,7 +1542,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           tmp_pv <- getHyperPvalue(tmp_genes, genesets, A, lgs, q0, biobj)
           sigidx <- which(p.adjust(tmp_pv, "fdr") < q0)
           tmp_pres[sigidx, i] <- unname(tG[tmp_cells[i]])
-          tmp_pv[which(tmp_pv < 1e-16)] <- 1e-16
+          tmp_pv[which(tmp_pv < 1e-12)] <- 1e-12
 
           tmp_genes <- sapply(tmp_genes, function(i) {
             which(rc == i)
@@ -1591,7 +1591,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
           pres[[i]] <- which(p.adjust(prespv, "fdr") < q0)
 
-          prespv[which(prespv < 1e-16)] <- 1e-16
+          prespv[which(prespv < 1e-12)] <- 1e-12
 
           presTab <- cbind(presTab, -log10(prespv))
         }
@@ -1604,7 +1604,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
           pres[[i]] <- which(p.adjust(prespv, "fdr") < q0)
 
-          prespv[which(prespv < 1e-16)] <- 1e-16
+          prespv[which(prespv < 1e-12)] <- 1e-12
 
           presTab <- cbind(presTab, -log10(prespv))
         }
@@ -1863,7 +1863,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       output$dynamicTable <- renderUI({
         numTabs <- length(Cells)
-        CardColors <- briterhex(scales::hue_pal()(length(Cells)))
+        CardColors <- briterhex(scales::hue_pal(h = c(0, 360) + 15, c = 100, l = 65, h.start = 0,
+                                                direction = 1)(length(Cells)))
         options(useFancyQuotes = FALSE)
         tagList(
           material_row(
@@ -2056,7 +2057,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         return(NULL)
       }
       shinyjs::hide("legenddn")
-      UniqueCol <- briterhex(scales::hue_pal()(length(Cells)))
+      UniqueCol <- briterhex(scales::hue_pal(h = c(0, 360) + 15, c = 100, l = 65, h.start = 0,
+                                             direction = 1)(length(Cells)))
       names(UniqueCol) <- Cells
 
       colV <- unname(UniqueCol[dfobj$col])
@@ -2236,8 +2238,8 @@ buildGradientLegend <- function(sortList, img = FALSE, name = NULL, Cells) {
     rlobj <- rbind(rlobj, cbind(Scale, Pathway, Group))
   }
   colnames(rlobj) <- c("Scale", "Pathway", "Group")
-  # currentGroup <- as.vector(rlobj$Group)
-  currentGroup <- rlobj$Group
+  currentGroup <- as.vector(rlobj$Group)
+  # currentGroup <- rlobj$Group
 
   if (img) {
     png(name)
@@ -2254,7 +2256,7 @@ buildGradientLegend <- function(sortList, img = FALSE, name = NULL, Cells) {
 
   rlobj$Pathway <- paste0(
     sapply(
-      colV[myGroup],
+      colV[currentGroup],
       function(i) {
         paste0('<div style="background: ', i, '; display: inline-block; width: 1em;height: 1em;"></div>')
       }
