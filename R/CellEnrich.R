@@ -1450,8 +1450,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       # genesets <- GenesetsizeFlush(genesets, lgs, 15, 500)
 
       # ------ Gene Flush
-      remgenes <- GeneFlush(genes, genesets)
+      remgenes <- GeneFlush(genes, genesets)      
       CountData <- CountData[-remgenes, ]
+      genes <- genes[!genes %in% names(remgenes)] 
 
       genesets <<- genesets
 
