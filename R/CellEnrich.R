@@ -24,7 +24,7 @@ GeneFlush <- function(genes, genesets) {
   gsgenes <- unique(unlist(genesets))
   remgenes <- sapply(setdiff(genes, gsgenes), function(i) {
     which(i == genes)
-  }, USE.NAMES = FALSE)
+  }, USE.NAMES = TRUE)  # changed to TRUE - Hai
   return(remgenes)
 }
 
@@ -1451,8 +1451,10 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       # ------ Gene Flush
       remgenes <- GeneFlush(genes, genesets)      
-      CountData <- CountData[-remgenes, ]
-      genes <- genes[!genes %in% names(remgenes)] 
+      #CountData <- CountData[-remgenes, ]
+      CountData <- CountData[!(rownames(CountData) %in% names(remgenes)),]
+      genes <- genes[!genes %in% names(remgenes)]
+      rm(remgenes)      
 
       genesets <<- genesets
 
