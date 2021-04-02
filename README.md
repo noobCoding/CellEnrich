@@ -11,7 +11,7 @@ if(!require(remotes)){
   install.packages('remotes') # install devtools if not installed.
 }
 remotes::install_github('vqv/ggbiplot')
-remotes::install_github('unistbig/cellenrich')
+remotes::install_github('noobCoding/cellenrich')
 library(CellEnrich)
 ```
 
@@ -20,9 +20,9 @@ library(CellEnrich)
 ```R
 # download minimal data to working directory
 
-download.file('https://github.com/jhk0530/CellEnrich/blob/master/pbmcData.RData?raw=true','pbmcData.RData', mode = 'wb')
-download.file('https://github.com/jhk0530/CellEnrich/blob/master/pbmcClustinfo.RData?raw=true','pbmcClustinfo.RData', mode = 'wb')
-download.file('https://github.com/jhk0530/CellEnrich/blob/master/humanKEGG.RData?raw=true', 'humanKEGG.RData', mode = 'wb')
+download.file('https://github.com/noobCoding/CellEnrich/blob/master/pbmcData.RData?raw=true','pbmcData.RData', mode = 'wb')
+download.file('https://github.com/noobCoding/CellEnrich/blob/master/pbmcClustinfo.RData?raw=true','pbmcClustinfo.RData', mode = 'wb')
+download.file('https://github.com/noobCoding/CellEnrich/blob/master/humanKEGG.RData?raw=true', 'humanKEGG.RData', mode = 'wb')
 
 # load library and data
 
