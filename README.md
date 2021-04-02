@@ -44,6 +44,7 @@ CellEnrich(CountData, GroupInfo)
 
 * [dplyr](https://github.com/tidyverse/dplyr) - 0.8.5
 * [DT](https://github.com/rstudio/DT) - 0.13
+* [faver]
 * [ggplot2](https://github.com/tidyverse/ggplot2) - 3.3.0
 * [ggrepel](https://github.com/slowkow/ggrepel) - 0.8.2
 * [highcharter](https://github.com/jbkunst/highcharter) - 0.7.0.9001
@@ -58,9 +59,10 @@ CellEnrich(CountData, GroupInfo)
 * [shinyjs](https://github.com/daattali/shinyjs) - 1.1
 * [shinymaterial](https://github.com/ericrayanderson/shinymaterial) - 1.0.1
 * [SingleCellExperiment](https://git.bioconductor.org/packages/SingleCellExperiment) - 1.8.0
+* [Slingshot]
 * [sortable](https://github.com/rstudio/sortable) - 0.4.2
 * [uwot](https://github.com/jlmelville/uwot) - 0.1.8
-* [waiter](https://github.com/JohnCoene/waiter) - 0.1.1.9000
+* [waiter](https://github.com/JohnCoene/waiter) - 0.1.1.9000* 
 
 ## :blush: Authors
 * :octocat: Jinhwan Kim [@jhk0530](http://github.com/jhk0530)
