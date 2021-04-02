@@ -66,7 +66,8 @@ CellEnrich(CountData, GroupInfo)
 
 ## :blush: Authors
 * :octocat: Jinhwan Kim [@jhk0530](http://github.com/jhk0530)
-* prof. Dougu Nam *dougnam@unist.ac.kr*
+* Prof. Dougu Nam *dougnam@unist.ac.kr*
+* Dr. Hai Nguyen *hainct@unist.ac.kr* -- [@noobCoding](http://github.com/noobCoding)
 
 ## :memo: License
 This project is [MIT](https://opensource.org/licenses/MIT) licensed
