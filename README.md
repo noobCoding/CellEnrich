@@ -65,7 +65,7 @@ CellEnrich(CountData, GroupInfo)
 * [waiter](https://github.com/JohnCoene/waiter) - 0.1.1.9000* 
 
 ## :blush: Authors
-* :octocat: Jinhwan Kim [@jhk0530](http://github.com/jhk0530)
+* Jinhwan Kim [@jhk0530](http://github.com/jhk0530)
 * Prof. Dougu Nam *dougnam@unist.ac.kr*
 * Dr. Hai Nguyen *hainct@unist.ac.kr* -- [@noobCoding](http://github.com/noobCoding)
 
