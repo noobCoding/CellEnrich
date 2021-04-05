@@ -1,3 +1,5 @@
+## April 1st
+
 GenesetFlush <- function(genes, genesets) {
   cat("GenesetFlush\n")
   for (i in 1:length(genesets)) {
@@ -498,8 +500,21 @@ groupTable <- function(pres, genesets, dfobj, pres2) {
   return(res)
 }
 
+# values <- c("Carbs" = "carbs", "Proteins" = "prots", "BMI" = "bmi")
+default_genesets <- c(
+  "Human-Curated", # c2
+  "Human-KEGG", # KEGG
+  "Human-GO",
+  "Human-GO-BP",
+  "Human-GO-CC",
+  "Human-GO-MF",
+  "Mouse-KEGG", # Mouse
+  "Mouse-GO",
+  "Mouse-GO-BP",
+  "Mouse-GO-CC",
+  "Mouse-GO-MF")
 
-CellEnrichUI <- function() {sd
+CellEnrichUI <- function() {
   library(shinymaterial)
   library(highcharter)
   library(sortable)
@@ -592,31 +607,25 @@ CellEnrichUI <- function() {sd
             ),
             material_column(
               material_card(
-                material_radio_button(
-                  input_id = "genesetOption",
-                  label = "Gene-sets",
-                  color = "#1976d2",
-                  choices = c(
-                    "User-Geneset",
-                    "Human-Curated", # c2
-                    "Human-KEGG", # KEGG
-                    "Human-GO",
-                    "Human-GO-BP",
-                    "Human-GO-CC",
-                    "Human-GO-MF",
-                    "Mouse-KEGG", # Mouse
-                    "Mouse-GO",
-                    "Mouse-GO-BP",
-                    "Mouse-GO-CC",
-                    "Mouse-GO-MF"
-                  ),
-                  selected = "Human-KEGG"
-                )
+                # material_radio_button(
+                #   input_id = "genesetOption",
+                #   label = "Gene-sets",
+                #   color = "#1976d2",
+                #   choices = default_genesets,
+                #   selected = default_genesets[2] #"Human-KEGG"
+                # ),
+                radioButtons("genesetOption",
+                             label="Gene-sets",
+                             choices = default_genesets,
+                             selected= default_genesets[2]
+                             ),
+                textInput("other", "Insert your geneset file."),
+                actionButton("add", "Add geneset", style="color: #ffff; background-color: #1976d2;")
               ),
               width = 4
             )
           ),
-          solvedButton(
+           solvedButton(
             inputId = "StartCellEnrich",
             label = "Start",
             style = "margin-left:45%; background-color: #1976d2",
@@ -1229,6 +1238,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
   options(useFancyQuotes = FALSE)
 
   server <- function(input, output, session) {
+
     buildbiplot <- function(biFont, biX, biY, genesets, TOPN = 5, oddratio = FALSE) {
       Cells <- sort(unique(GroupInfo))
 
@@ -1369,7 +1379,15 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       return(myslingshot)
     }
 
-
+    usergs <- ""
+    observeEvent(input$add, {
+      req(input$other)
+      otherVal <- "other"
+      names(otherVal) <- input$other
+      usergs <<- input$other
+      updatedValues <- c(default_genesets, otherVal)
+      updateRadioButtons(session, "genesetOption", choices = updatedValues)
+    })
     ### CODES
 
     # variable initialize
@@ -1399,13 +1417,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         )
       }
 
-      if (is.null(genesets)) {
-        if (input$genesetOption == "User-Geneset") {
-          shiny::showNotification("Geneset not given ...", type = "error", duration = 10)
-          return(NULL)
-        }
-      }
-
       # ------ Hide Start Button
       shinyjs::hide("StartCellEnrich")
 
@@ -1413,6 +1424,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       shinyjs::runjs('$("#Emphasize").attr("disabled",true)')
 
       # ------ Load Genesets
+      # Check that data object exists and is data frame.
       if (is.null(genesets)) {
         if (input$genesetOption == "Human-Curated") load("c2v71.RData")
         if (input$genesetOption == "Human-GO") load("humanGO.RData")
@@ -1427,8 +1439,18 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         if (input$genesetOption == "Mouse-GO-MF") load("mouseGOMF.RData")
       }
 
-      else {
-        shiny::showNotification("User Geneset will be used", type = "message", duration = 10)
+      if (is.null(genesets)) {
+          load(usergs)
+          # load("hmgobp-usergs.RData")
+          if (is.null(genesets)){
+            shiny::showNotification("Geneset file is invalid!", type = "error", duration = 10)
+            return(NULL)
+          }
+      }
+
+      if (is.null(genesets)) {
+        shiny::showNotification("Geneset file is missing!", type = "error", duration = 10)
+        return(NULL)
       }
 
       genesets <<- genesets
@@ -1450,11 +1472,11 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       # genesets <- GenesetsizeFlush(genesets, lgs, 15, 500)
 
       # ------ Gene Flush
-      remgenes <- GeneFlush(genes, genesets)      
+      remgenes <- GeneFlush(genes, genesets)
       #CountData <- CountData[-remgenes, ]
       CountData <- CountData[!(rownames(CountData) %in% names(remgenes)),]
       genes <- genes[!genes %in% names(remgenes)]
-      rm(remgenes)      
+      rm(remgenes)
 
       genesets <<- genesets
 
@@ -2140,7 +2162,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       )
     })
 
-    # clear timelist in Cell tab
+    # clear list in Cell tab
     observeEvent(input$ClearList, {
       if (input$ClearList == 0) { # prevent default click state
         return(NULL)
