@@ -618,14 +618,14 @@ CellEnrichUI <- function() {
                              label="Gene-sets",
                              choices = default_genesets,
                              selected= default_genesets[2]
-                             ),
+                ),
                 textInput("other", "Insert your geneset file."),
                 actionButton("add", "Add geneset", style="color: #ffff; background-color: #1976d2;")
               ),
               width = 4
             )
           ),
-           solvedButton(
+          solvedButton(
             inputId = "StartCellEnrich",
             label = "Start",
             style = "margin-left:45%; background-color: #1976d2",
@@ -1163,9 +1163,7 @@ emphasizeSlingShot <- function(inputObj, dfobj, Cells, pres, genesets, seu, pres
 
   myslingshot <-
     list (plot(now_obj, col = colV, pch = 16, cex = 0.8),
-          # plot(reducedDim(sds), col = colV, pch = 16, cex = 0.5),
-          # lines(sds, lwd = 2, col = 'black'),
-          lines(sds, lwd = 1.5, type = 'lineages', col='red4'))
+          lines(SlingshotDataSet(sds), lwd = 1.5, type = 'lineages', col='red4'))
 
   return(myslingshot)
 }
@@ -1372,10 +1370,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       # cell_colors_clust <- cell_pal(seu$seurat_clusters,  brewer_pal("qual", "Set1"))
 
       myslingshot <<-
-        list (plot(reducedDim(sds), col = cell_colors, pch = 16, cex = .75),
-              # lines(sds, lwd = 2, col = 'black'),
-              lines(sds, lwd = 1.5, type = 'lineages', col='red4'))
-
+        list (plot(sds@elementMetadata@listData$reducedDim, col = cell_colors, pch = 16, cex = .8),
+              lines(SlingshotDataSet(sds), lwd = 1.5, type = 'lineages', col='red4'))
       return(myslingshot)
     }
 
@@ -1440,12 +1436,12 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       }
 
       if (is.null(genesets)) {
-          load(usergs)
-          # load("hmgobp-usergs.RData")
-          if (is.null(genesets)){
-            shiny::showNotification("Geneset file is invalid!", type = "error", duration = 10)
-            return(NULL)
-          }
+        load(usergs)
+        # load("hmgobp-usergs.RData")
+        if (is.null(genesets)){
+          shiny::showNotification("Geneset file is invalid!", type = "error", duration = 10)
+          return(NULL)
+        }
       }
 
       if (is.null(genesets)) {
