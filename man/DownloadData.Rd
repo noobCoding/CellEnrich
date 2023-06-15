@@ -2,10 +2,13 @@
 % Please edit documentation in R/DownloadData.R
 \name{DownloadData}
 \alias{DownloadData}
-\title{Download additional CellEnrich Data}
+\title{Download additional CellEnrich data (gene-sets, sample data)}
 \usage{
-DownloadData()
+DownloadData(type='test')
+}
+\arguments{
+\item{type}{'test' for a lite PBMC data and Wikipathway, KEGG, GO, ... gene-sets; 'all' for all available data}
 }
 \description{
-Download additional CellEnrich Data
+Download additional CellEnrich data (gene-sets, sample data)
 }
