@@ -1,15 +1,5 @@
 ## 23.06.08
 
-if(!require(waiter)){
-  install.packages('waiter') # install 'waiter' if not installed.
-} 
-
-if(!require(farver)){
-  install.packages('farver') # install 'farver' if not installed.
-  
-}
-library(farver)
-
 GenesetFlush <- function(genes, genesets) {
   cat("GenesetFlush\n")
   for (i in 1:length(genesets)) {
@@ -1030,6 +1020,11 @@ emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres, genesets, seu,
 
 emphasizePathway <-
   function(inputObj, dfobj, Cells, pres, genesets, seu, presTab) {
+    if(!require(farver)){
+      install.packages('farver') # install 'farver' if not installed.
+      
+    }
+    library(farver)
     cat("emphasize pathways\n")
     buildRlobj <- function(items) {
       rlobj <- data.frame(stringsAsFactors = FALSE)
@@ -1166,6 +1161,11 @@ emphasizePathway <-
   }
 
 emphasizeSlingShot <- function(inputObj, dfobj, Cells, pres, genesets, seu, presTab) {
+  if(!require(farver)){
+    install.packages('farver') # install 'farver' if not installed.
+    
+  }
+  library(farver)
   cat("emphasize SlingShot \n")
   buildRlobj <- function(items) {
     rlobj <- data.frame(stringsAsFactors = FALSE)
