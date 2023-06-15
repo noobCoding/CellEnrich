@@ -557,6 +557,11 @@ CellEnrichUI <- function() {
   library(shinymaterial)
   library(highcharter)
   library(sortable)
+  if(!require(farver)){
+    install.packages('farver') # install 'farver' if not installed.
+    
+  }
+  library(farver)
 
   material_page(
     shinyjs::useShinyjs(),
@@ -854,6 +859,7 @@ myDnButton <- function(outputId, label = "Download", type = "default", ...) {
 }
 
 emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres, genesets, seu, presTab) {
+  
   cat("emphasize\n")
   buildRlobj <- function(items) {
     rlobj <- data.frame(stringsAsFactors = FALSE)
@@ -966,7 +972,7 @@ emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres, genesets, seu,
     #                            c=min(100, 100*cell_pval[i]),
     #                            l=min(100, 100*cell_pval[i]))
 
-    tmp <- decode_colour(colV[cellidx[i]], to="hcl")
+    tmp <- farver::decode_colour(colV[cellidx[i]], to="hcl")
     # tmp[2] <- min (100, tmp[2] * cell_pval[i])
     # tmp[3] <- min (100, tmp[3] + 100 * (1 - cell_pval[i]))
     tmp[3] <- min (100, 100 * cell_pval[i])
@@ -1020,11 +1026,6 @@ emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres, genesets, seu,
 
 emphasizePathway <-
   function(inputObj, dfobj, Cells, pres, genesets, seu, presTab) {
-    if(!require(farver)){
-      install.packages('farver') # install 'farver' if not installed.
-      
-    }
-    library(farver)
     cat("emphasize pathways\n")
     buildRlobj <- function(items) {
       rlobj <- data.frame(stringsAsFactors = FALSE)
@@ -1141,7 +1142,7 @@ emphasizePathway <-
       #                            c=min(100, 100*cell_pval[i]),
       #                            l=min(100, 100*cell_pval[i]))
 
-      tmp <- decode_colour(colV[cellidx[i]], to="hcl")
+      tmp <- farver::decode_colour(colV[cellidx[i]], to="hcl")
       # tmp[2] <- min (100, tmp[2] * cell_pval[i])
       tmp[3] <- min (100, 100 * cell_pval[i])
       colV[cellidx[i]] <- encode_colour(tmp, from = 'hcl')
@@ -1305,7 +1306,7 @@ solvedButton <- function(inputId, label, style = NULL, onClick = NULL, ...) {
 #' @import ggbiplot
 #' @import magrittr
 #' @import waiter
-#' @import faver
+#' @import farver
 #' @rawNamespace import(shinyjs, except = runExample)
 #' @import scales
 #' @import sortable
