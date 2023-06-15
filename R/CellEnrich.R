@@ -1,8 +1,12 @@
 ## 23.06.08
-library(farver)
-library(waiter)
 
-library(plyr); library(dplyr)
+if(!require(waiter)){
+  install.packages('waiter') # install 'waiter' if not installed.
+} 
+
+if(!require(farver)){
+  install.packages('farver') # install 'farver' if not installed.
+}
 
 GenesetFlush <- function(genes, genesets) {
   cat("GenesetFlush\n")
