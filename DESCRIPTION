@@ -1,6 +1,6 @@
 Package: CellEnrich
 Title: Pathway Enrichment Analysis, Visualize for Single Cell Data
-Version: 0.0.0.9000
+Version: 1.6.68
 Authors@R: 
     person(given = "Truong Hai",
            family = "Nguyen Cao",
