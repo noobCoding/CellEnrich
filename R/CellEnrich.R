@@ -3,13 +3,12 @@
 if(!require(waiter)){
   install.packages('waiter') # install 'waiter' if not installed.
 } 
-require(waiter)
 
 if(!require(farver)){
   install.packages('farver') # install 'farver' if not installed.
   
 }
-require(farver)
+library(farver)
 
 GenesetFlush <- function(genes, genesets) {
   cat("GenesetFlush\n")
