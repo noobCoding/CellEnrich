@@ -11,9 +11,10 @@ Online manual is available [here](https://github.com/noobCoding/CellEnrich/wiki)
 
 ```R
 if(!require(remotes)){
-  install.packages('remotes') # install devtools if not installed.
+  install.packages('remotes') 
 }
 remotes::install_github('vqv/ggbiplot')
+install.packages('farver') # install 'farver' if not installed.
 remotes::install_github('noobCoding/CellEnrich')
 library(CellEnrich)
 ```
