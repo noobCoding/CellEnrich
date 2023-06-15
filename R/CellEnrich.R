@@ -122,9 +122,6 @@ findSigGenesGroup <- function(Count = NULL, ClustInfo = NULL, q0 = 0.1, TopCutof
   if (is.null(Count)) stop("Count must given")
   if (is.null(ClustInfo)) stop("ClustInfo must given")
 
-  # Count = CountData
-  # ClustInfo = GroupInfo
-
   GrpRes <- scran::findMarkers(x = as.matrix(Count), ClustInfo, test.type = "wilcox", direction = "up")
   Grp <- unique(ClustInfo)
 
