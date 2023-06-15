@@ -3,10 +3,13 @@
 if(!require(waiter)){
   install.packages('waiter') # install 'waiter' if not installed.
 } 
+require(waiter)
 
 if(!require(farver)){
   install.packages('farver') # install 'farver' if not installed.
+  
 }
+require(farver)
 
 GenesetFlush <- function(genes, genesets) {
   cat("GenesetFlush\n")
@@ -1990,7 +1993,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       }
 
       # group 별 significant pathways
-      # group 별 DE Genes
+      # group 별DE Genes
 
       # is counted
       dtobj <<- buildDT(pres2)
