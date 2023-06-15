@@ -1,7 +1,7 @@
 destination: docs
 authors:
-  Jinhwam Kim:
-    href: https://github.com/jhk0530
+  CaoTruongHai Nguyen:
+    href: https://github.com/noobcoding
 navbar:
   structure:
     left:  [home, reference, articles, tutorials]
