@@ -17,4 +17,26 @@ Encoding: UTF-8
 LazyData: true
 Depends:
     R (>= 4.2.0)
+biocViews:
+Imports:
+    dplyr,
+    plyr,
+    farver,
+    DT,
+    ggplot2,
+    ggrepel,
+    highcharter,
+    htmltools,
+    magrittr,
+    Rtsne,
+    scMerge,
+    scran,
+    Seurat,
+    shiny,
+    shinyFeedback,
+    shinyjs,
+    shinymaterial,
+    sortable,
+    SingleCellExperiment,
+    waiter
 RoxygenNote: 7.2.3
