@@ -743,21 +743,21 @@ CellEnrichUI <- function() {
               material_button("slingRedraw", "Redraw",  color = "blue darken-2", )
             ),
             # p('Coloring by'),
-            material_button("colorbtn", "Cell groups", icon = shiny::icon("color_lens"), color = "blue darken-2"),
-            material_button("freqbtn", "Frequency", icon = shiny::icon("grain"), color = "blue darken-2"),
-            material_button("sigbtn", "Odds Ratio", icon = shiny::icon("grade"), color = "blue darken-2")
+            material_button("colorbtn", "Cell groups", color = "blue darken-2"),
+            material_button("freqbtn", "Frequency", color = "blue darken-2"),
+            material_button("sigbtn", "Odds Ratio", color = "blue darken-2")
 
           ),
           material_row(
-            shiny::downloadButton("imgdn", "Save Plot", icon = shiny::icon("save"), style = "background-color : #616161 !important"),
-            shiny::downloadButton("sppcdn", "Significant pathways ", icon = shiny::icon("save"), style = "background-color : #616161 !important")
+            shiny::downloadButton("imgdn", "Save Plot", style = "background-color : #616161 !important"),
+            shiny::downloadButton("sppcdn", "Significant pathways ", style = "background-color : #616161 !important")
 
           ),
           material_row(
             material_card(
               title = "",
               DT::dataTableOutput("legendTable"),
-              shiny::downloadButton("legenddn", "Save Legend", icon = shiny::icon("save"), style = "background-color : #616161 !important; display:none;")
+              shiny::downloadButton("legenddn", "Save Legend", style = "background-color : #616161 !important; display:none;")
             )
           ),
           material_row(
@@ -768,11 +768,11 @@ CellEnrichUI <- function() {
                                      input_id = "sortList", css_id = "mysortableCell"),
               material_row(
                 # material_button("OrderEmphasize", "Emphasize with Order", icon = "timeline", color = "blue darken-2"),
-                material_button("Emphasize", "Emphasize", icon = shiny::icon("bubble_chart"), color = "blue darken-2"),
-                material_button("ClearList", "Clear List", icon = shiny::icon("clear_all"), color = "blue darken-2")
+                material_button("Emphasize", "Emphasize", color = "blue darken-2"),
+                material_button("ClearList", "Clear List", color = "blue darken-2")
               ),
               material_row(
-                shiny::downloadButton("tbldn", "Save Highlighted Pathways", icon = shiny::icon("save"), style = "background-color : #616161 !important")
+                shiny::downloadButton("tbldn", "Save Highlighted Pathways", style = "background-color : #616161 !important")
               ),
             ),
             shiny::uiOutput("dynamicTable"), depth = 3
@@ -813,7 +813,7 @@ CellEnrichUI <- function() {
                 )
               ),
               material_row(
-                shiny::downloadButton("biplotdn", "Save Biplot", icon = shiny::icon("save"), style = "background-color : #616161 !important")
+                shiny::downloadButton("biplotdn", "Save Biplot", style = "background-color : #616161 !important")
               ),
               width = 2
             )
