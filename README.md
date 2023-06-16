@@ -7,7 +7,7 @@ Online manual is available [here](https://github.com/noobCoding/CellEnrich/wiki)
 <img src="data/figures/scatter-area.png"> 
 <img src="data/figures/severe-freq.png"> 
 
-## :wrench: Install
+## Install
 
 ```R
 if(!require(remotes)){
