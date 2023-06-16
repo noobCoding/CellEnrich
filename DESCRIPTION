@@ -5,11 +5,7 @@ Authors@R:
     person(given = "Truong Hai",
            family = "Nguyen Cao",
            role = c("aut", "cre"),
-           email = "justosue@gmail.com")
-    person(given = "Jinhwan",
-           family = "Kim",
-           role = c("aut", "cre"),
-           email = "hwanistic@gmail.com")
+           email = "justosue@gmail.com")  
 Description: Pathway Enrichment Analysis, Visualize for Single Cell Data.
 License: MIT + file LICENSE
 URL: https://github.com/noobcoding/CellEnrich
