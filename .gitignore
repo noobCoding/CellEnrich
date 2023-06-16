@@ -10,3 +10,7 @@ mixture.csv
 tmp.csv
 TIDYCELLENRICH.csv
 plot3.R
+.Rdata
+.httr-oauth
+.DS_Store
+.quarto
