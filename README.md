@@ -7,7 +7,7 @@ Online manual is available [here](https://github.com/noobCoding/CellEnrich/wiki)
 <img src="data/figures/scatter-area.png"> 
 <img src="data/figures/severe-freq.png"> 
 
-## :wrench: Install
+## Install
 
 ```R
 if(!require(remotes)){
@@ -19,7 +19,7 @@ remotes::install_github('noobCoding/CellEnrich')
 library(CellEnrich)
 ```
 
-## :ship: Example run with Alzheimer data 
+## Example run with Alzheimer data 
 
 ```R
 # download minimal data to working directory
@@ -41,11 +41,11 @@ CellEnrich(CountData, GroupInfo)
 
 ```
 
-## :paperclip: Dependency
+## Dependency
 
 * [dplyr](https://github.com/tidyverse/dplyr) - 0.8.5
 * [DT](https://github.com/rstudio/DT) - 0.13
-* [faver](https://cran.r-project.org/web/packages/farver/) - 2.0.3
+* [farver](https://cran.r-project.org/web/packages/farver/) - 2.0.3
 * [ggplot2](https://github.com/tidyverse/ggplot2) - 3.3.0
 * [ggrepel](https://github.com/slowkow/ggrepel) - 0.8.2
 * [highcharter](https://github.com/jbkunst/highcharter) - 0.7.0.9001
@@ -66,11 +66,11 @@ CellEnrich(CountData, GroupInfo)
 * [uwot](https://github.com/jlmelville/uwot) - 0.1.8
 * [waiter](https://github.com/JohnCoene/waiter) - 0.1.1.9000* 
 
-## :blush: Authors
-* Jinhwan Kim [@jhk0530](http://github.com/jhk0530)
-* Prof. Dougu Nam *dougnam@unist.ac.kr*
+## Authors
 * Dr. Hai Nguyen *hainct@unist.ac.kr* -- [@noobCoding](http://github.com/noobCoding)
+* Jinhwan Kim [@jhk0530](http://github.com/jhk0530)
+* Prof. Dougu Nam *dougnam@unist.ac.kr* 
 
-## :memo: License
+## License
 This project is [MIT](https://opensource.org/licenses/MIT) licensed
 
