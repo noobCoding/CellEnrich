@@ -45,7 +45,7 @@ CellEnrich(CountData, GroupInfo)
 
 * [dplyr](https://github.com/tidyverse/dplyr) - 0.8.5
 * [DT](https://github.com/rstudio/DT) - 0.13
-* [faver](https://cran.r-project.org/web/packages/farver/) - 2.0.3
+* [farver](https://cran.r-project.org/web/packages/farver/) - 2.0.3
 * [ggplot2](https://github.com/tidyverse/ggplot2) - 3.3.0
 * [ggrepel](https://github.com/slowkow/ggrepel) - 0.8.2
 * [highcharter](https://github.com/jbkunst/highcharter) - 0.7.0.9001
