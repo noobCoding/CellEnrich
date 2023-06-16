@@ -35,4 +35,6 @@ Imports:
     sortable,
     SingleCellExperiment,
     waiter
+Suggests: 
+    testthat (>= 2.1.0)
 RoxygenNote: 7.2.3
