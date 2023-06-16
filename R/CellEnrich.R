@@ -1,4 +1,4 @@
-## 23.06.08
+$)C## 23.06.08
 
 GenesetFlush <- function(genes, genesets) {
   cat("GenesetFlush\n")
@@ -305,11 +305,11 @@ pathwayPvalue <- function(GroupInfo, pres, pres2, genesets) {
 # pres : which gene-sets are significant for each cells.
 # pres2 : for each gene-sets, how many cells are significant that gene-sets.
 
-# 전체 그룹에서 유의한 회수 20 # pres2[genesets[i]]
-# 특정 그룹에서 유의한 회수 6 # pres2[thiscellidx]
+# @|C< 1W7l?!<- @/@GGQ H8<v 20 # pres2[genesets[i]]
+# F/A$ 1W7l?!<- @/@GGQ H8<v 6 # pres2[thiscellidx]
 
-# 전체 그룹 Cell 수 : N
-# 특정 그룹 Cell 수 : K
+# @|C< 1W7l Cell <v : N
+# F/A$ 1W7l Cell <v : K
 
 # Group_specific_OR = (6/K) / (14/N)
 
@@ -324,18 +324,18 @@ getOddRatio <- function(GroupInfo, pres, pres2, genesets, ratio) {
     thisCell <- Cells[i]
     thisCellIdx <- which(GroupInfo == thisCell)
     OR <- unname(sapply(1:length(genesets), function(k) {
-      B <- table(unlist(pres[thisCellIdx]))[as.character(k)] # 특정 Cell에서 유의한 회수
+      B <- table(unlist(pres[thisCellIdx]))[as.character(k)] # F/A$ Cell?!<- @/@GGQ H8<v
       if (is.na(B)) {
         return(0)
       }
       if (B < length(thisCellIdx) * ratio) {
         return(0)
       }
-      A <- pres2[names(genesets)[k]] # 전체 Cell에서 유의한 회수
+      A <- pres2[names(genesets)[k]] # @|C< Cell?!<- @/@GGQ H8<v
       if (is.na(A)) {
         return(0)
       }
-      N <- total # 전체 Cell 수
+      N <- total # @|C< Cell <v
 
       K <- length(thisCellIdx)
 
@@ -1360,7 +1360,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           tab[, i] <- round(unname(
             sapply(1:length(gs), function(k) {
               k <- gs[k]
-              B <- table(unlist(pres[thisCellIdx]))[as.character(unname(k))] # 특정 Cell에서 유의한 회수
+              B <- table(unlist(pres[thisCellIdx]))[as.character(unname(k))] # F/A$ Cell?!<- @/@GGQ H8<v
               if (is.na(B)) {
                 return(0)
               }
@@ -1992,8 +1992,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         )
       }
 
-      # group 별 significant pathways
-      # group 별DE Genes
+      # group :0 significant pathways
+      # group :0DE Genes
 
       # is counted
       dtobj <<- buildDT(pres2)
