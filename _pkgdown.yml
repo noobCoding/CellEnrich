@@ -1,8 +1,4 @@
-destination: docs
-authors:
-  CaoTruongHai Nguyen:
-    href: https://github.com/noobcoding
-navbar:
-  structure:
-    left:  [home, reference, articles, tutorials]
-    right: [github]
+url: ~
+template:
+  bootstrap: 5
+
