@@ -1465,7 +1465,12 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
     }
 
     buildSlingShot <- function(seu, plotOption) {
-      # BiocManager::install('slingshot')
+      if(!require(BiocManager)){
+        install.packages('BiocManager') 
+      }
+      if(!require(slingshot)){
+        BiocManager::install('slingshot')
+      }
       library(slingshot)
       # TSNE
       if (plotOption == "TSNE") {
