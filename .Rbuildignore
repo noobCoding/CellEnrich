@@ -7,3 +7,4 @@
 ^images$
 ^pkgdown$
 ^vignettes/articles$
+^\.github$

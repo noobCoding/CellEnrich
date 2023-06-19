@@ -8,7 +8,7 @@ Authors@R:
            email = "justosue@gmail.com")  
 Description: Pathway Enrichment Analysis, Visualize for Single Cell Data.
 License: MIT + file LICENSE
-URL: https://github.com/noobcoding/CellEnrich
+URL: https://github.com/noobcoding/CellEnrich, https://noobcoding.github.io/CellEnrich/
 Encoding: UTF-8
 LazyData: true
 Depends:
