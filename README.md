@@ -43,6 +43,7 @@ CellEnrich(CountData, GroupInfo)
 
 ## Dependency
 
+* [R](https://cran.r-project.org/src/base/R-4/) - >= 4.0.1
 * [dplyr](https://github.com/tidyverse/dplyr) - 0.8.5
 * [DT](https://github.com/rstudio/DT) - 0.13
 * [farver](https://cran.r-project.org/web/packages/farver/) - 2.0.3
