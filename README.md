@@ -4,8 +4,8 @@ Pathway enrichment analysis / visualize for Single Cell Data
 
 Online manual is available [here](https://github.com/noobCoding/CellEnrich/wiki)
 
-<img src="data/figures/scatter-area.png"> 
-<img src="data/figures/severe-freq.png"> 
+<img src="docs/images/5scatter-area.png"> 
+<img src="docs/images/6severe-freq.png"> 
 
 ## Install
 
