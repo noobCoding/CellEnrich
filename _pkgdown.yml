@@ -1,4 +1,8 @@
-url: ~
-template:
-  bootstrap: 5
-
+destination: docs
+authors:
+  Nguyen Cao Truong Hai:
+    href: https://github.com/noobCoding
+navbar:
+  structure:
+    left:  [home, reference, articles, tutorials]
+    right: [github]
