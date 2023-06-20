@@ -1,8 +1,8 @@
 # CellEnrich 
 
-Pathway enrichment analysis / visualize for Single Cell Data
+Pathway enrichment analysis/visualization for Single Cell Data
 
-Online manual is available [here](https://github.com/noobCoding/CellEnrich/wiki)
+The online manual is available [here](https://github.com/noobCoding/CellEnrich/wiki)
 
 <img src="docs/images/5scatter-area.png"> 
 <img src="docs/images/6severe-freq.png"> 
@@ -19,15 +19,15 @@ remotes::install_github('noobCoding/CellEnrich')
 library(CellEnrich)
 ```
 
-## Example run with Alzheimer data 
+## Example run with Alzheimer's data 
 
 ```R
-# download minimal data to working directory
+# download minimal data to the working directory
 download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Alzheimer_Counts_sampled.RDS','Alzheimer_Counts_sampled.RDS', mode = 'wb')
 download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Alzheimer_CellType_sampled.RDS','Alzheimer_CellType_sampled.RDS', mode = 'wb')
 download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/WikiPathways_2021_Human.RData', 'WikiPathways_2021_Human.RData', mode = 'wb')
 
-# load library and data
+# Load library and data
 library(CellEnrich)
 
 CountData <- readRDS("Alzheimer_Counts_sampled.RDS")
