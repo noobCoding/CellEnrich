@@ -4,8 +4,8 @@ Pathway enrichment analysis / visualize for Single Cell Data
 
 Online manual is available [here](https://github.com/noobCoding/CellEnrich/wiki)
 
-<img src="data/figures/scatter-area.png"> 
-<img src="data/figures/severe-freq.png"> 
+<img src="docs/images/5scatter-area.png"> 
+<img src="docs/images/6severe-freq.png"> 
 
 ## Install
 
@@ -29,13 +29,10 @@ download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/WikiPath
 
 # load library and data
 library(CellEnrich)
-readRDS("Alzheimer_CellType_sampled.RDS")
-readRDS("Alzheimer_Counts_sampled.RDS")
 
-CountData <- Alzheimer_Counts_sampled
-GroupInfo <- Alzheimer_CellType_sampled
-rm(Alzheimer_Counts_sampled, Alzheimer_CellType_sampled) # remove 
-
+CountData <- readRDS("Alzheimer_Counts_sampled.RDS")
+GroupInfo <- readRDS("Alzheimer_CellType_sampled.RDS")
+ 
 # Run cellenrich
 CellEnrich(CountData, GroupInfo)
 
@@ -43,6 +40,7 @@ CellEnrich(CountData, GroupInfo)
 
 ## Dependency
 
+* [R](https://cran.r-project.org/src/base/R-4/) - >= 4.2.0
 * [dplyr](https://github.com/tidyverse/dplyr) - 0.8.5
 * [DT](https://github.com/rstudio/DT) - 0.13
 * [farver](https://cran.r-project.org/web/packages/farver/) - 2.0.3
