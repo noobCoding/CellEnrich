@@ -1,7 +1,7 @@
 ---
 title: "How to install CellEnrich"
 author: "Jinhwan Kim"
-date : "2020.05.05"
+date : "2023.06.20"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{How to install CellEnrich}
@@ -41,7 +41,7 @@ library(BiocManager)
 
 As noted in [README](https://github.com/unistbig/CellEnrich)
 
-`CellEnrich` needs some packages to be installed before use it.
+`CellEnrich` needs some packages to be installed before using it.
 
 Bioconductor Packages
 
@@ -66,7 +66,7 @@ After install these 3 packages,
 
 ## Install CellEnrich
 
-running this Script will install most of dependent packages. 
+running this Script will install most of the dependent packages. 
 
 ```R
 install_github('unistbig/CellEnrich')
@@ -77,47 +77,43 @@ library(CellEnrich)
 
 ## Download Example Data
 
-CellEnrich provides example dataset and gene-sets.
+CellEnrich provides example datasets and gene-sets.
 
-using this function, user can download them in current working directory.
+using this function, users can download them in the current working directory.
 
 ```R
 CellEnrich::DownloadData()
 ```
 
-Here are list of data.
+Here is a list of data.
 
 - Human Gene-sets
 
-  - "c2v7.RData" ( Curated )
+  - "WikiPathways_2021_Human.RData"
   - "humanGO.RData"
   - "humanGOBP.RData"
   - "humanGOCC.RData"
   - "humanGOMF.RData"
-  - "keggv7.RData" ( KEGG )
+  - "KEGG_2021_Human.RData" ( KEGG )
   
 - Mouse Gene-sets
 
+  - "WikiPathways_2019_Mouse.RData"
   - "mouseGO.RData"
   - "mouseGOBP.RData"
   - "mouseGOCC.RData"
   - "mouseGOMF.RData"
-  - "mouseKEGG.RData"
+  - "KEGG_2021_Mouse.RData"
 
 - Human Data
 
-  - [Seurat PBMC Guide](https://satijalab.org/seurat/v3.1/pbmc3k_tutorial.html)
-  
-  - "pbmcClustInfo.RData"
+  - "pbmcClustInfo.RData" ([Seurat PBMC Guide](https://satijalab.org/seurat/v3.1/pbmc3k_tutorial.html))
   - "pbmcData.RData"
 
-  - [DuoClustering](https://bioconductor.org/packages/release/data/experiment/html/DuoClustering2018.html)
-  - [paper](https://f1000research.com/articles/7-1141)
+  - [DuoClustering](https://bioconductor.org/packages/release/data/experiment/html/DuoClustering2018.html)([link](https://f1000research.com/articles/7-1141))
 
   - "koh.RData"
   - "kohInfo.RData"
     
-- Mouse Data
-  
-  - [Seurat Mouse Guide](https://satijalab.org/seurat/v3.1/mca.html)
+- [Mouse Data](https://satijalab.org/seurat/v3.1/mca.html))
 
