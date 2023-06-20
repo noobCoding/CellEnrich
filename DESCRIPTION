@@ -18,6 +18,7 @@ Imports:
     dplyr,
     plyr,
     farver,
+    slingshot,
     DT,
     ggplot2,
     ggrepel,
@@ -32,6 +33,7 @@ Imports:
     shinyFeedback,
     shinyjs,
     shinymaterial,
+    slingshot,
     sortable,
     SingleCellExperiment,
     waiter

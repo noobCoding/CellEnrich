@@ -85,6 +85,7 @@
 <div class="page-header"><h1 class="hasAnchor">
 <a href="#cellenrich" class="anchor"></a>CellEnrich</h1></div>
 <p>Pathway enrichment analysis / visualize for Single Cell Data</p>
+<<<<<<< HEAD
 <p>Online manual is available in <a href="https://jhk0530.github.io/CellEnrich/">here</a></p>
 <div id="-install" class="section level2">
 <h2 class="hasAnchor">
@@ -95,6 +96,47 @@
 <div id="-dependency" class="section level2">
 <h2 class="hasAnchor">
 <a href="#-dependency" class="anchor"></a><span class="emoji" data-emoji="paperclip">📎</span> Dependency</h2>
+=======
+<p>Online manual is available <a href="https://github.com/noobCoding/CellEnrich/wiki" class="external-link">here</a></p>
+      <p><img src="images/5scatter-area.png"></p>
+      <p><img src="images/6severe-freq.png"></p>
+<div class="section level2">
+<h2 id="install">Install<a class="anchor" aria-label="anchor" href="#install"></a>
+</h2>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw">if</span><span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="va"><a href="https://remotes.r-lib.org" class="external-link">remotes</a></span><span class="op">)</span><span class="op">)</span><span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'remotes'</span><span class="op">)</span> </span>
+<span><span class="op">}</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">'vqv/ggbiplot'</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'farver'</span><span class="op">)</span> <span class="co"># install 'farver' if not installed.</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">'noobCoding/CellEnrich'</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/noobcoding/CellEnrich" class="external-link">CellEnrich</a></span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="example-run-with-alzheimer-data">Example run with Alzheimer data<a class="anchor" aria-label="anchor" href="#example-run-with-alzheimer-data"></a>
+</h2>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># download minimal data to working directory</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span><span class="st">'https://github.com/noobcoding/CellEnrich/raw/master/data/Alzheimer_Counts_sampled.RDS'</span>,<span class="st">'Alzheimer_Counts_sampled.RDS'</span>, mode <span class="op">=</span> <span class="st">'wb'</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span><span class="st">'https://github.com/noobcoding/CellEnrich/raw/master/data/Alzheimer_CellType_sampled.RDS'</span>,<span class="st">'Alzheimer_CellType_sampled.RDS'</span>, mode <span class="op">=</span> <span class="st">'wb'</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span><span class="st">'https://github.com/noobcoding/CellEnrich/raw/master/data/WikiPathways_2021_Human.RData'</span>, <span class="st">'WikiPathways_2021_Human.RData'</span>, mode <span class="op">=</span> <span class="st">'wb'</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># load library and data</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/noobcoding/CellEnrich" class="external-link">CellEnrich</a></span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="st">"Alzheimer_CellType_sampled.RDS"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="st">"Alzheimer_Counts_sampled.RDS"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">CountData</span> <span class="op">&lt;-</span> <span class="va">Alzheimer_Counts_sampled</span></span>
+<span><span class="va">GroupInfo</span> <span class="op">&lt;-</span> <span class="va">Alzheimer_CellType_sampled</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/rm.html" class="external-link">rm</a></span><span class="op">(</span><span class="va">Alzheimer_Counts_sampled</span>, <span class="va">Alzheimer_CellType_sampled</span><span class="op">)</span> <span class="co"># remove </span></span>
+<span></span>
+<span><span class="co"># Run cellenrich</span></span>
+<span><span class="fu"><a href="reference/CellEnrich.html">CellEnrich</a></span><span class="op">(</span><span class="va">CountData</span>, <span class="va">GroupInfo</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="dependency">Dependency<a class="anchor" aria-label="anchor" href="#dependency"></a>
+</h2>
+>>>>>>> master
 <ul>
 <li>
 <a href="https://github.com/tidyverse/dplyr">dplyr</a> - 0.8.5</li>
