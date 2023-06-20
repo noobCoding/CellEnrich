@@ -18,7 +18,6 @@ Imports:
     dplyr,
     plyr,
     farver,
-    slingshot,
     DT,
     ggplot2,
     ggrepel,
