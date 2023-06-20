@@ -1,7 +1,7 @@
 ---
-title: "PBMC 2700 tutorial"
-author: "Jinhwan Kim"
-date : "2020.05.05"
+title: "PBMC 3k tutorial"
+author: "Hai Nguyen"
+date: "2023.06.20"
 output: rmarkdown::html_vignette
 ---
 
@@ -12,15 +12,15 @@ knitr::opts_chunk$set(
 )
 ```
 
-In this tutorial, we will use PBMC analysis data from [Seurat](https://satijalab.org/seurat/).
+This tutorial will use PBMC analysis data from [Seurat](https://satijalab.org/seurat/).
 
-To get full description about experiment, refer [here](https://satijalab.org/seurat/v3.1/pbmc3k_tutorial.html)
+To get a complete description of the experiment, refer [here](https://satijalab.org/seurat/v3.1/pbmc3k_tutorial.html)
 
-We assume that all dependent packages is already installed. see **How to install CellEnrich** document.
+We assume that all dependent packages are already installed. see **How to install CellEnrich** document.
 
 ## Required Data
 
-Pre-processed data is included in github [repository](https://github.com/jhk0530/cellenrich).
+Pre-processed data is included in GitHub [repository](https://github.com/jhk0530/cellenrich).
 
 |Filename|Parameter|Type|
 |:---:|:---:|:---:|
@@ -29,7 +29,7 @@ Pre-processed data is included in github [repository](https://github.com/jhk0530
 
 ## Run
 
-with these Codes, user can see interactive `shiny` page.
+with these Codes, users can see an interactive `shiny` page.
 
 ```R
 
@@ -42,38 +42,38 @@ load("pbmcClustInfo.RData")
 CountData <- pbmcData
 GroupInfo <- pbmcClustInfo
 
-# this will run CellEnrich
+# This will run CellEnrich
 
 CellEnrich(CountData, GroupInfo)
 
 ```
 ## Result
 
-Set options before start `CellEnrich`.
+Set options before starting `CellEnrich`.
 
 Possible options are : 
 
 - Strategy for Differential Expressed Genes.
 - Plot Options
-- Gene-set and their size cutoff to used in analysis.
+- Gene-set and their size cutoff to be used in the analysis.
 
-After 30 seconds ~ 1 min, analysis result will be appear.
+After 30 seconds ~ 1 min, the analysis result will appear.
 
 used Test environment : 
 
-- OS : win 10
-- CPU : i5-8400 
-- RAM : 16G
+- OS : Ubuntu 22.04 LTS
+- CPU: i5-8400 
+- RAM: 32G
 
-CellEnrich is consisted with 3 modules.
+CellEnrich consists of 3 modules.
   
 ### 1. Plot Module
   
 <img src='images/groups2.png'>
 
-Left plot is scatter plot created with `t-SNE` or `U-MAP` and `ggplot2` that user selected in option. 
+The left plot is a scatter plot created with `t-SNE` or `U-MAP` and `ggplot2` that the user selected in the option. 
 
-- *In this tutorial, scatter plot is `t-SNE` result.*
+- *In this tutorial, the scatter plot is the `t-SNE` result.*
 
 - this scatter plot can be **emphasized** with 4 buttons:
 
@@ -83,19 +83,19 @@ Left plot is scatter plot created with `t-SNE` or `U-MAP` and `ggplot2` that use
   
   <img src='images/togray.png'>
   
-  3. `FREQUENT` button will colorize frequently enriched cell in each group.
+  3. `FREQUENT` button will colorize frequently enriched cells in each group.
   
   <img src='images/frequent.png'>
   
-  4. `SIGNIFICANT` button will colorize most significantly enriched cell in each group.
+  4. `SIGNIFICANT` button will colorize the most significantly enriched cell in each group.
 
   <img src='images/significant.png'>
 
-Right plot is histogram plot created with `highcharter` to see distribution of Group / Cell labels.
+The right plot is a histogram plot created with `high charter` to see a distribution of Group / Cell labels.
 
 - *In this tutorial, 9 group exists.*
 
-User can download both result with `save` button (LEFT) and `export` options in right top (RIGHT).
+User can download both result with the `Save` button (LEFT) and `Export` options at the right top (RIGHT).
 
 <img src='images/highchart.png'>
   
@@ -105,11 +105,11 @@ User can download both result with `save` button (LEFT) and `export` options in 
   
 <img src='images/markers2.png'>
 
-This marker module will show Differentially Expressed genes in : 
+This marker module will show Differentially Expressed genes in the following: 
 
   1. Each group ( using findMarker in scran )
 
-  2. Each group and pathway specific ( using fisher's exact test )
+  2. Each group and pathway-specific ( using Fisher's exact test )
 
 ------
   
@@ -117,17 +117,17 @@ This marker module will show Differentially Expressed genes in :
 
 <img src='images/pathways2.png'>
 
-This pathway module will show significant pathways for each groups in table format.
+This pathway module will show significant pathways for each group in table format.
 
-To use emphasize feature, user should clear `sortable` list with `CLEARLIST` button.
+To use emphasize feature, a user should clear the `sortable` list with the `CLEARLIST` button.
 
 <img src='images/clearlist.png'>
 
-For each group, **only 1 pathway** can be selected for emphasize in scatter plot.
+For each group, **only 1 pathway** can be selected for emphasis in a scatter plot.
 
 <img src='images/select.png'>
 
-2 emphasize option can be used.
+2 emphasize options can be used.
 
   1. `WITHOUTORDER` : This will emphasize cells with selected pathway is enriched.
   
