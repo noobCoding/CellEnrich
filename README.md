@@ -2,8 +2,6 @@
 
 Pathway enrichment analysis/visualization for Single Cell Data
 
-The online manual is available [here](https://github.com/noobCoding/CellEnrich/wiki)
-
 <img src="docs/images/5scatter-area.png"> 
 <img src="docs/images/6severe-freq.png"> 
 
@@ -37,6 +35,10 @@ GroupInfo <- readRDS("Alzheimer_CellType_sampled.RDS")
 CellEnrich(CountData, GroupInfo)
 
 ```
+## Example run with PBMC_3K data 
+
+The online manual and example with PBMC 3K data are available [here](https://github.com/noobCoding/CellEnrich/wiki)
+
 
 ## Dependency
 
