@@ -56,10 +56,12 @@ Other Packages
 
 1. `waiter`
 2. `ggbiplot`
+3. `farver`
 
 ```R
 devtools::install_github('JohnCoene/waiter')
 devtools::install_github('vqv/ggbiplot')
+remotes::install_github('noobCoding/CellEnrich')
 
 ```
 After installing these packages: 
