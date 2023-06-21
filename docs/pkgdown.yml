@@ -1,5 +1,5 @@
 pandoc: 2.7.2
-pkgdown: 1.5.1
+pkgdown: 2.0.7
 pkgdown_sha: ~
 articles:
   how-to-install: how-to-install.html
