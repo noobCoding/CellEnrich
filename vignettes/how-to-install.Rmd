@@ -94,7 +94,7 @@ Here is a list of data.
   - "humanGOBP.RData"
   - "humanGOCC.RData"
   - "humanGOMF.RData"
-  - "KEGG_2021_Human.RData" ( KEGG )
+  - "KEGG_2021_Human.RData"
   
 - Mouse Gene-sets
 
