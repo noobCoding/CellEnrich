@@ -540,6 +540,7 @@ groupTable <- function(pres, genesets, dfobj, pres2) {
 
 # values <- c("Carbs" = "carbs", "Proteins" = "prots", "BMI" = "bmi")
 default_genesets <- c(
+  "Reactome", # 2022
   "Human-WikiPathway", # 2021
   "Human-KEGG", # KEGG 2021
   "Human-GO",
