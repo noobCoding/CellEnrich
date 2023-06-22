@@ -2066,7 +2066,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                     DT::dataTableOutput(
                       paste0("dynamicGroupTable", i),
                       width = "100%",
-                      height = "500px"
+                      height = "100%"
+                      # height = "500px"
                     ),
                     solvedButton(
                       inputId = paste0("toSortButton", i),
