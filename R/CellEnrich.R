@@ -665,6 +665,7 @@ CellEnrichUI <- function() {
                   "genesetOption",
                   label=HTML("<font color='black' size='5'>Genesets</font>"),#"Genesets",
                   choiceNames = list(
+                    HTML("<font color='black'>Reactome</font>"),
                     HTML("<font color='black'>Human-WikiPathway</font>"),
                     HTML("<font color='black'>Human-KEGG</font>"),
                     HTML("<font color='black'>Human-GO</font>"),
@@ -1569,6 +1570,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       # ------ Load Genesets
       # Check that data object exists and is data frame.
       if (is.null(genesets)) {
+        if (input$genesetOption == "Reactome") load("Reactome_2022.RData")
         if (input$genesetOption == "Human-WikiPathway") load("WikiPathways_2021_Human.RData")
         if (input$genesetOption == "Human-KEGG") load("KEGG_2021_Human.RData")
         if (input$genesetOption == "Human-GO") load("humanGO.RData")

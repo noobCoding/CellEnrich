@@ -12,6 +12,7 @@ DownloadData <- function(type='test') {
 
     filelist <- c(
       # Gene-sets
+      "Reactome_2022.RData",
       "WikiPathways_2021_Human.RData",
       "WikiPathways_2019_Mouse.RData",
       "KEGG_2021_Human.RData",
@@ -39,6 +40,7 @@ DownloadData <- function(type='test') {
   } else if (type=='test') {
     filelist <- c(
       # Gene-sets
+      "Reactome_2022.RData",
       "WikiPathways_2021_Human.RData",
       "KEGG_2021_Human.RData",
       "humanGO.RData",
