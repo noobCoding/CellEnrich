@@ -2084,7 +2084,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                     )
                   )
                 ),
-                width = 4 # maximum 3 table in column
+                width = "100%" # maximum 3 table in column
               )
             })
           )
