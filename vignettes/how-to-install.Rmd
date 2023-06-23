@@ -18,26 +18,27 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-* Testing Environment
+-   Testing Environment
 
-1. Ubuntu 22.04.2 LTS
-2. R version 4.2
-3. Rstudio 2023.03.0
-4. Rtools 40
+1.  Ubuntu 22.04.2 LTS
+2.  R version 4.2.0
+3.  RStudio 2023.03.0+386 "Cherry Blossom"
+4.  Rtools 40
 
-* This installation guide is written in R version 4.2.0
+-   This installation guide is written in R version 4.2.0
 
 ## Install Dependent Packages
 
-* Also some package needs **install from sources which needs compilation** and it needs proper version of [Rtools](https://cran.r-project.org/bin/windows/Rtools/) installed
+-   Also some package needs **install from sources which needs compilation** and it needs proper version of [Rtools](https://cran.r-project.org/bin/windows/Rtools/) installed
 
-* It's recommended to install `devtools`, `BiocManager` packages first, to install following packages in Github / Bioconductor (not in CRAN).
+-   It's recommended to install `devtools`, `BiocManager` packages first, to install following packages in Github / Bioconductor (not in CRAN).
 
-```R
+``` r
 library(devtools)
 library(BiocManager)
 ```
-------
+
+------------------------------------------------------------------------
 
 As noted in [README](https://github.com/unistbig/CellEnrich)
 
@@ -45,77 +46,85 @@ As noted in [README](https://github.com/unistbig/CellEnrich)
 
 Bioconductor Packages
 
-1. `SingleCellExperiment`
-2. `scran`
+1.  `SingleCellExperiment`
+2.  `scran`
 
-```R
+``` r
 BiocManager::install('SingleCellExperiment')
 BiocManager::install('scran')
 ```
-Other Packages 
 
-1. `waiter`
-2. `ggbiplot`
-3. `farver`
+Other Packages
 
-```R
+1.  `waiter`
+2.  `ggbiplot`
+3.  `farver`
+
+``` r
 devtools::install_github('JohnCoene/waiter')
 devtools::install_github('vqv/ggbiplot')
-remotes::install_github('noobCoding/CellEnrich')
+install.packages('farver') # install 'farver' if not installed.
 
+remotes::install_github('noobCoding/CellEnrich')
 ```
-After installing these packages: 
+
+After installing these packages:
 
 ## Install CellEnrich
 
-Running this Script will install most of the dependent packages. 
+Running this Script will install most of the dependent packages.
 
-```R
+``` r
 install_github('noobCoding/CellEnrich')
+
 library(CellEnrich)
 ```
 
-------
+------------------------------------------------------------------------
 
-## Download Example Data
+## Download Data
 
-CellEnrich provides example datasets and genesets.
+CellEnrich provides example data and genesets.
 
 using this function, users can download them in the current working directory.
 
-```R
-CellEnrich::DownloadData()
+``` r
+CellEnrich::DownloadData(type='test') # for available human related data & genesets 
+
+## Use type='all' for all available data
 ```
 
 Here is a list of data.
 
-- Human Gene-sets
+-   Human Gene-sets
 
-  - "WikiPathways_2021_Human.RData"
-  - "humanGO.RData"
-  - "humanGOBP.RData"
-  - "humanGOCC.RData"
-  - "humanGOMF.RData"
-  - "KEGG_2021_Human.RData"
-  
-- Mouse Gene-sets
+    -   "Reactome_2022.RData"
+    -   "WikiPathways_2021_Human.RData"
+    -   "KEGG_2021_Human.RData"
+    -   "humanGO.RData"
+    -   "humanGOBP.RData"
+    -   "humanGOCC.RData"
+    -   "humanGOMF.RData"
 
-  - "WikiPathways_2019_Mouse.RData"
-  - "mouseGO.RData"
-  - "mouseGOBP.RData"
-  - "mouseGOCC.RData"
-  - "mouseGOMF.RData"
-  - "KEGG_2021_Mouse.RData"
+-   Mouse Gene-sets
 
-- Human Data
+    -   "WikiPathways_2019_Mouse.RData"
+    -   "KEGG_2021_Mouse.RData"
+    -   "mouseGO.RData"
+    -   "mouseGOBP.RData"
+    -   "mouseGOCC.RData"
+    -   "mouseGOMF.RData"
 
-  - "pbmcClustInfo.RData" ([Seurat PBMC Guide](https://satijalab.org/seurat/v3.1/pbmc3k_tutorial.html))
-  - "pbmcData.RData"
+-   Human Data
 
-  - [DuoClustering](https://bioconductor.org/packages/release/data/experiment/html/DuoClustering2018.html)([link](https://f1000research.com/articles/7-1141))
+    -   "pbmcClustInfo.RData" ([Seurat PBMC Guide](https://satijalab.org/seurat/v3.1/pbmc3k_tutorial.html))
 
-  - "koh.RData"
-  - "kohInfo.RData"
-    
-- [Mouse Data](https://satijalab.org/seurat/v3.1/mca.html))
+    -   "pbmcData.RData"
 
+    -   [DuoClustering](https://bioconductor.org/packages/release/data/experiment/html/DuoClustering2018.html)([link](https://f1000research.com/articles/7-1141))
+
+    -   "koh.RData"
+
+    -   "kohInfo.RData"
+
+-   [Mouse Data](https://satijalab.org/seurat/v3.1/mca.html)

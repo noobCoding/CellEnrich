@@ -20,18 +20,18 @@ We assume that all dependent packages are already installed. see **How to instal
 
 ## Required Data
 
-Pre-processed data is included in GitHub [repository](https://github.com/jhk0530/cellenrich).
+Pre-processed data is included in GitHub [repository](https://github.com/noobCoding/cellenrich).
 
-|Filename|Parameter|Type|
-|:---:|:---:|:---:|
-|`pbmcData.RData`|`CountData`|`dgCMatrix`|
-|`pbmcClustinfo.RData`|`GroupInfo`|`Character`|
+|       Filename        |  Parameter  |    Type     |
+|:---------------------:|:-----------:|:-----------:|
+|   `pbmcData.RData`    | `CountData` | `dgCMatrix` |
+| `pbmcClustinfo.RData` | `GroupInfo` | `Character` |
 
 ## Run
 
 with these Codes, users can see an interactive `shiny` page.
 
-```R
+``` r
 
 # Download data, if not downloaded
 CellEnrich::DownloadData()
@@ -43,102 +43,97 @@ CountData <- pbmcData
 GroupInfo <- pbmcClustInfo
 
 # This will run CellEnrich
-
 CellEnrich(CountData, GroupInfo)
-
 ```
+
 ## Result
 
 Set options before starting `CellEnrich`.
 
-Possible options are : 
+Possible options are :
 
-- Strategy for Differential Expressed Genes.
-- Plot Options
-- Gene-set and their size cutoff to be used in the analysis.
+-   Strategy for Differential Expressed Genes.
+-   Plot Options
+-   Gene-set and their size cutoff to be used in the analysis.
 
-After 30 seconds ~ 1 min, the analysis result will appear.
+After a few minutes, the analysis result will appear.
 
-used Test environment : 
+used Test environment :
 
-- OS : Ubuntu 22.04 LTS
-- CPU: i5-8400 
-- RAM: 32G
+-   OS : Ubuntu 22.04 LTS
+-   CPU: iAMD® Ryzen 9 5950x 16-core processor × 32
+-   RAM: 64GB
 
-CellEnrich consists of 3 modules.
-  
-### 1. Plot Module
-  
-<img src='images/groups2.png'>
+CellEnrich consists of 5 modules.
 
-The left plot is a scatter plot created with `t-SNE` or `U-MAP` and `ggplot2` that the user selected in the option. 
+### 1. Parameter Selection
 
-- *In this tutorial, the scatter plot is the `t-SNE` result.*
+<img src="images/4options-area.png"/>
 
-- this scatter plot can be **emphasized** with 4 buttons:
+### 2. Scatter Area
 
-  1. `TOCOLOR` button ( default ) will colorize as group information.
-  
-  2. `TOGRAY` button will colorize all dots to gray color.
-  
-  <img src='images/togray.png'>
-  
-  3. `FREQUENT` button will colorize frequently enriched cells in each group.
-  
-  <img src='images/frequent.png'>
-  
-  4. `SIGNIFICANT` button will colorize the most significantly enriched cell in each group.
+<img src="images/5scatter-area.png"/>
 
-  <img src='images/significant.png'>
+The left plot is a scatter plot created with `t-SNE` or `U-MAP` and `ggplot2` that the user selected in the option.
+
+-   *In this tutorial, the scatter plot is the `t-SNE` result.*
+
+-   this scatter plot can be **emphasized** with 3 buttons:
+
+    1.  `CELL GROUPS` button ( default ) will colorize as group information.
+
+    2.  `FREQUENCY` button will colorize frequently enriched cells in each group.
+
+    3.  `ODDS RATIO` button will colorize the enriched cell in each group with the **highest** odds ratio.
 
 The right plot is a histogram plot created with `high charter` to see a distribution of Group / Cell labels.
 
-- *In this tutorial, 9 group exists.*
+-   *In this tutorial, 9 group exists.*
 
 User can download both result with the `Save` button (LEFT) and `Export` options at the right top (RIGHT).
 
-<img src='images/highchart.png'>
-  
-------
-  
-### 2. Marker Module
-  
-<img src='images/markers2.png'>
+<img src="images/highchart.png"/>
 
-This marker module will show Differentially Expressed genes in the following: 
+------------------------------------------------------------------------
 
-  1. Each group ( using findMarker in scran )
-
-  2. Each group and pathway-specific ( using Fisher's exact test )
-
-------
-  
 ### 3. Pathways Module
 
-<img src='images/pathways2.png'>
+<img src="images/pathways2.png" width="1200"/>
 
 This pathway module will show significant pathways for each group in table format.
 
 To use emphasize feature, a user should clear the `sortable` list with the `CLEARLIST` button.
 
-<img src='images/clearlist.png'>
+<img src="images/clearlist.png" width="1200"/>
 
 For each group, **only 1 pathway** can be selected for emphasis in a scatter plot.
 
-<img src='images/select.png'>
+<img src="images/select.png" width="1200"/>
 
-2 emphasize options can be used.
+After clicking the 'EMPHASIZE' button, top cell enriched by the selected pathways will be shown.
 
-  1. `WITHOUTORDER` : This will emphasize cells with selected pathway is enriched.
-  
-  <img src='images/emphasize_without_order.png'>
-  
-  2. `WITHORDER` : This will emphasize cells with selected pathway is enriched. and also it will generate path based on order in `sortable`
-  
-  <img src='images/emphasize_with_order.png'>  
+<img src="images/8toppathways-area.png"/>
 
+------------------------------------------------------------------------
 
-Using `SAVE` button in pathways module, user can download pathway - group significance table.
+### 4. BiPlot Module
 
-<img src='images/table.png'>
+This section shows the BiPlot presentation of the correlation between categories and top significant pathways.
 
+<img src="images/1biplot-area.png" width="1200"/>
+
+User can check the BiPlot under the perspective of **FREQUENCY** (above) or **ODDS RATIO** (below).
+
+<img src="images/6severe-odds.png"/>
+
+------------------------------------------------------------------------
+
+### 5. Marker Module
+
+<img src="images/markers2.png" width="1200"/>
+
+This marker module will show Differentially Expressed genes in the following:
+
+1.  Each group ( using findMarker in scran )
+
+2.  Each group and pathway-specific ( using Fisher's exact test )
