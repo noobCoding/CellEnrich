@@ -23,7 +23,7 @@ library(CellEnrich)
 # download minimal data to the working directory
 download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Alzheimer_Counts_sampled.RDS','Alzheimer_Counts_sampled.RDS', mode = 'wb')
 download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Alzheimer_CellType_sampled.RDS','Alzheimer_CellType_sampled.RDS', mode = 'wb')
-download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/WikiPathways_2021_Human.RData', 'WikiPathways_2021_Human.RData', mode = 'wb')
+download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Reactome_2022.RData', 'Reactome_2022.RData', mode = 'wb')
 
 # Load library and data
 library(CellEnrich)
