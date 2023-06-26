@@ -682,7 +682,7 @@ CellEnrichUI <- function() {
                   ),
                   choiceValues = default_genesets,
                   # color= "#1976d2",
-                  selected= default_genesets[2] #"Human-WikiPathway"
+                  selected= default_genesets[1] #"Reactome_2022"
                 ),
                 sidebarPanel(
                   tags$style("
