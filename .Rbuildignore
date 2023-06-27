@@ -4,7 +4,9 @@
 ^README\.md$
 ^_pkgdown\.yml$
 ^docs$
+^data$
 ^images$
+^wiki$
 ^pkgdown$
 ^vignettes/articles$
 ^\.github$
