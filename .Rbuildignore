@@ -4,6 +4,7 @@
 ^README\.md$
 ^_pkgdown\.yml$
 ^docs$
+^data$
 ^images$
 ^pkgdown$
 ^vignettes/articles$
