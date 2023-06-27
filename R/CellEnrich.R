@@ -1322,11 +1322,11 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
   library(dplyr)
   library(shiny)
 
-  if(!require(ggbiplot)){
-    remotes::install_github('vqv/ggbiplot')
-  }
-
-  library(ggbiplot)
+  # if(!require(ggbiplot)){
+  #   remotes::install_github('vqv/ggbiplot')
+  # }
+  # 
+  # library(ggbiplot)
   library(ggrepel)
   options(useFancyQuotes = FALSE)
 
