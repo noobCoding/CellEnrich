@@ -6,6 +6,7 @@
 ^docs$
 ^data$
 ^images$
+^wiki$
 ^pkgdown$
 ^vignettes/articles$
 ^\.github$
