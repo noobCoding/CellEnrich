@@ -1326,7 +1326,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
   #   remotes::install_github('vqv/ggbiplot')
   # }
   # 
-  # library(ggbiplot)
+  library(ggbiplot)
   library(ggrepel)
   options(useFancyQuotes = FALSE)
 
