@@ -12,9 +12,9 @@ if(!require(remotes)){
   install.packages('remotes') 
 }
 remotes::install_github('vqv/ggbiplot')
-install.packages('farver') # install 'farver' if not installed.
+install.packages('waiter')
+install.packages('farver')
 remotes::install_github('noobCoding/CellEnrich')
-library(CellEnrich)
 ```
 
 ## Example run with Alzheimer's data 
