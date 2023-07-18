@@ -2,8 +2,8 @@
 
 Pathway enrichment analysis/visualization for Single Cell Data
 
-<img src="docs/images/5scatter-area.png"> 
-<img src="docs/images/6severe-freq.png"> 
+<img src="images/LPS_exp_freq.png"> 
+<img src="images/LPS_exp_biplot.png" width="1024"> 
 
 ## Install
 
@@ -17,27 +17,30 @@ install.packages('farver')
 remotes::install_github('noobCoding/CellEnrich')
 ```
 
-## Example run with Alzheimer's data 
+## Example with primary mouse dendritic cells (DCs) stimulated with lipopolysaccharide (LPS)
 
 ```R
 # download minimal data to the working directory
-download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Alzheimer_Counts_sampled.RDS','Alzheimer_Counts_sampled.RDS', mode = 'wb')
-download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Alzheimer_CellType_sampled.RDS','Alzheimer_CellType_sampled.RDS', mode = 'wb')
-download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Reactome_2022.RData', 'Reactome_2022.RData', mode = 'wb')
+download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/LPS_exp.rds','LPS_exp.rds', mode = 'wb')
+download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/WikiPathways_2019_Mouse.RData', 'WikiPathways_2019_Mouse.RData', mode = 'wb')
 
 # Load library and data
 library(CellEnrich)
 
-CountData <- readRDS("Alzheimer_Counts_sampled.RDS")
-GroupInfo <- readRDS("Alzheimer_CellType_sampled.RDS")
+CountData <- LPS_exp$counts
+GroupInfo <- LPS_exp$meta
  
 # Run cellenrich
 CellEnrich(CountData, GroupInfo)
 
 ```
-## Example run with PBMC_3K data 
+## Example with PBMC_3K data 
 
 The online manual and example with PBMC 3K data are available [here](https://github.com/noobCoding/CellEnrich/wiki)
+
+## Example with Alzheimer's data 
+
+The online manual and example with Alzheimer's data are available [here](https://noobcoding.github.io/CellEnrich/)
 
 
 ## Dependency
