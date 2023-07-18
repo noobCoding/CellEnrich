@@ -17,7 +17,7 @@ install.packages('farver')
 remotes::install_github('noobCoding/CellEnrich')
 ```
 
-## Example run with Smart-seq dataset contains primary mouse dendritic cells (DCs) stimulated with lipopolysaccharide (LPS)
+## Example with primary mouse dendritic cells (DCs) stimulated with lipopolysaccharide (LPS)
 
 ```R
 # download minimal data to the working directory
@@ -34,11 +34,11 @@ GroupInfo <- LPS_exp$meta
 CellEnrich(CountData, GroupInfo)
 
 ```
-## Example run with PBMC_3K data 
+## Example with PBMC_3K data 
 
 The online manual and example with PBMC 3K data are available [here](https://github.com/noobCoding/CellEnrich/wiki)
 
-## Example run with Alzheimer's data 
+## Example with Alzheimer's data 
 
 The online manual and example with Alzheimer's data are available [here](https://noobcoding.github.io/CellEnrich/)
 
