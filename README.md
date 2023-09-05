@@ -21,8 +21,8 @@ remotes::install_github('noobCoding/CellEnrich')
 
 ```R
 # download minimal data to the working directory
-download.file('https://github.com/noobcoding/CellEnrich/blod/master/data/LPS_exp.rds','LPS_exp.rds', mode = 'wb')
-download.file('https://github.com/noobcoding/CellEnrich/blod/master/data/WikiPathways_2019_Mouse.RData', 'WikiPathways_2019_Mouse.RData', mode = 'wb')
+download.file('https://github.com/noobcoding/CellEnrich/blob/master/data/LPS_exp.rds','LPS_exp.rds', mode = 'wb')
+download.file('https://github.com/noobcoding/CellEnrich/blob/master/data/WikiPathways_2019_Mouse.RData', 'WikiPathways_2019_Mouse.RData', mode = 'wb')
 
 # Load library and data
 library(CellEnrich)
