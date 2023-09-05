@@ -58,7 +58,7 @@ DownloadData <- function(type='test') {
   }
 
   filelist <- setdiff(filelist, dir())
-  urls <- paste0("https://github.com/noobcoding/CellEnrich/raw/master/data/",filelist)
+  urls <- paste0("https://github.com/noobcoding/CellEnrich/blob/master/data/",filelist)
   for (i in 1:length(urls)) {
     download.file(urls[i], filelist[i])
   }
