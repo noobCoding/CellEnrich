@@ -725,8 +725,8 @@ CellEnrichUI <- function() {
           ),
           depth = 3
         ),
-        width = 6,
-        offset = 3 # center half layout
+        width = "100%", #6,
+        # offset = 3 # center half layout
       )
     ),
 
@@ -737,23 +737,30 @@ CellEnrichUI <- function() {
         material_card(
           title = shiny::tags$h4("Scatter & Bar"), depth = 3,
 
-          # Comparison - SlingShot
-          material_row(
-            material_column(width = 6,
-                            plotOutput("Comparison", height = "480px") # cell distribution
-            ),
-            material_column(width = 6,
-                            plotOutput("SlingShot", height = "480px")
-            )
-          ),
+          
           # Cell - Bar
+         
+          
           material_row(
-            material_column(width = 6,
-                            plotOutput("CellPlot", height = "480px")
-            ),
-            material_column(width = 6,
+            material_column(width ="100%", #width = 6,
                             highchartOutput("CellBar", height = "480px")
             )
+          ),
+          material_row(
+            material_column(width ="100%",#width = 6,
+                            plotOutput("CellPlot", height = "480px")
+            )
+          ),
+         
+          # Comparison - SlingShot
+          material_row(
+            material_column(width ="100%",#width = 6,
+                            plotOutput("Comparison", height = "480px") # cell distribution
+            )
+            # ,
+            # material_column(width = 6,
+            #                 plotOutput("SlingShot", height = "480px")
+            # )
           ),
           material_row(
             shinyjs::hidden(
@@ -795,7 +802,7 @@ CellEnrichUI <- function() {
             ),
             shiny::uiOutput("dynamicTable"), depth = 3
           )
-        ), width = 12
+        ), width = "100%"#12
       ), style = "margin : 1em; border : solid 0.5em #1976d2"
     ),
 
@@ -1179,109 +1186,109 @@ emphasizePathway <-
     return(ggobj2)
   }
 
-emphasizeSlingShot <- function(inputObj, dfobj, Cells, pres, genesets, seu, presTab) {
-  if(!require(farver)){
-    install.packages('farver') # install 'farver' if not installed.
-    
-  }
-  library(farver)
-  cat("emphasize SlingShot \n")
-  buildRlobj <- function(items) {
-    rlobj <- data.frame(stringsAsFactors = FALSE)
-
-    for (i in 1:length(items)) {
-      kk <- strsplit(items[[i]], " @")[[1]]
-      name <- kk[1]
-      location <- kk[2]
-      rlobj <- rbind(rlobj, cbind(name, location))
-    }
-
-    colnames(rlobj) <- c("name", "location")
-    rlobj$name <- as.character(rlobj$name)
-    rlobj$location <- as.character(rlobj$location)
-    return(rlobj)
-  }
-
-  getCellValues <- function(rlobj) {
-    ret <- list()
-    for (i in 1:nrow(rlobj)) {
-      thisGeneset <- which(names(genesets) == rlobj[i, 1]) # index
-
-      if (length(thisGeneset) > 1) {
-        thisGeneset <- thisGeneset[1]
-      }
-
-      thisGroup <- rlobj[i, 2]
-
-      thisCellsIdx <- which(dfobj$col == thisGroup)
-      if (length(thisCellsIdx) == 0) {
-        ret[[i]] <- c()
-        next
-      }
-      rn <- thisCellsIdx
-
-      res <- c()
-      for (j in 1:length(rn)) {
-        if (thisGeneset %in% pres[[rn[j]]]) {
-          res <- c(res, rn[j])
-        }
-      }
-      if (length(res) == 0) {
-        rlobj <- rlobj[-i, ]
-        next
-      }
-      ret[[i]] <- res
-      names(ret)[i] <- thisGroup
-    }
-    return(ret)
-  }
-
-  rlobj <- buildRlobj(inputObj) # split into name, location dataframe
-
-  cellValues <- getCellValues(rlobj) # get cell index for each cell
-
-  dfobj_new <- data.frame(dfobj, stringsAsFactors = FALSE)
-  colnames(dfobj_new) <- c("x", "y", "col")
-
-  # print(dfobj_new)
-  dfobj_new_coord <- cbind(dfobj_new$x, dfobj_new$y)
-  dfobj_new_coord <- dfobj_new_coord[unlist(cellValues, use.names = FALSE), 1:2]
-  # dfobj_new_label <- dfobj_new$col[unlist(cellValues, use.names = FALSE)]
-  dfobj_new_label <- seu$seurat_clusters[unlist(cellValues, use.names = FALSE)]
-
-  # define ggobj2 element
-  UniqueCol <- briterhex(scales::hue_pal(h = c(20, 350), c = 100, l = 65, h.start = 0,
-                                         direction = 1)(length(Cells)))
-  names(UniqueCol) <- Cells
-  colV <- unname(UniqueCol[dfobj_new$col])
-  colV[-unlist(cellValues, use.names = FALSE)] <- "#E5E5EEE5" # gray color
-
-  dfobj_new$col <- colV
-  ## Get -log10(p_value) of a cell based on which genesets are chosen
-
-  rownames(dfobj_new) <- NULL
-  # graphString <- "ggobj2 <- ggplot(dfobj_new, aes(x = x, y = y)) + geom_point(colour = colV)"
-
-  now_obj <- cbind(dfobj_new$x, dfobj_new$y)
-  colnames(now_obj) <- c("x", "y")
-
-  sds <- getLineages(dfobj_new_coord, clusterLabels = dfobj_new_label)
-  crv <- getCurves(sds)
-  crv <- SlingshotDataSet(crv)
-  
-  if (length(crv@curves)>0){
-    myslingshot <-
-      list (plot(now_obj, col = colV, pch = 16, cex = 0.8),
-            lines(SlingshotDataSet(crv), lwd = 2, type = 'curves', col='red4'))
-    
-  } else {
-    myslingshot <-
-      list (plot(now_obj, col = colV, pch = 16, cex = 0.8),
-            lines(SlingshotDataSet(crv), lwd = 2, type = 'lineages', col='red4'))
-    
-  }
-  return(myslingshot)
-}
+# emphasizeSlingShot <- function(inputObj, dfobj, Cells, pres, genesets, seu, presTab) {
+#   if(!require(farver)){
+#     install.packages('farver') # install 'farver' if not installed.
+#     
+#   }
+#   library(farver)
+#   cat("emphasize SlingShot \n")
+#   buildRlobj <- function(items) {
+#     rlobj <- data.frame(stringsAsFactors = FALSE)
+# 
+#     for (i in 1:length(items)) {
+#       kk <- strsplit(items[[i]], " @")[[1]]
+#       name <- kk[1]
+#       location <- kk[2]
+#       rlobj <- rbind(rlobj, cbind(name, location))
+#     }
+# 
+#     colnames(rlobj) <- c("name", "location")
+#     rlobj$name <- as.character(rlobj$name)
+#     rlobj$location <- as.character(rlobj$location)
+#     return(rlobj)
+#   }
+# 
+#   getCellValues <- function(rlobj) {
+#     ret <- list()
+#     for (i in 1:nrow(rlobj)) {
+#       thisGeneset <- which(names(genesets) == rlobj[i, 1]) # index
+# 
+#       if (length(thisGeneset) > 1) {
+#         thisGeneset <- thisGeneset[1]
+#       }
+# 
+#       thisGroup <- rlobj[i, 2]
+# 
+#       thisCellsIdx <- which(dfobj$col == thisGroup)
+#       if (length(thisCellsIdx) == 0) {
+#         ret[[i]] <- c()
+#         next
+#       }
+#       rn <- thisCellsIdx
+# 
+#       res <- c()
+#       for (j in 1:length(rn)) {
+#         if (thisGeneset %in% pres[[rn[j]]]) {
+#           res <- c(res, rn[j])
+#         }
+#       }
+#       if (length(res) == 0) {
+#         rlobj <- rlobj[-i, ]
+#         next
+#       }
+#       ret[[i]] <- res
+#       names(ret)[i] <- thisGroup
+#     }
+#     return(ret)
+#   }
+# 
+#   rlobj <- buildRlobj(inputObj) # split into name, location dataframe
+# 
+#   cellValues <- getCellValues(rlobj) # get cell index for each cell
+# 
+#   dfobj_new <- data.frame(dfobj, stringsAsFactors = FALSE)
+#   colnames(dfobj_new) <- c("x", "y", "col")
+# 
+#   # print(dfobj_new)
+#   dfobj_new_coord <- cbind(dfobj_new$x, dfobj_new$y)
+#   dfobj_new_coord <- dfobj_new_coord[unlist(cellValues, use.names = FALSE), 1:2]
+#   # dfobj_new_label <- dfobj_new$col[unlist(cellValues, use.names = FALSE)]
+#   dfobj_new_label <- seu$seurat_clusters[unlist(cellValues, use.names = FALSE)]
+# 
+#   # define ggobj2 element
+#   UniqueCol <- briterhex(scales::hue_pal(h = c(20, 350), c = 100, l = 65, h.start = 0,
+#                                          direction = 1)(length(Cells)))
+#   names(UniqueCol) <- Cells
+#   colV <- unname(UniqueCol[dfobj_new$col])
+#   colV[-unlist(cellValues, use.names = FALSE)] <- "#E5E5EEE5" # gray color
+# 
+#   dfobj_new$col <- colV
+#   ## Get -log10(p_value) of a cell based on which genesets are chosen
+# 
+#   rownames(dfobj_new) <- NULL
+#   # graphString <- "ggobj2 <- ggplot(dfobj_new, aes(x = x, y = y)) + geom_point(colour = colV)"
+# 
+#   now_obj <- cbind(dfobj_new$x, dfobj_new$y)
+#   colnames(now_obj) <- c("x", "y")
+# 
+#   sds <- getLineages(dfobj_new_coord, clusterLabels = dfobj_new_label)
+#   crv <- getCurves(sds)
+#   crv <- SlingshotDataSet(crv)
+#   
+#   if (length(crv@curves)>0){
+#     myslingshot <-
+#       list (plot(now_obj, col = colV, pch = 16, cex = 0.8),
+#             lines(SlingshotDataSet(crv), lwd = 2, type = 'curves', col='red4'))
+#     
+#   } else {
+#     myslingshot <-
+#       list (plot(now_obj, col = colV, pch = 16, cex = 0.8),
+#             lines(SlingshotDataSet(crv), lwd = 2, type = 'lineages', col='red4'))
+#     
+#   }
+#   return(myslingshot)
+# }
 
 sortItem <- function(label, tableName) {
   options(useFancyQuotes = FALSE)
@@ -1488,59 +1495,59 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       return(BiPlot)
     }
 
-    buildSlingShot <- function(seu, plotOption) {
-      if(!require(BiocManager)){
-        install.packages('BiocManager') 
-      }
-      if(!require(slingshot)){
-        BiocManager::install('slingshot')
-      }
-      library(slingshot)
-      # PCA
-      if (plotOption == "PCA") {
-        sds <- getLineages(Embeddings(seu, "pca"), clusterLabels = seu$seurat_clusters)
-      }
-      
-      # TSNE
-      if (plotOption == "TSNE") {
-        sds <- getLineages(Embeddings(seu, "tsne"), clusterLabels = seu$seurat_clusters)
-      }
-
-      # UMAP
-      if (plotOption == "UMAP") {
-        sds <- getLineages(Embeddings(seu, "umap"), clusterLabels = seu$seurat_clusters)
-      }
-      
-      cell_pal <- function(cell_vars, pal_fun,...) {
-        if (is.numeric(cell_vars)) {
-          pal <- pal_fun(100, ...)
-          return(pal[cut(cell_vars, breaks = 100)])
-        } else {
-          categories <- sort(unique(cell_vars))
-          pal <- setNames(pal_fun(length(categories), ...), categories)
-          return(pal[cell_vars])
-        }
-      }
-      cell_colors <- cell_pal(seu$cell_type, hue_pal(h = c(20, 350), c = 100, l = 65, h.start = 0, direction = 1))
-      # cell_colors_clust <- cell_pal(seu$seurat_clusters,  brewer_pal("qual", "Set1"))
-      
-      crv <- getCurves(sds)
-      crv <- SlingshotDataSet(crv)
-      
-      if (length(crv@curves)>0){
-        myslingshot <<-
-          list (plot(sds@elementMetadata@listData$reducedDim, col = cell_colors, pch = 16, cex = .8),
-                lines(SlingshotDataSet(crv), lwd = 2, type = 'curves', col='red4'))  
-        
-        
-      } else {
-        myslingshot <<-
-          list (plot(sds@elementMetadata@listData$reducedDim, col = cell_colors, pch = 16, cex = .8),
-                lines(SlingshotDataSet(crv), lwd = 2, type = 'lineages', col='red4'))  
-        
-      }
-      return(myslingshot)
-    }
+    # buildSlingShot <- function(seu, plotOption) {
+    #   if(!require(BiocManager)){
+    #     install.packages('BiocManager') 
+    #   }
+    #   if(!require(slingshot)){
+    #     BiocManager::install('slingshot')
+    #   }
+    #   library(slingshot)
+    #   # PCA
+    #   if (plotOption == "PCA") {
+    #     sds <- getLineages(Embeddings(seu, "pca"), clusterLabels = seu$seurat_clusters)
+    #   }
+    #   
+    #   # TSNE
+    #   if (plotOption == "TSNE") {
+    #     sds <- getLineages(Embeddings(seu, "tsne"), clusterLabels = seu$seurat_clusters)
+    #   }
+    # 
+    #   # UMAP
+    #   if (plotOption == "UMAP") {
+    #     sds <- getLineages(Embeddings(seu, "umap"), clusterLabels = seu$seurat_clusters)
+    #   }
+    #   
+    #   cell_pal <- function(cell_vars, pal_fun,...) {
+    #     if (is.numeric(cell_vars)) {
+    #       pal <- pal_fun(100, ...)
+    #       return(pal[cut(cell_vars, breaks = 100)])
+    #     } else {
+    #       categories <- sort(unique(cell_vars))
+    #       pal <- setNames(pal_fun(length(categories), ...), categories)
+    #       return(pal[cell_vars])
+    #     }
+    #   }
+    #   cell_colors <- cell_pal(seu$cell_type, hue_pal(h = c(20, 350), c = 100, l = 65, h.start = 0, direction = 1))
+    #   # cell_colors_clust <- cell_pal(seu$seurat_clusters,  brewer_pal("qual", "Set1"))
+    #   
+    #   crv <- getCurves(sds)
+    #   crv <- SlingshotDataSet(crv)
+    #   
+    #   if (length(crv@curves)>0){
+    #     myslingshot <<-
+    #       list (plot(sds@elementMetadata@listData$reducedDim, col = cell_colors, pch = 16, cex = .8),
+    #             lines(SlingshotDataSet(crv), lwd = 2, type = 'curves', col='red4'))  
+    #     
+    #     
+    #   } else {
+    #     myslingshot <<-
+    #       list (plot(sds@elementMetadata@listData$reducedDim, col = cell_colors, pch = 16, cex = .8),
+    #             lines(SlingshotDataSet(crv), lwd = 2, type = 'lineages', col='red4'))  
+    #     
+    #   }
+    #   return(myslingshot)
+    # }
 
     usergs <- ""
 
@@ -1603,6 +1610,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       # ------ Hide Start Button
       shinyjs::hide("StartCellEnrich")
+      
+      # ---------- Hide slingshot
+      shinyjs::hide("SlingShot")
 
       #Disable Emphasize 1st
       shinyjs::runjs('$("#Emphasize").attr("disabled",true)')
@@ -2223,7 +2233,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       )
 
       plotImg <- emphasize(FALSE, res, dfobj, Cells, pres, genesets, seu, presTab)
-      output$SlingShot <- renderPlot(emphasizeSlingShot(res, dfobj, Cells, pres, genesets, seu, presTab))
+      # output$SlingShot <- renderPlot(emphasizeSlingShot(res, dfobj, Cells, pres, genesets, seu, presTab))
       output$Comparison <- renderPlot(emphasizePathway(res, dfobj, Cells, pres, genesets, seu, presTab))
 
       output$imgdn <- downloadHandler(
@@ -2283,7 +2293,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       )
 
       plotImg <- emphasize(FALSE, res, dfobj, Cells, pres, genesets, seu, presTab)
-      output$SlingShot <- renderPlot(emphasizeSlingShot(res, dfobj, Cells, pres, genesets, seu, presTab))
+      # output$SlingShot <- renderPlot(emphasizeSlingShot(res, dfobj, Cells, pres, genesets, seu, presTab))
       output$Comparison <- renderPlot(emphasizePathway(res, dfobj, Cells, pres, genesets, seu, presTab))
 
       output$imgdn <- downloadHandler(
@@ -2352,7 +2362,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       )
       output$CellPlot <- shiny::renderPlot(colorImage)
       output$Comparison <- shiny::renderPlot(colorImage)
-      output$SlingShot <- renderPlot(buildSlingShot(seu, input$plotOption))
+      # output$SlingShot <- renderPlot(buildSlingShot(seu, input$plotOption))
     })
 
     observeEvent(input$sortList, {
@@ -2372,7 +2382,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       shinyjs::show("legenddn")
       plotImg <- emphasize(FALSE, res, dfobj, Cells, pres, genesets, seu, presTab)
       output$CellPlot <- renderPlot(plotImg)
-      output$SlingShot <- renderPlot(emphasizeSlingShot(res, dfobj, Cells, pres, genesets, seu, presTab))
+      # output$SlingShot <- renderPlot(emphasizeSlingShot(res, dfobj, Cells, pres, genesets, seu, presTab))
       output$Comparison <- renderPlot(emphasizePathway(res, dfobj, Cells, pres, genesets, seu, presTab))
 
       output$legendTable <- DT::renderDataTable(
@@ -2449,7 +2459,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         return(NULL)
       }
 
-      output$SlingShot <- renderPlot(buildSlingShot(seu, input$plotOption))
+      # output$SlingShot <- renderPlot(buildSlingShot(seu, input$plotOption))
 
       # output$slingDownload <- downloadHandler(
       #   filename = function() {
@@ -2470,7 +2480,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       output$biPlot <- renderPlot(buildbiplot(input$biFont, input$biX, input$biY, genesets, TOPN = input$biCount,
                                               gsFont = input$gsFont, axtxt = input$axtxt, axlab = input$axlab,
                                               oddratio = TRUE))
-      output$SlingShot <- renderPlot(emphasizeSlingShot(res, dfobj, Cells, pres, genesets, seu, presTab))
+      # output$SlingShot <- renderPlot(emphasizeSlingShot(res, dfobj, Cells, pres, genesets, seu, presTab))
       output$Comparison <- renderPlot(emphasizePathway(res, dfobj, Cells, pres, genesets, seu, presTab))
       # output$slingDownload <- downloadHandler(
       #   filename = function() {
