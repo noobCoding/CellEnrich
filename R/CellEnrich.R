@@ -1,4 +1,5 @@
 ## 23.07.14
+library(waiter)
 
 GenesetFlush <- function(genes, genesets) {
   cat("GenesetFlush\n")
@@ -40,14 +41,14 @@ getTU <- function(CountData, GroupInfo, plotOption='UMAP', topdims= 50) {
   library(Seurat)
 
   seu <- CreateSeuratObject(CountData)
-  # store mitochondrial percentage in object meta data
+  
   seu <- PercentageFeatureSet(seu, pattern = "^MT-", col.name = "percent.mt")
+  
   # run sctransform
   seu <- SCTransform(seu, vars.to.regress = "percent.mt", verbose = FALSE, )
+
   
-  # seu <- NormalizeData(seu)
-  # seu <- FindVariableFeatures(seu)
-  # seu <- ScaleData(seu)
+  
 
   # Add cell type annotation to metadata
   seu <- AddMetaData(seu, GroupInfo, col.name = "cell_type")
@@ -82,17 +83,18 @@ gnm <- function(v) {
   return(mat_discretised)
 }
 
-findSigGenes <- function(v, method = "CellEnrich - median", Name) {
-  if (!method %in% c("CellEnrich - median", "CellEnrich - mixture", "Fisher")) stop("wrong method")
+findSigGenes <- function(v, method = "CellEnrich - HALF median", Name) {
+  if (!method %in% c("CellEnrich - HALF median", "CellEnrich - median", "CellEnrich - mixture")) stop("wrong method")
 
   cat("findSigGenes started\n")
   rownames(v) <- colnames(v) <- NULL
 
   res <- list()
 
-  if (method == "Fisher") {
-    return(res)
-  }
+  # if (method == "Fisher") {
+  #   return(res)
+  # }
+  
   if (method == "CellEnrich - mixture") {
     v <- gnm(v)
     for (i in 1:ncol(v)) {
@@ -107,10 +109,19 @@ findSigGenes <- function(v, method = "CellEnrich - median", Name) {
       v <- v[which(v > 0)]
       return(median(v) / 2)
     }
+    
+    medfull <- function(v) {
+      v <- v[which(v > 0)]
+      return(median(v))
+    }
 
-    if (method == "CellEnrich - median") {
+    if (method == "CellEnrich - HALF median") {
       for (i in 1:ncol(v)) {
         res[[i]] <- which(v[, i] > med2(v[, i]))
+      }
+    } else if (method == "CellEnrich - median") {
+      for (i in 1:ncol(v)) {
+        res[[i]] <- which(v[, i] > medfull(v[, i]))
       }
     }
   }
@@ -136,12 +147,11 @@ findSigGenesGroup <- function(Count = NULL, ClustInfo = NULL, q0 = 0.1, TopCutof
       GrpRes[[i]],
       row.names = NULL,
       stringsAsFactors = FALSE
-    ) %>%
-      select(Group, Top, genes, FDR) %>%
+    ) %>% select(Group, Top, genes, FDR) %>%
       filter(FDR <= q0) %>%
       # filter(Top <= TopCutoff) %>%
       arrange(FDR)
-
+    
     res <- rbind(res, G)
   }
   res$genes <- as.character(res$genes)
@@ -220,23 +230,23 @@ buildCellPathwayDF <- function(GroupInfo, pres, genesets) {
     }
   }
 
-  colnames(CellPathwayDF) <- c("Cell", "Geneset", "Count")
+  colnames(CellPathwayDF) <- c("Cell", "Geneset", "Frequency")
   CellPathwayDF$Cell <- as.character(CellPathwayDF$Cell)
   CellPathwayDF$Geneset <- names(genesets)[as.numeric(as.character(CellPathwayDF$Geneset))]
 
-  CellPathwayDF$Count <- as.numeric(as.character(CellPathwayDF$Count))
+  CellPathwayDF$Frequency <- as.numeric(as.character(CellPathwayDF$Frequency))
 
   # ------ add length column
 
   # Length <- getlgs(CellPathwayDF$Geneset)
-  Length <- getlgs(genesets[as.character(CellPathwayDF$Geneset)])
-  CellPathwayDF <- cbind(CellPathwayDF, Length)
+  Size <- getlgs(genesets[as.character(CellPathwayDF$Geneset)])
+  CellPathwayDF <- cbind(CellPathwayDF, Size)
 
   # ------ select genesets with count > 1
 
   if(length(pres) != length(Cells)){
     CellPathwayDF <- CellPathwayDF %>%
-      dplyr::filter(Count > 1)
+      dplyr::filter(Frequency > 1)
   }
 
   return(CellPathwayDF)
@@ -274,7 +284,7 @@ pathwayPvalue <- function(GroupInfo, pres, pres2, genesets) {
   }
   else {
     for (i in 1:length(Cells)) {
-      thisCell <- Cells[i]
+      thisCell <- Cells[i]  # this cell means this cell type
       thisCellIdx <- which(GroupInfo == thisCell)
 
       k <- length(thisCellIdx)
@@ -298,12 +308,15 @@ pathwayPvalue <- function(GroupInfo, pres, pres2, genesets) {
   }
 
   res <- data.frame(res, stringsAsFactors = FALSE)
-  colnames(res) <- c("Cell", "Geneset", "Qvalue")
+  colnames(res) <- c("Cell", "Geneset", "Pvalue") 
 
   res$Cell <- as.character(res$Cell)
   res$Geneset <- as.character(res$Geneset)
-  res$Qvalue[which(res$Qvalue <= 1e-20)] <- 1e-20
-  res$Qvalue <- -log10(as.numeric(as.character(res$Qvalue)))
+  res$Pvalue <- as.numeric(as.character(res$Pvalue))  
+  
+  res$Qvalue <- res$Pvalue
+  res$Qvalue[which(res$Qvalue < 1e-20)] <- 1e-20
+  res$Qvalue <- round(-log10(res$Qvalue), 6)  ## -log10(p-value) ->> Q-value
 
   return(res)
 }
@@ -312,7 +325,7 @@ pathwayPvalue <- function(GroupInfo, pres, pres2, genesets) {
 # pres2 : for each gene-sets, how many cells are significant that gene-sets.
 
 # 전체 그룹에서 유의한 회수 20 # pres2[genesets[i]]
-# 특정 그룹에서 유의한 회수 6 # pres2[thiscellidx]
+# 특정 그룹에서 유의한 회수 6 # pres2[thiscell[idx]
 
 # 전체 그룹 Cell 수 : N
 # 특정 그룹 Cell 수 : K
@@ -362,7 +375,7 @@ getOddRatio <- function(GroupInfo, pres, pres2, genesets, ratio) {
 
   colnames(res) <- c("Cell", "Geneset", "OddRatio")
 
-  res <- res %>% filter(OddRatio > 1)
+  # res <- res %>% filter(OddRatio > 1)
 
   return(res)
 }
@@ -605,12 +618,14 @@ CellEnrichUI <- function() {
                   "FCoption",
                   label = HTML("<font color='black' size='5'>Methods</font>"),#"Methods",
                   choiceNames = list(
-                    HTML("<font color='black'>CellEnrich - median</font>"),
-                    HTML("<font color='black'>CellEnrich - mixture</font>"),
-                    HTML("<font color='black'>Fisher</font>")
+                    HTML("<font color='black'>CellEnrich - HALF median (coef = 0.5)</font>"),
+                    HTML("<font color='black'>CellEnrich - Median (coef = 1)</font>"),
+                    HTML("<font color='black'>CellEnrich - Mixture</font>")
+                    # HTML("<font color='black'>Fisher</font>")
                   ),
-                  choiceValues = c("CellEnrich - median", "CellEnrich - mixture", "Fisher"),
-                  selected = "CellEnrich - median",
+                  # choiceValues = c("CellEnrich - median", "CellEnrich - mixture", "Fisher"),
+                  choiceValues = c("CellEnrich - HALF median", "CellEnrich - median", "CellEnrich - mixture"),
+                  selected = "CellEnrich - HALF median",
                   # color = "#1976d2"
                 )
               ),
@@ -630,7 +645,7 @@ CellEnrichUI <- function() {
                 
                 material_number_box(
                   input_id = "topdims",
-                  label = HTML("<font color='black' size='5'>Top-N components/dims</font>"), # top dims
+                  label = HTML("<font color='black' size='5'>Top-N dims</font>"), # top dims
                   min_value = 30,
                   max_value = 100,
                   initial_value = 50,
@@ -707,11 +722,13 @@ CellEnrichUI <- function() {
                                   border-color: none;
                                }
                                "),
-                  HTML("<font color='black' size='3'>User's geneset input</font>"),
+                  HTML("<font color='black' size='3'>User defined geneset</font>"),
                   fileInput("other", "", placeholder = "RData format is required!"),
                   # fileInput("other", "User's geneset input", accept=".Rdata, .RData"),
                   # checkboxInput("header", "Header", TRUE),
-                  actionButton("addgeneset", "Add geneset", style="color: #ffffff; background-color: #1976d2;")
+                  # shinyjs::hidden(
+                  #   actionButton("addgeneset", "Add geneset", style="color: #ffffff; background-color: #1976d2;")
+                  # )
                 )
               ),
               width = 4
@@ -725,57 +742,59 @@ CellEnrichUI <- function() {
           ),
           depth = 3
         ),
-        width = "100%", #6,
+        width = 12, # 6
         # offset = 3 # center half layout
       )
     ),
 
-    # tSNE/UMAP plot - SlingShot - Monocle
+    # tSNE/UMAP plot
     material_row(
       material_column(
 
         material_card(
           title = shiny::tags$h4("Scatter & Bar"), depth = 3,
 
-          
-          # Cell - Bar
-         
-          
+          # Bar
           material_row(
-            material_column(width ="100%", #width = 6,
-                            highchartOutput("CellBar", height = "480px")
+            material_column(width = 6,
+                            plotOutput("CellScatter", height = "480px")
+            ),
+            material_column(width = 6,
+                          highchartOutput("CellBar", height = "480px")
             )
           ),
+          # Cell - Comparison
           material_row(
-            material_column(width ="100%",#width = 6,
+            material_column(width = 6,
                             plotOutput("CellPlot", height = "480px")
-            )
-          ),
-         
-          # Comparison - SlingShot
-          material_row(
-            material_column(width ="100%",#width = 6,
+            ),
+           
+            material_column(width = 6,
                             plotOutput("Comparison", height = "480px") # cell distribution
             )
-            # ,
-            # material_column(width = 6,
-            #                 plotOutput("SlingShot", height = "480px")
-            # )
           ),
           material_row(
-            shinyjs::hidden(
-              material_button("slingDraw", "SlingShot",  color = "blue darken-2", ),
-              material_button("slingRedraw", "Redraw",  color = "blue darken-2", )
-            ),
-            # p('Coloring by'),
-            material_button("colorbtn", "Cell groups", color = "blue darken-2"),
-            material_button("freqbtn", "Frequency", color = "blue darken-2"),
-            material_button("sigbtn", "Odds Ratio", color = "blue darken-2")
-
+            material_column(
+              # material_button("colorbtn", "Cell groups", color = "blue darken-2"),
+              material_button("freqbtn", "Frequency", icon = "menu", color = "blue darken-2"),
+              material_button("sigbtn", "Odds Ratio", icon = "sort", color = "blue darken-2"), width = 2
+            ), 
+            material_column(
+              shiny::downloadButton("sctdn", "Save Scatter", style = "background-color : #616161 !important"),
+              shiny::downloadButton("imgdn", "Pathway Significance in each Group", style = "background-color : #616161 !important"),
+              # shinyjs::hidden(
+              shiny::downloadButton("cmpdn", "Pathway Significance in whole data", style = "background-color : #616161 !important")
+              # )
+              , width = 6
+            )
           ),
           material_row(
-            shiny::downloadButton("imgdn", "Save Plot", style = "background-color : #616161 !important"),
-            shiny::downloadButton("sppcdn", "Significant pathways ", style = "background-color : #616161 !important")
+            material_column(width = 2),
+            material_column(
+              shiny::downloadButton("sppcdn", "Cell-Pathway (P-values)", style = "background-color : #616161 !important"),
+              shiny::downloadButton("tbldn", " All Significant Pathways", style = "background-color : #616161 !important")
+              , width = 6
+            )
 
           ),
           material_row(
@@ -792,17 +811,14 @@ CellEnrichUI <- function() {
               my_ranklist<-rank_list(text = "", labels = "Please drag&drop to change pathway positions at least once!",
                                      input_id = "sortList", css_id = "mysortableCell"),
               material_row(
-                # material_button("OrderEmphasize", "Emphasize with Order", icon = "timeline", color = "blue darken-2"),
-                material_button("Emphasize", "Emphasize", color = "blue darken-2"),
+                material_button("Emphasize", "Plot the Selected Pathways", color = "blue darken-2"),
                 material_button("ClearList", "Clear List", color = "blue darken-2")
               ),
-              material_row(
-                shiny::downloadButton("tbldn", "Save Highlighted Pathways", style = "background-color : #616161 !important")
-              ),
+             
             ),
             shiny::uiOutput("dynamicTable"), depth = 3
           )
-        ), width = "100%"#12
+        ), width = 12
       ), style = "margin : 1em; border : solid 0.5em #1976d2"
     ),
 
@@ -811,7 +827,7 @@ CellEnrichUI <- function() {
       material_card(
         title = "",
         material_card(
-          title = shiny::tags$h4("Biplot between pathways and cell groups"), divider = TRUE,
+          title = shiny::tags$h4("Biplot between top pathways and groups"), divider = TRUE,
           material_row(
             material_column(
               plotOutput("biPlot", height = "700px"),
@@ -823,22 +839,41 @@ CellEnrichUI <- function() {
             # ),
             material_column(
               material_row(
-                numericInput("biCount", label = "Pathways uses in each group", value = 5, min = 1, max = 10, step = 1),
-                numericInput("biFont", label = "Label Size", value = 5, min = 1, max = 10, step = 1),
-                numericInput("gsFont", label = "Pathway Size", value = 5, min = 1, max = 10, step = 1),
+                numericInput("biCount", label = "Top Pathways in each Group", value = 5, min = 1, max = 10, step = 1),
+                numericInput("biFont", label = "Cell Type Label", value = 5, min = 1, max = 10, step = 1),
+                numericInput("gsFont", label = "Pathway Label", value = 5, min = 1, max = 10, step = 1),
                 numericInput("biX", label = "Range of X-axis", value = 5, min = 1, max = 10, step = 1),
                 numericInput("biY", label = "Range of Y-axis", value = 2, min = 1, max = 10, step = 1),
-                numericInput("axlab", label = "Axes Title", value = 15, min = 10, max = 30, step = 1),
-                numericInput("axtxt", label = "Axes Index", value = 13, min = 10, max = 30, step = 1),
+                numericInput("axlab", label = "Axes Title Font", value = 15, min = 10, max = 30, step = 1),
+                numericInput("axtxt", label = "Axes Index Font", value = 13, min = 10, max = 30, step = 1),
                 material_row(
-                  material_button("freqbp", "Biplot with Frequency", color = "blue darken-2")
+                  material_button("orbp", "Odds Ratio based Plot", color = "blue darken-2")
                 ),
                 material_row(
-                  material_button("orbp", "Biplot with Odds Ratio", color = "blue darken-2")
+                  material_button("freqbp", "Frequency based Plot", color = "blue darken-2")
                 )
               ),
               material_row(
                 shiny::downloadButton("biplotdn", "Save Biplot", style = "background-color : #616161 !important")
+              ),
+              width = 2
+            )
+          ),
+        ),
+        material_card(
+          title = shiny::tags$h4("Heatmap between top pathways and groups"), divider = TRUE,
+          material_row(
+            material_column(
+              plotOutput("heatPlot", height = "700px"),
+              width = 10
+            ),
+            # material_column(
+            # DT::dataTableOutput('bitable'),
+            # width = 2
+            # ),
+            material_column(
+              material_row(
+                shiny::downloadButton("heatplotdn", "Save Heatmap", style = "background-color : #616161 !important")
               ),
               width = 2
             )
@@ -1013,37 +1048,36 @@ emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres, genesets, seu,
                             panel.border = element_rect(colour = 'black', fill=NA, size=0.25)
                                 )"
 
-  if (path) { # add mean point to path
-    dfobj_path <- data.frame()
-    for (i in 1:length(cellValues)) {
-      x <- mean(as.numeric(dfobj_new$x[cellValues[[i]]]))
-      y <- mean(as.numeric(dfobj_new$y[cellValues[[i]]]))
-
-      dfobj_new <- rbind(dfobj_new, c(x, y, "meanPoint"))
-      # colV <- c(colV, "#aaaa00")
-      colV <- c(colV, UniqueCol[i])
-
-      dfobj_path <- rbind(dfobj_path, c(x, y))
-    }
-    colnames(dfobj_path) <- c("x", "y")
-
-    newIdx <- (nrow(dfobj) + 1):nrow(dfobj_new)
-    cellValues <- c(unname(unlist(cellValues)), newIdx)
-
-    dfobj_new$x <- round(as.numeric(dfobj_new$x), 4)
-    dfobj_new$y <- round(as.numeric(dfobj_new$y), 4)
-
-    for (i in 1:(length(newIdx) - 1)) { # add curve
-      newCurve <- paste(
-        " + geom_curve( aes(x = ", "x[newIdx[", i,
-        "]], y = y[newIdx[", i, "]], xend = x[newIdx[", i + 1,
-        "]], yend = y[newIdx[", i + 1, ']]), size = 0.5, linetype = "longdash",',
-        # "curvature = 0.1, colour = '#ffff00', ", 'arrow = arrow(length = unit(0.1,"inches")))'
-        "curvature = 0.1, colour = colV[newIdx[", i, ']], arrow = arrow(length = unit(0.1,"inches")))'
-      )
-      graphString <- paste(graphString, newCurve, sep = "")
-    }
-  }
+  # if (path) { # add mean point to path
+  #   dfobj_path <- data.frame()
+  #   for (i in 1:length(cellValues)) {
+  #     x <- mean(as.numeric(dfobj_new$x[cellValues[[i]]]))
+  #     y <- mean(as.numeric(dfobj_new$y[cellValues[[i]]]))
+  # 
+  #     dfobj_new <- rbind(dfobj_new, c(x, y, "meanPoint"))
+  #     colV <- c(colV, UniqueCol[i])
+  # 
+  #     dfobj_path <- rbind(dfobj_path, c(x, y))
+  #   }
+  #   colnames(dfobj_path) <- c("x", "y")
+  # 
+  #   newIdx <- (nrow(dfobj) + 1):nrow(dfobj_new)
+  #   cellValues <- c(unname(unlist(cellValues)), newIdx)
+  # 
+  #   dfobj_new$x <- round(as.numeric(dfobj_new$x), 4)
+  #   dfobj_new$y <- round(as.numeric(dfobj_new$y), 4)
+  # 
+  #   for (i in 1:(length(newIdx) - 1)) { # add curve
+  #     newCurve <- paste(
+  #       " + geom_curve( aes(x = ", "x[newIdx[", i,
+  #       "]], y = y[newIdx[", i, "]], xend = x[newIdx[", i + 1,
+  #       "]], yend = y[newIdx[", i + 1, ']]), size = 0.5, linetype = "longdash",',
+  #       # "curvature = 0.1, colour = '#ffff00', ", 'arrow = arrow(length = unit(0.1,"inches")))'
+  #       "curvature = 0.1, colour = colV[newIdx[", i, ']], arrow = arrow(length = unit(0.1,"inches")))'
+  #     )
+  #     graphString <- paste(graphString, newCurve, sep = "")
+  #   }
+  # }
   eval(parse(text = graphString))
 
   return(ggobj2)
@@ -1186,109 +1220,6 @@ emphasizePathway <-
     return(ggobj2)
   }
 
-# emphasizeSlingShot <- function(inputObj, dfobj, Cells, pres, genesets, seu, presTab) {
-#   if(!require(farver)){
-#     install.packages('farver') # install 'farver' if not installed.
-#     
-#   }
-#   library(farver)
-#   cat("emphasize SlingShot \n")
-#   buildRlobj <- function(items) {
-#     rlobj <- data.frame(stringsAsFactors = FALSE)
-# 
-#     for (i in 1:length(items)) {
-#       kk <- strsplit(items[[i]], " @")[[1]]
-#       name <- kk[1]
-#       location <- kk[2]
-#       rlobj <- rbind(rlobj, cbind(name, location))
-#     }
-# 
-#     colnames(rlobj) <- c("name", "location")
-#     rlobj$name <- as.character(rlobj$name)
-#     rlobj$location <- as.character(rlobj$location)
-#     return(rlobj)
-#   }
-# 
-#   getCellValues <- function(rlobj) {
-#     ret <- list()
-#     for (i in 1:nrow(rlobj)) {
-#       thisGeneset <- which(names(genesets) == rlobj[i, 1]) # index
-# 
-#       if (length(thisGeneset) > 1) {
-#         thisGeneset <- thisGeneset[1]
-#       }
-# 
-#       thisGroup <- rlobj[i, 2]
-# 
-#       thisCellsIdx <- which(dfobj$col == thisGroup)
-#       if (length(thisCellsIdx) == 0) {
-#         ret[[i]] <- c()
-#         next
-#       }
-#       rn <- thisCellsIdx
-# 
-#       res <- c()
-#       for (j in 1:length(rn)) {
-#         if (thisGeneset %in% pres[[rn[j]]]) {
-#           res <- c(res, rn[j])
-#         }
-#       }
-#       if (length(res) == 0) {
-#         rlobj <- rlobj[-i, ]
-#         next
-#       }
-#       ret[[i]] <- res
-#       names(ret)[i] <- thisGroup
-#     }
-#     return(ret)
-#   }
-# 
-#   rlobj <- buildRlobj(inputObj) # split into name, location dataframe
-# 
-#   cellValues <- getCellValues(rlobj) # get cell index for each cell
-# 
-#   dfobj_new <- data.frame(dfobj, stringsAsFactors = FALSE)
-#   colnames(dfobj_new) <- c("x", "y", "col")
-# 
-#   # print(dfobj_new)
-#   dfobj_new_coord <- cbind(dfobj_new$x, dfobj_new$y)
-#   dfobj_new_coord <- dfobj_new_coord[unlist(cellValues, use.names = FALSE), 1:2]
-#   # dfobj_new_label <- dfobj_new$col[unlist(cellValues, use.names = FALSE)]
-#   dfobj_new_label <- seu$seurat_clusters[unlist(cellValues, use.names = FALSE)]
-# 
-#   # define ggobj2 element
-#   UniqueCol <- briterhex(scales::hue_pal(h = c(20, 350), c = 100, l = 65, h.start = 0,
-#                                          direction = 1)(length(Cells)))
-#   names(UniqueCol) <- Cells
-#   colV <- unname(UniqueCol[dfobj_new$col])
-#   colV[-unlist(cellValues, use.names = FALSE)] <- "#E5E5EEE5" # gray color
-# 
-#   dfobj_new$col <- colV
-#   ## Get -log10(p_value) of a cell based on which genesets are chosen
-# 
-#   rownames(dfobj_new) <- NULL
-#   # graphString <- "ggobj2 <- ggplot(dfobj_new, aes(x = x, y = y)) + geom_point(colour = colV)"
-# 
-#   now_obj <- cbind(dfobj_new$x, dfobj_new$y)
-#   colnames(now_obj) <- c("x", "y")
-# 
-#   sds <- getLineages(dfobj_new_coord, clusterLabels = dfobj_new_label)
-#   crv <- getCurves(sds)
-#   crv <- SlingshotDataSet(crv)
-#   
-#   if (length(crv@curves)>0){
-#     myslingshot <-
-#       list (plot(now_obj, col = colV, pch = 16, cex = 0.8),
-#             lines(SlingshotDataSet(crv), lwd = 2, type = 'curves', col='red4'))
-#     
-#   } else {
-#     myslingshot <-
-#       list (plot(now_obj, col = colV, pch = 16, cex = 0.8),
-#             lines(SlingshotDataSet(crv), lwd = 2, type = 'lineages', col='red4'))
-#     
-#   }
-#   return(myslingshot)
-# }
 
 sortItem <- function(label, tableName) {
   options(useFancyQuotes = FALSE)
@@ -1360,34 +1291,34 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
   options(useFancyQuotes = FALSE)
 
   server <- function(input, output, session) {
-
-    buildbiplot <- function(biFont, biX, biY, genesets, TOPN = 5, oddratio = TRUE, gsFont=5, axtxt=13, axlab=15) {
+    
+    toptab <- function (genesets, TOPN = 5, oddratio = TRUE, myplot='biplot'){
       Cells <- sort(unique(GroupInfo))
       # pres : which gene-sets are significant for each cells.
       # pres2 : for each gene-sets, how many cells are significant that gene-sets.
-
+      
       if (oddratio) { ## ODDRATIO
         total <- length(GroupInfo)
-
+        
         dat <- OR %>%
           group_by(Cell) %>%
           arrange(Cell) %>%
           top_n(TOPN)
-
+        
         gs <- unique(dat$Geneset)
-
+        
         tab <- matrix(0, nrow = length(gs), ncol = length(Cells))
         rownames(tab) <- gs
         colnames(tab) <- Cells
-
+        
         gs <- sapply(gs, function(i) {
           which(names(genesets) == i)
         })
-
+        
         for (i in 1:length(Cells)) {
           thisCell <- Cells[i]
           thisCellIdx <- which(GroupInfo == thisCell)
-
+          
           tab[, i] <- round(unname(
             sapply(1:length(gs), function(k) {
               k <- gs[k]
@@ -1396,13 +1327,13 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                 return(0)
               }
               A <- pres2[names(k)]
-
+              
               if (is.na(A)) {
                 return(0)
               }
               N <- total
               K <- length(thisCellIdx)
-
+              
               return((B / K) / (A / N))
             })
           ), 4)
@@ -1410,19 +1341,19 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         }
       }
       else { # FREQUENCY
-
+        
         tab <- matrix(0, nrow = length(genesets), ncol = length(Cells))
-
+        
         for (i in 1:length(Cells)) {
           thisCell <- Cells[i]
           thisCellIdx <- which(GroupInfo == thisCell)
           v <- rep(0, length(genesets))
-
+          
           vs <- table(unlist(pres[thisCellIdx]))
           nvs <- as.numeric(names(vs))
           vs <- unname(vs)
           v[nvs] <- vs
-
+          
           tab[, i] <- v / length(thisCellIdx)
         }
         rownames(tab) <- names(genesets)
@@ -1430,7 +1361,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         tab <- tab[-which(sapply(1:nrow(tab), function(i) {
           sum(tab[i, ]) == 0
         })), ] # remove zero
-
+        
         # select high in groups
         high <- c()
         if (TOPN == 1){
@@ -1443,12 +1374,23 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
             high <- c(high, rownames(tab[order(-tab[, i]),])[1:TOPN])
           }
         }
-
+        
         high <- unique(high)
         tab <- tab[high, ]
       }
-      labels <- rownames(tab)
+      return(tab)
+    }
+    
 
+    buildbiplot <- function(biFont, biX, biY, genesets, TOPN = 5, oddratio = TRUE, gsFont=5, axtxt=13, axlab=15,
+                            myplot='biplot', tab=matrix(0, 0, 0)) {
+    
+      hmtype <- 'Odds Ratio based Biplot'
+      if (!oddratio){
+        hmtype <- 'Frequency based Biplot'
+      }
+      ##########  BiPlot
+      labels <- rownames(tab)
       model <- prcomp(tab, scale = TRUE)
       library(ggplot2)
       BiPlot <<-
@@ -1472,8 +1414,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           point.padding = 1,
           max.overlaps = 30
           )+
-        labs(y = 'PC2', x = 'PC1') +
-        theme(axis.line = element_blank(), #element_line(color = "black", size = 0.5, linetype = "solid"),
+        labs(y = 'PC2', x = 'PC1', title = hmtype) +
+        theme(   plot.title = element_text(size=20, hjust = 0.5),
+                 axis.line = element_blank(), #element_line(color = "black", size = 0.5, linetype = "solid"),
                  axis.title.x = element_text(size=axlab),
                  axis.title.y = element_text(size=axlab), #element_blank(),
                  axis.text.x = element_text(size=axtxt, colour = 'black', hjust = 1),
@@ -1492,92 +1435,112 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                  # strip.background.y = element_blank(),
                  legend.position="none")
 
+     
       return(BiPlot)
     }
+    
+    buildheatplot <- function(biFont, biX, biY, genesets, TOPN = 5, oddratio = TRUE, gsFont=5, axtxt=13, axlab=15, 
+                              myplot='biplot', tab=maxtrix(0, 0, 0)) {
+      
+      ###########   Heatmap 
+      hmtype <- 'Odds Ratio based Heatmap'
+      if (!oddratio){
+        hmtype <- 'Frequency based Heatmap'
+      }
+  
+      # First define your breaks
+      col_breaks <- c(seq(0, ceiling(max(tab)), length.out=32))
+      
+      # Then define wich color gradient you want for between each values
+      # Green - red radient not recommended !!
+      # NB : this will work only if the maximum value is > 3
+      my_palette <- c(colorRampPalette(c("white", "#2244aa"))(length(col_breaks)-1))
+      
+      # x11(width = 10/2.54, height = 10/2.54)
+      mat_data <- round(tab, 2) # probably better to round your values for easier reading
+      
+      library(gplots)
+      HeatPlot <<- heatmap.2(mat_data,
+                # cellnote = mat_data,  # same data set for cell labels
+                main = hmtype, # heat map title
+                # notecol="black",      # change font color of cell labels to black
+                density.info="none",  # turns off density plot inside color legend
+                trace="none",         # turns off trace lines inside the heat map
+                margins =c(8,60),      # widens margins around plot
+                col=my_palette,       # use on color palette defined earlier
+                scale = "none",
+                # breaks=col_breaks,    # enable color transition at specified limits
+                dendrogram="row",    # only draw a row dendrogram
+                Colv=NA,            # turn off column clustering
 
-    # buildSlingShot <- function(seu, plotOption) {
-    #   if(!require(BiocManager)){
-    #     install.packages('BiocManager') 
-    #   }
-    #   if(!require(slingshot)){
-    #     BiocManager::install('slingshot')
-    #   }
-    #   library(slingshot)
-    #   # PCA
-    #   if (plotOption == "PCA") {
-    #     sds <- getLineages(Embeddings(seu, "pca"), clusterLabels = seu$seurat_clusters)
-    #   }
-    #   
-    #   # TSNE
-    #   if (plotOption == "TSNE") {
-    #     sds <- getLineages(Embeddings(seu, "tsne"), clusterLabels = seu$seurat_clusters)
-    #   }
-    # 
-    #   # UMAP
-    #   if (plotOption == "UMAP") {
-    #     sds <- getLineages(Embeddings(seu, "umap"), clusterLabels = seu$seurat_clusters)
-    #   }
-    #   
-    #   cell_pal <- function(cell_vars, pal_fun,...) {
-    #     if (is.numeric(cell_vars)) {
-    #       pal <- pal_fun(100, ...)
-    #       return(pal[cut(cell_vars, breaks = 100)])
-    #     } else {
-    #       categories <- sort(unique(cell_vars))
-    #       pal <- setNames(pal_fun(length(categories), ...), categories)
-    #       return(pal[cell_vars])
-    #     }
-    #   }
-    #   cell_colors <- cell_pal(seu$cell_type, hue_pal(h = c(20, 350), c = 100, l = 65, h.start = 0, direction = 1))
-    #   # cell_colors_clust <- cell_pal(seu$seurat_clusters,  brewer_pal("qual", "Set1"))
-    #   
-    #   crv <- getCurves(sds)
-    #   crv <- SlingshotDataSet(crv)
-    #   
-    #   if (length(crv@curves)>0){
-    #     myslingshot <<-
-    #       list (plot(sds@elementMetadata@listData$reducedDim, col = cell_colors, pch = 16, cex = .8),
-    #             lines(SlingshotDataSet(crv), lwd = 2, type = 'curves', col='red4'))  
-    #     
-    #     
-    #   } else {
-    #     myslingshot <<-
-    #       list (plot(sds@elementMetadata@listData$reducedDim, col = cell_colors, pch = 16, cex = .8),
-    #             lines(SlingshotDataSet(crv), lwd = 2, type = 'lineages', col='red4'))  
-    #     
-    #   }
-    #   return(myslingshot)
-    # }
-
+                # # add horizontal and vertical lines (but no box...)
+                # colsep = 3,
+                # rowsep = 3,
+                # sepcolor = "black",
+                
+                # additional control of the presentation
+                lhei = c(2, 6),       # adapt the relative areas devoted to the matrix
+                lwid = c(2, 10),
+                cexRow = 2,
+                cexCol = 2,
+                key.title = NA,
+                key.par = list(mar=c(4, 1, 2, 1),
+                               mgp=c(1.5, 0.5, 0),
+                               cex=1.5)
+      )  
+      # saveRDS(HeatPlot, 'hm.rds')
+      return(HeatPlot)
+    }
+    
     usergs <- ""
-
-    observeEvent(input$addgeneset, {
+    
+    observeEvent(input$other,{
       other_geneset <- input$other
       # print(other_geneset)
       ext <- tools::file_ext(other_geneset$datapath)
       # print(ext)
-
+      
       req(other_geneset)
-      # validate(need(!ext %in% c("csv", 'txt', 'RData', 'Rdata'), "Please upload a CSV, TXT, Rdata or RData file!"))
+      # validate(need(!ext %in% c('RData', 'Rdata'), "Please upload a Rdata or RData file!"))
       inFile <- other_geneset$datapath
-
+      
       otherVal <- other_geneset$name
       usergs <<- inFile
       updatedValues <- c(default_genesets, otherVal)
-
-      # for(i in 1:(length(updatedValues)-1) ){
-      #   # list(
-      #   #   HTML("<font color='red'>Normal</font>"),
-      #   #   tags$span(style = "color:red", "Uniform"),
-      #   #   "Log-normal", "Exponential"
-      #   # )
-      #   updatedValues[i] <- paste0("tags$span(style = 'color:green'", updatedValues[i] , ")")
-      # }
-      # updatedValues[length(updatedValues)] <- paste0("tags$span(style = 'color:red'", updatedValues[length(updatedValues)] , ")")
+   
       updateRadioButtons(session, "genesetOption", choices = updatedValues, selected= otherVal)
       print(usergs)
-      cat("add genesets done!")
+      # shinyjs::alert("Geneset added!")
+      cat("Geneset added!")
     })
+
+    # observeEvent(input$addgeneset, {
+    #   other_geneset <- input$other
+    #   # print(other_geneset)
+    #   ext <- tools::file_ext(other_geneset$datapath)
+    #   # print(ext)
+    # 
+    #   req(other_geneset)
+    #   # validate(need(!ext %in% c("csv", 'txt', 'RData', 'Rdata'), "Please upload a CSV, TXT, Rdata or RData file!"))
+    #   inFile <- other_geneset$datapath
+    # 
+    #   otherVal <- other_geneset$name
+    #   usergs <<- inFile
+    #   updatedValues <- c(default_genesets, otherVal)
+    # 
+    #   # for(i in 1:(length(updatedValues)-1) ){
+    #   #   # list(
+    #   #   #   HTML("<font color='red'>Normal</font>"),
+    #   #   #   tags$span(style = "color:red", "Uniform"),
+    #   #   #   "Log-normal", "Exponential"
+    #   #   # )
+    #   #   updatedValues[i] <- paste0("tags$span(style = 'color:green'", updatedValues[i] , ")")
+    #   # }
+    #   # updatedValues[length(updatedValues)] <- paste0("tags$span(style = 'color:red'", updatedValues[length(updatedValues)] , ")")
+    #   updateRadioButtons(session, "genesetOption", choices = updatedValues, selected= otherVal)
+    #   print(usergs)
+    #   cat("Geneset added!")
+    # })
 
     ### CODES
 
@@ -1588,13 +1551,14 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
     gt <- Cells <- A <- ""
     CellScatter <- ""
     CellHistogram <- ""
-    BiPlot <- OR <- ""
+    BiPlot <- HeatPlot <- OR <- ""
+    
 
     observeEvent(input$StartCellEnrich, {
       pt <- proc.time()
 
       if (input$FCoption == "Fisher") {
-        shinyjs::runjs('$("#colorbtn").attr("disabled",true)')
+        # shinyjs::runjs('$("#colorbtn").attr("disabled",true)')
         shinyjs::runjs('$("#freqbtn").attr("disabled",true)')
         shinyjs::runjs('$("#sigbtn").attr("disabled",true)')
         shinyjs::runjs('$("#Emphasize").attr("disabled",true)')
@@ -1610,9 +1574,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       # ------ Hide Start Button
       shinyjs::hide("StartCellEnrich")
-      
-      # ---------- Hide slingshot
-      shinyjs::hide("SlingShot")
 
       #Disable Emphasize 1st
       shinyjs::runjs('$("#Emphasize").attr("disabled",true)')
@@ -1721,7 +1682,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       # ------ Calculate TSNE / UMAP First
       # library(Matrix)
 
-      seu <- getTU(CountData, GroupInfo, input$plotOption, topdims=input$topdims)
+      seu <- getTU(CountData, GroupInfo, input$plotOption, topdims=input$topdims)#, normalization=T)
       seu <<- seu
       
       #PCA
@@ -1787,13 +1748,15 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                       selection = "none",
         )
       )
+      
+      saveRDS(s2, 'sigGeneGroup.rds')
       tmp_df <- data.frame()
 
       cat("biobj \n")
       biobj <- getbiobj(genes, genesets)
 
       if (length(s) == 0) {
-        tmp_cells <- unique(s2$Group)
+        tmp_cells <- unique(s2$Group) ## cells containing significant genes
         tmp_pres <- matrix(0, length(genesets), length(tmp_cells))
         tG <- table(GroupInfo)
         # define s
@@ -1805,9 +1768,10 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
             unname()
 
           tmp_pv <- getHyperPvalue(tmp_genes, genesets, A, lgs, q0, biobj)
-          sigidx <- which(p.adjust(tmp_pv, "fdr") <= q0)
+          sigidx <- which(p.adjust(tmp_pv, "fdr") <= q0)  # q-values cutoff 0.05
           tmp_pres[sigidx, i] <- unname(tG[tmp_cells[i]])
-          tmp_pv[which(tmp_pv < 1e-12)] <- 1e-12
+          
+          tmp_pv[which(tmp_pv < 1e-20)] <- 1e-20  # -12
 
           tmp_genes <- sapply(tmp_genes, function(i) {
             which(rc == i)
@@ -1820,7 +1784,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
         colnames(tmp_pres) <- tmp_cells
         rownames(tmp_pres) <- names(genesets)
-
+        
         # fisher ODD RATIO
         ors <- rowSums(tmp_pres) / sum(tG)
         ors[which(ors != 0)] <- 1 / ors[which(ors != 0)]
@@ -1846,7 +1810,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       pres <- list()
 
       cat("pres declare\n")
-      presTab <- c()
+      presTab_pval <- presTab <- c()
+      
 
       if (length(s) >= 100) {
         w$start()
@@ -1856,12 +1821,13 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
           pres[[i]] <- which(p.adjust(prespv, "fdr") <= q0)
 
-          prespv[which(prespv < 1e-12)] <- 1e-12
+          # prespv[which(prespv < 1e-20)] <- 1e-20 # -12
 
-          presTab <- cbind(presTab, -log10(prespv))
+          presTab_pval <- cbind(presTab_pval, prespv)
+          # presTab <- cbind(presTab, -log10(prespv))
         }
         w$close()
-        colnames(presTab) <- colnames(CountData)
+        colnames(presTab_pval) <- colnames(CountData)
       }
       else {
         for (i in 1:lens) {
@@ -1869,116 +1835,87 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
           pres[[i]] <- which(p.adjust(prespv, "fdr") <= q0)
 
-          prespv[which(prespv < 1e-12)] <- 1e-12
-
-          presTab <- cbind(presTab, -log10(prespv))
+          # prespv[which(prespv < 1e-20)] <- 1e-20  # -12
+          
+          presTab_pval <- cbind(presTab_pval, prespv) ### presTab_pval-> hyper P-value
         }
-        colnames(presTab) <- names(s)
+        colnames(presTab_pval) <- names(s)
       }
-
+      rownames(presTab_pval) <- names(genesets)
+      
+      # presTab_pval
+      output$sppcdn <- downloadHandler(
+        filename = "cell_pw_pval.csv",
+        content = function(file) {
+          write.csv(presTab_pval, file, row.names = TRUE)
+        }
+      )
+      
       cat("pres defined\n")
-      rownames(presTab) <- names(genesets)
+      presTab <- presTab_pval ### presTab -log10(p-value) -> Q-value
+      presTab[which(presTab < 1e-20)] <- 1e-20
+      presTab <- round(-log10(presTab), 6) ### presTab -log10(p-value) -> Q-value
       presTab <<- presTab
-      # write.csv(presTab, 'presTab.csv')
+      # saveRDS(presTab, 'presTab.rds')
 
-      pres <<- pres
-      # [[686]]
-      # [1]  11  62 102 118 161 197 215 216 218 225 228 229 230
-      #
-      # [[687]]
-      # [1]  62  69 140 216 229
       # pres : which gene-sets are significant for each cells.
-
-      # ------ CellPathwayDF
-
-      CellPathwayDF <- buildCellPathwayDF(GroupInfo, pres, genesets)
-
-      # group / pathway count
-
+      pres <<- pres
+      # saveRDS(pres, 'pres.rds')
+      
       # pres2 : for each gene-sets, how many cells are significant that gene-sets.
-
       cat("pres2\n")
-
-      pres2 <- sort(table(unlist(pres)), decreasing = T)
+      pres2 <- sort(table(unlist(pres)), decreasing = T) 
       if (length(s) != 0) {
         names(pres2) <- names(genesets)[as.numeric(names(pres2))]
       }
       pres2 <<- pres2
       # print(pres2)
+      
+      
+      # ------ CellPathwayDF
+      CellPathwayDF <- buildCellPathwayDF(GroupInfo, pres, genesets)
+      
+      PP <- pathwayPvalue(GroupInfo, pres, pres2, genesets) 
 
-      # 2625*4
-      PP <- pathwayPvalue(GroupInfo, pres, pres2, genesets) # qvalue cutoff removed
-
+      # OR -> # Group / PATHWAY / ODDRATIO        
       if (nrow(tmp_df) > 0) {
         OR <- tmp_df
         colnames(OR) <- c("Cell", "Geneset", "OddRatio")
-        OR <- OR %>% filter(OddRatio > 1)
         OR <<- OR
       }
       else {
         # OR <- getOddRatio(GroupInfo, pres, pres2, genesets, 0.1)
         OR <<- getOddRatio(GroupInfo, pres, pres2, genesets, input$ORratio)
       }
-
-      # OR -> # Group / PATHWAY / ODDRATIO
-
-      # QVCUTOFF <- 4
-
-      # group / pathway /
+      
       CellPathwayDFP <- CellPathwayDF %>%
-        inner_join(PP) %>%
-        dplyr::select(Cell, Geneset, Qvalue) %>%
-        filter(Qvalue > 4)
-      write.csv(CellPathwayDFP, 'cellpathwaydf_p.csv')
-
-      ggs <- unique(CellPathwayDFP %>% dplyr::select(Geneset))[, 1]
-      ces <- sort(unique(CellPathwayDFP %>% dplyr::select(Cell))[, 1])
-
-      nr <- length(ggs) # nrow
-      nc <- length(ces) # ncol
-
+        inner_join(PP) %>% inner_join(OR)  %>% select(-Pvalue)  # %>% filter(Qvalue > 1) 
+      
+      # CellPathwayDFP <- CellPathwayDFP
+      # saveRDS(CellPathwayDFP, 'df_qval_odds.rds')
+      
+      # saveRDS(CellPathwayDF, 'cpdf.rds')
+      # saveRDS(CellPathwayDFP, 'cpdf_p.rds')
+      # saveRDS(PP, 'pp.rds')
+      # saveRDS(OR, 'or.rds')
+      
+      CellPathwayDFP <- CellPathwayDFP %>% filter(Qvalue > 1) 
       output$tbldn <- downloadHandler(
-        filename = "myhighlight.csv",
+        filename = "all_sig_pathways.csv",
         content = function(file) {
-          # pathway - cell ? -log pvalue
-          # outputFile = matrix(0,nr,nc)
-
-          # rownames(outputFile) = ggs
-          # colnames(outputFile) = ces
-
-          # for(i in 1:length(ces)){
-          # tf <- CellPathwayDFP %>% filter(Cell == ces[i]) %>% select(Geneset, Qvalue)
-          # outputFile[(tf %>% select(Geneset))[,1],i] = (tf%>% select(Qvalue))[,1]
-          # }
-          # write.csv(outputFile, file)
-          # write.csv(presTab, file)
-
-          # name <- location <- c()
-          # for (i in 1:length(input$sortList)) {
-          #   kk <- strsplit(input$sortList[[i]], " @")[[1]]
-          #   name <- c(name, kk[1])
-          #   location <- c(location, kk[2])
-          # }
-          # newdf <- do.call(rbind, Map(data.frame, Pathway=name, Cell=location))
-          # write.csv(newdf, file, row.names = FALSE)
-          write.csv(CellPathwayDF, file, row.names = FALSE)
+          write.csv(CellPathwayDFP, file, row.names = FALSE)
         }
       )
 
-      # presTab
-      output$sppcdn <- downloadHandler(
-        filename = "sig_pw_cell.csv",
-        content = function(file) {
-          write.csv(presTab, file, row.names = TRUE)
-        }
-      )
-
-      CellPathwayDF <- CellPathwayDF %>%
-        inner_join(OR)
-
+      ## significant OR > 1
+      # QVCUTOFF <- 4 ???
+      # CellPathwayDF <- CellPathwayDFP %>% filter(Qvalue > 4) %>% 
+      #                                     filter(OddRatio > 1)
+      
+      OR <- OR %>% filter(OddRatio > 1)
+      CellPathwayDF <- CellPathwayDFP %>% filter(OddRatio > 1)
       CellPathwayDF <<- CellPathwayDF
-      write.csv(CellPathwayDF, "cellpathwaydf_innerjoin.csv")
-
+      # write.csv(CellPathwayDF, "cellpathwaydf_innerjoin.csv")
 
       # l2
       CellMarkers <- data.frame()
@@ -2093,27 +2030,27 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       CellScatter <<- getCellPlot(dfobj, Cells)
 
-      output$CellPlot <- renderPlot(CellScatter)
+      output$CellScatter <- renderPlot(CellScatter)
 
-      output$legenddn <- downloadHandler(
-        filename = "mylegend.png",
-        content = function(file) {
-          png(file)
-          plot(NULL, xaxt = "n", yaxt = "n", bty = "n", ylab = "", xlab = "", xlim = 0:1, ylim = 0:1)
-          legend(
-            "center",
-            legend = c("Sugar maple", "White ash", "Black walnut", "Red oak", "Eastern hemlock"),
-            pch = 16, pt.cex = 3, cex = 1.5, bty = "n",
-            col = c("orange", "red", "green", "blue", "purple")
-          )
-          dev.off()
-        }
-      )
+      # output$legenddn <- downloadHandler(
+      #   filename = "mylegend.pdf",
+      #   content = function(file) {
+      #     pdf(file)
+      #     plot(NULL, xaxt = "n", yaxt = "n", bty = "n", ylab = "", xlab = "", xlim = 0:1, ylim = 0:1)
+      #     legend(
+      #       "center",
+      #       legend = c("Sugar maple", "White ash", "Black walnut", "Red oak", "Eastern hemlock"),
+      #       pch = 16, pt.cex = 3, cex = 1.5, bty = "n",
+      #       col = c("orange", "red", "green", "blue", "purple")
+      #     )
+      #     dev.off()
+      #   }
+      # )
 
-      output$imgdn <- downloadHandler(
-        filename = "myfigure.png",
+      output$sctdn <- downloadHandler(
+        filename = "scatter.pdf",
         content = function(file) {
-          ggsave(file, CellScatter, device = "png")
+          ggsave(file, CellScatter, device = "pdf")
         }
       )
 
@@ -2184,7 +2121,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           "scrollX = TRUE,",
           "autoWidth = TRUE,",
           "lengthChange = FALSE,",
-          "order = list(list(3,'desc'))", # odd ratio based
+          "order = list(list(4,'desc'))", # odds ratio based
           "),",
           "rownames = FALSE,",
           "selection = 'single')",
@@ -2195,14 +2132,19 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       # StartEnrich Finished
       shinyjs::click('ClearList')
+      shinyjs::click('sigbtn')
       shinyjs::click('orbp')
-      shinyjs::click('slingDraw')
-      shiny::showNotification("Please   DRAG & DROP   the pathway positions ONCE to activate 'EMPHASIZE' button!",
-                              type = "error", duration = NULL )
+      shinyjs::click('heat_orbp')
+      
+      # shiny::showNotification("Please   DRAG & DROP   the pathway positions ONCE to activate 'EMPHASIZE' button!",
+      #                         type = "error", duration = NULL )
 
       print(proc.time() - pt)
     })
 
+    ##### trigger value
+    rv <- reactiveValues(download_flag = 0)
+    
     # draw frequently colored images
     observeEvent(input$freqbtn, {
       if (input$freqbtn == 0) { # prevent initial click state
@@ -2214,9 +2156,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       for (i in 1:length(Cells)) {
         thisCellData <- CellPathwayDF %>% dplyr::filter(Cell == Cells[i])
         if (nrow(thisCellData) >= 1) {
-          thisCellData <- thisCellData %>% top_n(1, wt = Count)
+          thisCellData <- thisCellData %>% top_n(1, wt = Frequency)
           if (nrow(thisCellData) >= 1) {
-            thisCellData <- thisCellData %>% top_n(-1, wt = Length)
+            thisCellData <- thisCellData %>% top_n(-1, wt = Size)
             if (nrow(thisCellData) >= 1) {
               thisCellData <- thisCellData %>% top_n(1, wt = OddRatio)
               if (nrow(thisCellData) >= 1) {
@@ -2233,27 +2175,38 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       )
 
       plotImg <- emphasize(FALSE, res, dfobj, Cells, pres, genesets, seu, presTab)
-      # output$SlingShot <- renderPlot(emphasizeSlingShot(res, dfobj, Cells, pres, genesets, seu, presTab))
-      output$Comparison <- renderPlot(emphasizePathway(res, dfobj, Cells, pres, genesets, seu, presTab))
+      compareImg <- emphasizePathway(res, dfobj, Cells, pres, genesets, seu, presTab)
+      
+      output$cmpdn <- downloadHandler(
+        filename = function() {
+          "frequency_global.pdf"
+        },
+        content = function(file) {
+          ggsave(file, compareImg, device = "pdf")
+        }
+      )
 
       output$imgdn <- downloadHandler(
         filename = function() {
-          "myfigure.png"
+          "frequency.pdf"
         },
         content = function(file) {
-          ggsave(file, plotImg, device = "png")
+          ggsave(file, plotImg, device = "pdf")
+          rv$download_flag <- rv$download_flag + 1
         }
       )
+      
       shinyjs::show("legenddn")
-
+      
       output$legenddn <- downloadHandler(
-        filename = "mylegend.png",
+        filename = "mylegend.pdf",
         content = function(file) {
           buildGradientLegend(res, img = TRUE, name = file, Cells = Cells)
         }
       )
 
       output$CellPlot <- renderPlot(plotImg)
+      output$Comparison <- renderPlot(compareImg)
     })
 
     # draw significant colored images
@@ -2274,9 +2227,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           thisCellData <- thisCellData %>% top_n(1, wt = OddRatio)
           # print (thisCellData)
           if (nrow(thisCellData) >= 1) {
-            thisCellData <- thisCellData %>% top_n(-1, wt = Length)
+            thisCellData <- thisCellData %>% top_n(-1, wt = Size)
             if (nrow(thisCellData) >= 1) {
-              thisCellData <- thisCellData %>% top_n(1, wt = Count)
+              thisCellData <- thisCellData %>% top_n(1, wt = Frequency)
               if (nrow(thisCellData) >= 1) {
                 thisCellData <- thisCellData %>% top_n(1)
               }
@@ -2293,78 +2246,39 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       )
 
       plotImg <- emphasize(FALSE, res, dfobj, Cells, pres, genesets, seu, presTab)
-      # output$SlingShot <- renderPlot(emphasizeSlingShot(res, dfobj, Cells, pres, genesets, seu, presTab))
-      output$Comparison <- renderPlot(emphasizePathway(res, dfobj, Cells, pres, genesets, seu, presTab))
+      compareImg <- emphasizePathway(res, dfobj, Cells, pres, genesets, seu, presTab)
+      
+      output$cmpdn <- downloadHandler(
+        filename = function() {
+          "oddsratio_global.pdf"
+        },
+        content = function(file) {
+          ggsave(file, compareImg, device = "pdf")
+        }
+      )
 
       output$imgdn <- downloadHandler(
         filename = function() {
-          "myfigure.png"
+          "oddsratio.pdf"
         },
         content = function(file) {
-          ggsave(file, plotImg, device = "png")
+          ggsave(file, plotImg, device = "pdf")
+          rv$download_flag <- rv$download_flag + 1
         }
       )
 
       output$legenddn <- downloadHandler(
-        filename = "mylegend.png",
+        filename = "mylegend.pdf",
         content = function(file) {
           buildLegend(res, img = TRUE, name = file, GroupInfo = GroupInfo)
         }
       )
 
       output$CellPlot <- renderPlot(plotImg)
+      output$Comparison <- renderPlot(compareImg)
     })
-
-    # draw group colored images
-    observeEvent(input$colorbtn, {
-      if (input$colorbtn == 0) { # prevent default click state
-        return(NULL)
-      }
-      shinyjs::hide("legenddn")
-      UniqueCol <- briterhex(scales::hue_pal(h = c(20, 350), c = 100, l = 65, h.start = 0,
-                                             direction = 1)(length(Cells)))
-      names(UniqueCol) <- Cells
-
-      colV <- unname(UniqueCol[dfobj$col])
-      ap <- colV
-      ap <- ifelse(ap=='#E5E5E5', 0.2, 1)
-
-      colorImage <- ggplot(dfobj, aes(x = x, y = y)) +
-        theme(panel.background = element_rect(fill = 'white', colour = 'white'),
-              panel.border = element_rect(colour = 'black', fill=NA, size=0.25))+
-        geom_point(colour = colV, alpha=ap)
-
-
-      output$imgdn <- downloadHandler(
-        filename = function() {
-          "myfigure.png"
-        },
-        content = function(file) {
-          ggsave(file, colorImage, device = "png")
-        }
-      )
-      o <- data.frame(Pathway = "", Group = "")
-      colnames(o) <- c("Pathway", "Group")
-
-      # clear legendtable
-      output$legendTable <- DT::renderDataTable(
-        DT::datatable(
-          o,
-          rownames = FALSE,
-          options = list(
-            autoWidth = TRUE,
-            dom = "ltp",
-            lengthChange = FALSE,
-            columnDefs = list(list(className = "dt-center", targets = 0:1))
-          ),
-          selection = "none"
-        )
-      )
-      output$CellPlot <- shiny::renderPlot(colorImage)
-      output$Comparison <- shiny::renderPlot(colorImage)
-      # output$SlingShot <- renderPlot(buildSlingShot(seu, input$plotOption))
-    })
-
+    
+    
     observeEvent(input$sortList, {
       shinyjs::runjs('$("#Emphasize").attr("disabled",false)')
     })
@@ -2381,9 +2295,10 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       shinyjs::show("legenddn")
       plotImg <- emphasize(FALSE, res, dfobj, Cells, pres, genesets, seu, presTab)
+      compareImg <- emphasizePathway(res, dfobj, Cells, pres, genesets, seu, presTab)
+      
       output$CellPlot <- renderPlot(plotImg)
-      # output$SlingShot <- renderPlot(emphasizeSlingShot(res, dfobj, Cells, pres, genesets, seu, presTab))
-      output$Comparison <- renderPlot(emphasizePathway(res, dfobj, Cells, pres, genesets, seu, presTab))
+      output$Comparison <- renderPlot(compareImg)
 
       output$legendTable <- DT::renderDataTable(
         buildGradientLegend(res, Cells = Cells)
@@ -2391,15 +2306,24 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
       output$imgdn <- downloadHandler(
         filename = function() {
-          "myfigure.png"
+          "my_pw_group.pdf"
         },
         content = function(file) {
-          ggsave(file, plotImg, device = "png")
+          ggsave(file, plotImg, device = "pdf")
+        }
+      )
+      
+      output$cmpdn <- downloadHandler(
+        filename = function() {
+          "my_pw_global.pdf"
+        },
+        content = function(file) {
+          ggsave(file, compareImg, device = "pdf")
         }
       )
 
       output$legenddn <- downloadHandler(
-        filename = "mylegend.png",
+        filename = "mylegend.pdf",
         content = function(file) {
           buildLegend(res, img = TRUE, name = file, GroupInfo = GroupInfo)
         }
@@ -2418,80 +2342,132 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         )
       )
     })
+    
     observeEvent(input$freqbp, {
       if (input$freqbp == 0) {
         return(NULL)
       }
-
+      
       output$biPlot <- renderPlot(buildbiplot(input$biFont, input$biX, input$biY, genesets, TOPN = input$biCount,
                                               gsFont = input$gsFont, axtxt = input$axtxt, axlab = input$axlab,
-                                              oddratio = FALSE))
+                                              oddratio = FALSE, 
+                                              tab=toptab(genesets, TOPN = input$biCount, oddratio = FALSE)))
+      
+      output$heatPlot <- renderPlot(buildheatplot(input$biFont, input$biX, input$biY, genesets, TOPN = input$biCount,
+                                              gsFont = input$gsFont, axtxt = input$axtxt, axlab = input$axlab,
+                                              oddratio = FALSE,
+                                              tab=toptab(genesets, TOPN = input$biCount, oddratio = FALSE)))
+   
       output$biplotdn <- downloadHandler(
         filename = function() {
-          "mybiplot.png"
+          "mybiplot.pdf"
         },
         content = function(file) {
-          ggsave(file, device = "png")
+          ggsave(file, device = "pdf")
         }
       )
-    })
+      
+      output$heatplotdn <- downloadHandler(
+        filename = function() {
+          "myheatmap.pdf"
+        },
+        content = function(file) {
+          
+          revRowInd <- match(c(1:length(HeatPlot$rowInd)), HeatPlot$rowInd)
+          revColInd <- match(c(1:length(HeatPlot$colInd)), HeatPlot$colInd)
+          
+          pdf(file, width = 18, height = 12)
+          heatmap.2(t(HeatPlot$carpet)[revRowInd, revColInd],
+                    main = "Frequency based Heatmap", # heat map title
+                    density.info="none",  # turns off density plot inside color legend
+                    trace="none",         # turns off trace lines inside the heat map
+                    margins =c(8,50),      # widens margins around plot
+                    col=HeatPlot$col,       # use on color palette defined earlier
+                    scale = "none",
+                    # breaks=HeatPlot$breaks,    # enable color transition at specified limits
+                    dendrogram = "row",
+                    Rowv = HeatPlot$rowDendrogram,
+                    Colv=NA,            # turn off column clustering
+                    
+                    # # additional control of the presentation
+                    lhei = c(2, 6),       # adapt the relative areas devoted to the matrix
+                    lwid = c(2, 10),
+                    cexRow = 2,
+                    cexCol = 2,
+                    key.title = NA,
+                    key.par = list(mar=c(4, 1, 2, 1),
+                                   mgp=c(1.5, 0.5, 0),
+                                   cex=1.5)
+          )  
+          
+          dev.off()
+        }
+      )
+      
+    })### input$freqbb
 
     observeEvent(input$orbp, {
       if (input$orbp == 0) {
         return(NULL)
       }
-
+      
       output$biPlot <- renderPlot(buildbiplot(input$biFont, input$biX, input$biY, genesets, TOPN = input$biCount,
                                               gsFont = input$gsFont, axtxt = input$axtxt, axlab = input$axlab,
-                                              oddratio = TRUE))
+                                              oddratio = TRUE,
+                                              tab = toptab(genesets, TOPN = input$biCount, oddratio = TRUE)))
+
+      output$heatPlot <- renderPlot(buildheatplot(input$biFont, input$biX, input$biY, genesets, TOPN = input$biCount,
+                                                gsFont = input$gsFont, axtxt = input$axtxt, axlab = input$axlab,
+                                                oddratio = TRUE,
+                                                tab=toptab(genesets, TOPN = input$biCount, oddratio = TRUE)))
+      
       output$biplotdn <- downloadHandler(
         filename = function() {
-          "mybiplot.png"
+          "mybiplot.pdf"
         },
         content = function(file) {
-          ggsave(file, device = "png")
+          ggsave(file, device = "pdf")
         }
       )
-    })
-
-    observeEvent(input$slingDraw, {
-      if (input$slingDraw == 0) {
-        return(NULL)
-      }
-
-      # output$SlingShot <- renderPlot(buildSlingShot(seu, input$plotOption))
-
-      # output$slingDownload <- downloadHandler(
-      #   filename = function() {
-      #     "myslingshot.png"
-      #   },
-      #   content = function(file) {
-      #     ggsave(file, device = "png")
-      #   }
-      # )
-    })
-
-    observeEvent(input$slingRedraw, {
-      if (input$slingRedraw == 0) {
-        return(NULL)
-      }
-
-      res <- input$sortList
-      output$biPlot <- renderPlot(buildbiplot(input$biFont, input$biX, input$biY, genesets, TOPN = input$biCount,
-                                              gsFont = input$gsFont, axtxt = input$axtxt, axlab = input$axlab,
-                                              oddratio = TRUE))
-      # output$SlingShot <- renderPlot(emphasizeSlingShot(res, dfobj, Cells, pres, genesets, seu, presTab))
-      output$Comparison <- renderPlot(emphasizePathway(res, dfobj, Cells, pres, genesets, seu, presTab))
-      # output$slingDownload <- downloadHandler(
-      #   filename = function() {
-      #     "myslingshot.png"
-      #   },
-      #   content = function(file) {
-      #     ggsave(file, device = "png")
-      #   }
-      # )
-    })
-
+      
+      output$heatplotdn <- downloadHandler(
+        filename = function() {
+          "myheatmap.pdf"
+        },
+        content = function(file) {
+          
+          revRowInd <- match(c(1:length(HeatPlot$rowInd)), HeatPlot$rowInd)
+          revColInd <- match(c(1:length(HeatPlot$colInd)), HeatPlot$colInd)
+          
+          pdf(file, width = 18, height = 12)
+          heatmap.2(t(HeatPlot$carpet)[revRowInd, revColInd],
+                    main = "Odds Ratio based Heatmap", # heat map title
+                    density.info="none",  # turns off density plot inside color legend
+                    trace="none",         # turns off trace lines inside the heat map
+                    margins =c(8,50),      # widens margins around plot
+                    col=HeatPlot$col,       # use on color palette defined earlier
+                    scale = "none",
+                    # breaks=HeatPlot$breaks,    # enable color transition at specified limits
+                    dendrogram = "row",
+                    Rowv = HeatPlot$rowDendrogram,
+                    Colv=NA,            # turn off column clustering
+                    
+                    # # additional control of the presentation
+                    lhei = c(2, 6),       # adapt the relative areas devoted to the matrix
+                    lwid = c(2, 10),
+                    cexRow = 2,
+                    cexCol = 2,
+                    key.title = NA,
+                    key.par = list(mar=c(4, 1, 2, 1),
+                                   mgp=c(1.5, 0.5, 0),
+                                   cex=1.5)
+          )  
+          
+          dev.off()
+        }
+      )
+      
+    })  ### input$orbp
   }
 
   ui <- CellEnrichUI()
@@ -2515,7 +2491,7 @@ buildGradientLegend <- function(sortList, img = FALSE, name = NULL, Cells) {
   # currentGroup <- rlobj$Group
 
   if (img) {
-    png(name)
+    pdf(name)
     plot(NULL, xaxt = "n", yaxt = "n", bty = "n", ylab = "", xlab = "", xlim = 0:1, ylim = 0:1)
     legend(
       "center",
@@ -2542,10 +2518,10 @@ buildGradientLegend <- function(sortList, img = FALSE, name = NULL, Cells) {
       colV[currentGroup],
       function(i) {
         paste0(
-          '<a style="color:black">low </a>',
+          '<a style="color:black"> High </a>',
           '<div style="background: linear-gradient(to right, ', col2hcl(i, l=0),' -40%, ', col2hcl(i),' 100%); display: inline-block; width: 8em;height: 1em;"></div>',
           '<div style="background: linear-gradient(to right, ', col2hcl(i),' 0%, ', col2hcl(i, l=100),' 95%); display: inline-block; width: 4em;height: 1em;"></div>',
-          '<a style="color:black"> high</a>'
+          '<a style="color:black"> Low </a>'
         )
       }
     ),
@@ -2584,7 +2560,7 @@ buildLegend <- function(sortList, img = FALSE, name = NULL, GroupInfo) {
   currentGroup <- rlobj$Group
 
   if (img) {
-    png(name)
+    pdf(name)
     plot(NULL, xaxt = "n", yaxt = "n", bty = "n", ylab = "", xlab = "", xlim = 0:1, ylim = 0:1)
     legend(
       "center",
