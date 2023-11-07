@@ -27,6 +27,7 @@ download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/WikiPath
 # Load library and data
 library(CellEnrich)
 
+LPS_exp <- readRDS("LPS_exp.rds")
 CountData <- LPS_exp$counts
 GroupInfo <- LPS_exp$meta
  
