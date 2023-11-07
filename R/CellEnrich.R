@@ -40,15 +40,18 @@ getTU <- function(CountData, GroupInfo, plotOption='UMAP', topdims= 50) {
   cat("Mapping is started\n")
   library(Seurat)
 
+  # CountData is normalized
   seu <- CreateSeuratObject(CountData)
   
-  seu <- PercentageFeatureSet(seu, pattern = "^MT-", col.name = "percent.mt")
-  
+  # seu <- PercentageFeatureSet(seu, pattern = "^MT-", col.name = "percent.mt")
   # run sctransform
-  seu <- SCTransform(seu, vars.to.regress = "percent.mt", verbose = FALSE, )
-
+  # seu <- SCTransform(seu, vars.to.regress = "percent.mt", verbose = FALSE, )
   
+  nfeat <- nrow(CountData) 
+  nfeat <- min(100*round(nfeat/100,0), 3000)
   
+  seu <- ScaleData(seu)
+  seu <- FindVariableFeatures(seu, nfeatures = nfeat)
 
   # Add cell type annotation to metadata
   seu <- AddMetaData(seu, GroupInfo, col.name = "cell_type")
@@ -1682,7 +1685,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       # ------ Calculate TSNE / UMAP First
       # library(Matrix)
 
-      seu <- getTU(CountData, GroupInfo, input$plotOption, topdims=input$topdims)#, normalization=T)
+      seu <- getTU(CountData, GroupInfo, input$plotOption, topdims=input$topdims)
       seu <<- seu
       
       #PCA
@@ -1712,7 +1715,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       gc()
 
       # ------ Find Significant Genes with Fold Change
-      CountData <- NormalizeData(CountData, normalization.method = 'LogNormalize', scale.factor = 1e6)
+      
+      # CountData is normalized
+      # CountData <- NormalizeData(CountData, normalization.method = 'LogNormalize', scale.factor = 1e6)
 
       if (input$FCoption != "GSVA") {
         # ------ need to build GSVA CASE
