@@ -835,7 +835,7 @@ CellEnrichUI <- function() {
           title = shiny::tags$h4("Biplot between top pathways and groups"), divider = TRUE,
           material_row(
             material_column(
-              plotOutput("biPlot", height = "700px"),
+              plotOutput("biPlot", height = "900px"),
               width = 10
             ),
             material_column(
@@ -865,7 +865,7 @@ CellEnrichUI <- function() {
           title = shiny::tags$h4("Heatmap between top pathways and groups"), divider = TRUE,
           material_row(
             material_column(
-              plotOutput("heatPlot", height = "700px"),
+              plotOutput("heatPlot", height = "900px"),
               width = 10
             ),
             # material_column(
@@ -1277,51 +1277,68 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         
         gs <- unique(dat$Geneset)
         
-        tab <- matrix(0, nrow = length(gs), ncol = length(unique(dat$Cell)))
+        tab <- matrix(0, nrow = length(gs), ncol = length(Cells))
         
         rownames(tab) <- gs
         colnames(tab) <- Cells
         
-        gs <- sapply(gs, function(i) {
-          which(names(genesets) == i)
-        })
-        
-        for (i in 1:length(Cells)) {
-          thisCell <- Cells[i]
-          thisCellIdx <- which(GroupInfo == thisCell)
+          gs <- sapply(gs, function(i) {
+            which(names(genesets) == i)
+          })
           
+          for (i in 1:length(Cells)) {
+          thisCellIdx <- which(GroupInfo == Cells[i])
+    
           tab[, i] <- round(unname(
             sapply(1:length(gs), function(k) {
-              k <- gs[k]
-              B <- table(unlist(pres[thisCellIdx]))[as.character(unname(k))] # 특정 Cell에서 유의한 회수
-              if (is.na(B)) {
-                return(0)
-              }
-              A <- pres2[names(k)]
-              
-              if (is.na(A)) {
-                return(0)
-              }
-              N <- total
-              K <- length(thisCellIdx)
-              
-              return((B / K) / (A / N))
-            })
-          ), 4)
+                k <- gs[k]
+                B <- table(unlist(pres[thisCellIdx]))[as.character(unname(k))] # 특정 Cell에서 유의한 회수
+                if (is.na(B)) {
+                  return(0)
+                }
+                A <- pres2[names(k)]
+      
+                if (is.na(A)) {
+                  return(0)
+                }
+                N <- total
+                K <- length(thisCellIdx)
+      
+                return((B / K) / (A / N))
+              })
+            ), 4)
+          
+          # #### Ceiling the max tab
+          # non_zero_or <- tab[, i][tab[, i] > 0]
+          # outlier_or <- round(mean(non_zero_or) + 2*sd(non_zero_or), 4)
+          # # retrieval
+          # extreme_values <- tab[, i][tab[, i] > outlier_or]
+          # extreme_min <- max(tab[, i][tab[, i] < min(extreme_values)])
+          # # rescale extreme values respecting to the ranks
+          # variation <- 1:length(extreme_values) /10 + sapply(1:length(extreme_values), function(i){ return (rbeta(1, 2, 8))})
+          # converted_extreme <- round(extreme_min + 0.1*sd(non_zero_or) + variation, 4)
+          # ordx <- order(extreme_values)
+          # tab[, i][tab[, i] > outlier_or] <- sort(converted_extreme)[order(ordx)]
+          
           # Cell, Geneset, OR
-        }
-        
-        # #### Ceiling the max OR to mean+2*sd
-        # non_zero_or <- tab[tab > 0]
-        # tab[tab > (mean(non_zero_or) + 2*sd(non_zero_or))] <- mean(non_zero_or) + 2*sd(non_zero_or)
+          }
+          
+          # adjusted to original OR values
+          for (i in 1:length(Cells)){
+            corGeneset <- dat$Geneset[dat$Cell == Cells[i]]
+            corOddRatio <- dat$OddRatio[dat$Cell == Cells[i]]
+            for (g in corGeneset){
+              tab[g, Cells[i]] <- corOddRatio[corGeneset==g]
+            }
+          }
+          
       }
       else { # FREQUENCY
         
         tab <- matrix(0, nrow = length(genesets), ncol = length(Cells))
         
         for (i in 1:length(Cells)) {
-          thisCell <- Cells[i]
-          thisCellIdx <- which(GroupInfo == thisCell)
+          thisCellIdx <- which(GroupInfo == Cells[i])
           v <- rep(0, length(genesets))
           
           vs <- table(unlist(pres[thisCellIdx]))
@@ -1430,10 +1447,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       if (!oddratio){
         hmtype <- 'Frequency based Heatmap'
       }
-  
-      # First define your breaks
-      col_breaks <- c(seq(0, ceiling(max(tab)), length.out=300))
       
+      # First define your breaks
+      col_breaks <- c(seq(0, ceiling(max(tab)), length.out=101))
       # Then define wich color gradient you want for between each values
       # Green - red radient not recommended !!
       # NB : this will work only if the maximum value is > 3
@@ -1449,7 +1465,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                 # notecol="black",      # change font color of cell labels to black
                 density.info="none",  # turns off density plot inside color legend
                 trace="none",         # turns off trace lines inside the heat map
-                margins =c(8,60),      # widens margins around plot
+                margins =c(15,60),      # widens margins around plot
                 col=my_palette,       # use on color palette defined earlier
                 scale = "none",
                 breaks=col_breaks,    # enable color transition at specified limits
@@ -1462,14 +1478,16 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                 # sepcolor = "black",
                 
                 # additional control of the presentation
-                lhei = c(2, 8),       # adapt the relative areas devoted to the matrix
+                lhei = c(2, 13),       # adapt the relative areas devoted to the matrix
                 lwid = c(2, 10),
                 cexRow = 2,
                 cexCol = 2,
                 key.title = NA,
-                key.par = list(mar=c(4, 1, 2, 1),
+                key.xlab = NA,
+                key.ylab = NA,
+                key.par = list(mar=c(5, 1, 2, 1),
                                mgp=c(1.5, 0.5, 0),
-                               cex=1.5)
+                               cex=1)
       )  
       # saveRDS(HeatPlot, 'hm.rds')
       return(HeatPlot)
@@ -1822,16 +1840,17 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         OR <<- getOddRatio(GroupInfo, pres, pres2, genesets, input$ORratio)
       }
       
-      #### Ceiling the max OR to mean+2*sd
+      #### Ceiling the max OR 
       non_zero_or <- OR$OddRatio[OR$OddRatio > 0]
-      outlier_or <- round(mean(non_zero_or) + 3*sd(non_zero_or), 4)
-      
+      outlier_or <- round(mean(non_zero_or) + 2*sd(non_zero_or), 4)
       # retrieval
-      OR$OddRatio[OR$OddRatio > outlier_or] -> extreme_values
+      extreme_values <- OR$OddRatio[OR$OddRatio > outlier_or]
       extreme_min <- max(OR$OddRatio[OR$OddRatio < min(extreme_values)])
+      # rescale extreme values respecting to the ranks
       variation <- 1:length(extreme_values) /10 + sapply(1:length(extreme_values), function(i){ return (rbeta(1, 2, 8))})
       converted_extreme <- round(extreme_min + 0.1*sd(non_zero_or) + variation, 4)
-      
+      ordx <- order(extreme_values)
+      OR$OddRatio[OR$OddRatio > outlier_or] <- sort(converted_extreme)[order(ordx)]
       
       
       CellPathwayDFP <- CellPathwayDF %>%
@@ -1859,7 +1878,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       # CellPathwayDF <- CellPathwayDFP %>% filter(Qvalue > 4) %>% 
       #                                     filter(OddRatio > 1)
       
-      OR <- OR %>% filter(OddRatio > 1)
+      OR <<- OR %>% filter(OddRatio > 1)
       CellPathwayDF <- CellPathwayDFP %>% filter(OddRatio > 1)
       
       CellPathwayDF <<- CellPathwayDF
@@ -1872,13 +1891,13 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       Cells <<- Cells
 
       for (i in 1:length(Cells)) {
-        thisCell <- Cells[i]
+        # thisCell <- Cells[i]
         thisCellPathways <- CellPathwayDF %>%
-          filter(Cell == thisCell) %>%
+          filter(Cell == Cells[i]) %>%
           dplyr::select(Geneset)
 
         thisCellDEs <- s2 %>%
-          filter(Group == thisCell) %>%
+          filter(Group == Cells[i]) %>%
           dplyr::select(genes)
 
         tcd <- thisCellDEs[, 1] # ThisCellDES
@@ -1903,7 +1922,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         genes <- names(tcp)
         Count <- as.numeric(unname(tcp))
 
-        additive <- data.frame(cbind(genes, Count, Group = thisCell))
+        additive <- data.frame(cbind(genes, Count, Group = Cells[i]))
         additive$Count <- as.numeric(additive$Count)
         additive <- additive %>% arrange(dplyr::desc(Count))
         additive <- additive[1:min(nrow(additive), 20), ]
@@ -2152,9 +2171,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       res <- c()
       # write.csv(CellPathwayDF, "cellpathwaydf_innerjoin_after.csv")
       for (i in 1:length(Cells)) {
-        thisCell <- Cells[i]
 
-        thisCellData <- CellPathwayDF %>% dplyr::filter(Cell == thisCell)
+        thisCellData <- CellPathwayDF %>% dplyr::filter(Cell == Cells[i])
         # print (thisCellData)
         if (nrow(thisCellData) >= 1) {
           thisCellData <- thisCellData %>% top_n(1, wt = OddRatio)
@@ -2324,7 +2342,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                     main = "Frequency based Heatmap", # heat map title
                     density.info="none",  # turns off density plot inside color legend
                     trace="none",         # turns off trace lines inside the heat map
-                    margins =c(8,50),      # widens margins around plot
+                    margins =c(15,50),      # widens margins around plot
                     col=HeatPlot$col,       # use on color palette defined earlier
                     scale = "none",
                     breaks=HeatPlot$breaks,    # enable color transition at specified limits
@@ -2333,14 +2351,16 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                     Colv=NA,            # turn off column clustering
                     
                     # # additional control of the presentation
-                    lhei = c(2, 8),       # adapt the relative areas devoted to the matrix
+                    lhei = c(2, 13),       # adapt the relative areas devoted to the matrix
                     lwid = c(2, 10),
                     cexRow = 2,
                     cexCol = 2,
                     key.title = NA,
-                    key.par = list(mar=c(4, 1, 2, 1),
+                    key.xlab = NA,
+                    key.ylab = NA,
+                    key.par = list(mar=c(5, 1, 2, 1),
                                    mgp=c(1.5, 0.5, 0),
-                                   cex=1.5)
+                                   cex=1)
           )  
           
           dev.off()
@@ -2387,7 +2407,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                     main = "Odds Ratio based Heatmap", # heat map title
                     density.info="none",  # turns off density plot inside color legend
                     trace="none",         # turns off trace lines inside the heat map
-                    margins =c(8,50),      # widens margins around plot
+                    margins =c(15,50),      # widens margins around plot
                     col=HeatPlot$col,       # use on color palette defined earlier
                     scale = "none",
                     breaks=HeatPlot$breaks,    # enable color transition at specified limits
@@ -2396,14 +2416,16 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                     Colv=NA,            # turn off column clustering
                     
                     # # additional control of the presentation
-                    lhei = c(2, 6),       # adapt the relative areas devoted to the matrix
+                    lhei = c(2, 13),       # adapt the relative areas devoted to the matrix
                     lwid = c(2, 10),
                     cexRow = 2,
                     cexCol = 2,
                     key.title = NA,
-                    key.par = list(mar=c(4, 1, 2, 1),
+                    key.xlab = NA,
+                    key.ylab = NA,
+                    key.par = list(mar=c(5, 1, 2, 1),
                                    mgp=c(1.5, 0.5, 0),
-                                   cex=1.5)
+                                   cex=1)
           )  
           
           dev.off()
