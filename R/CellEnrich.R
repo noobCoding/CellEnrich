@@ -1,4 +1,7 @@
-## 23.07.14
+## 23.11.09
+if(!require(farver)){
+  install.packages('waiter') # install 'waiter' if not installed.
+}
 library(waiter)
 
 GenesetFlush <- function(genes, genesets) {
@@ -43,10 +46,6 @@ getTU <- function(CountData, GroupInfo, plotOption='UMAP', topdims= 50) {
   # CountData is normalized
   seu <- CreateSeuratObject(CountData)
   
-  # seu <- PercentageFeatureSet(seu, pattern = "^MT-", col.name = "percent.mt")
-  # run sctransform
-  # seu <- SCTransform(seu, vars.to.regress = "percent.mt", verbose = FALSE, )
-  
   nfeat <- nrow(CountData) 
   nfeat <- min(100*round(nfeat/100,0), 3000)
   
@@ -55,21 +54,16 @@ getTU <- function(CountData, GroupInfo, plotOption='UMAP', topdims= 50) {
 
   # Add cell type annotation to metadata
   seu <- AddMetaData(seu, GroupInfo, col.name = "cell_type")
-  # celltype <- unique(GroupInfo)
-
+  
   # Dimension reduction
   # These are now standard steps in the Seurat workflow for visualization and clustering
   seu <- RunPCA(seu, npcs=topdims, verbose = FALSE)
 
   # TSNE
-  # if (plotOption == "TSNE") {
   seu <- RunTSNE(seu, dims = 1:topdims)
-  # }
 
   # UMAP
-  # if (plotOption == "UMAP") {
   seu <- RunUMAP(seu, dims = 1:topdims, uwot.sgd = TRUE)
-  # }
   seu <- FindNeighbors(seu, verbose = FALSE, dims = 1:30)
   seu <- FindClusters(seu, algorithm = 3, random.seed = 7968, resolution = 0.5)
   
@@ -77,7 +71,6 @@ getTU <- function(CountData, GroupInfo, plotOption='UMAP', topdims= 50) {
   return (seu)
 }
 
-# BiocManager::install('scMerge', force=TRUE)
 library(scMerge)
 gnm <- function(v) {
   out <- scMerge:::gammaNormMix(as.matrix(v), plot = FALSE )
@@ -93,11 +86,6 @@ findSigGenes <- function(v, method = "CellEnrich - HALF median", Name) {
   rownames(v) <- colnames(v) <- NULL
 
   res <- list()
-
-  # if (method == "Fisher") {
-  #   return(res)
-  # }
-  
   if (method == "CellEnrich - mixture") {
     v <- gnm(v)
     for (i in 1:ncol(v)) {
@@ -419,8 +407,6 @@ getColv <- function(GroupInfo) {
   UniqueCol <- briterhex(scales::hue_pal(h = c(20, 350),
                                          c = 100, l = 65, h.start = 0,
                                          direction = 1)(length(Cells)))
-  # print(UniqueCol)
-  # "#FF998D" "#FFBD00" "#BFDD00" "#00F148" "#00FACE" "#00F0FF" "#7ECAFF" "#FF94FF" "#FF7EFD"
   names(UniqueCol) <- Cells
 
   x <- c()
@@ -463,7 +449,6 @@ getCellHistogram <- function(GroupInfo, colV) {
 getCellPlot <- function(dfobj, Cells) {
   cat("getCellPlot\n")
   library(ggplot2)
-  # library(highcharter)
 
   colnames(dfobj) <- c("x", "y", "col")
   dfobj <<- dfobj
@@ -480,32 +465,13 @@ getCellPlot <- function(dfobj, Cells) {
   ap <- ifelse(ap=='#E5E5E5', 0.2, 1)
 
   p <- ggplot(dfobj, aes(x = x, y = y)) +    geom_point(colour = colV, alpha=ap)
-  # p <- p + scale_color_manual(values = method_col)
-  # p <- p + labs(x= NULL, y= "Percentage")
-  # p <- p + theme(legend.position=0)+ coord_flip()
   p <- p + theme(axis.title.y = element_text(size = 15, vjust= 0.5))
   p <- p + theme(axis.text = element_text(size = 12))
-  # p <- p + geom_hline(data=df, aes(yintercept=median),linetype="dashed", color='black')
-  # p <- p + theme(axis.text.y = element_text(size=14, color = a))
 
   p <- p + theme(
-    # axis.line = element_line(color = "black", size = 0.5, linetype = "solid"),
     axis.title.x = element_text(size=15),
-    # axis.title.y = element_blank(),
-    # axis.text.x = element_text(size=14, colour = 'black', hjust = 1),
-    # panel.grid.major = element_line(colour = "grey86"),
-    # panel.grid.major.x = element_blank(),
-    # panel.grid.minor.x = element_blank(),
-    # panel.grid.minor.y = element_blank(),
-    # panel.background = element_blank(),
     panel.background = element_rect(fill = 'white', colour = 'white'),
     panel.border = element_rect(fill = NA, colour = 'black', size=0.25 ),
-    # panel.spacing.x = unit(0.5, "lines"),
-    # panel.spacing.y = unit(1, "lines"),
-    # strip.text = element_text(size=17, color="black"),
-    # strip.background.x = element_rect(fill="#CDE8DF"),
-    # strip.background.x = element_blank(),
-    # strip.background.y = element_blank(),
     legend.position="none")
 
   return(p)
@@ -531,14 +497,12 @@ groupTable <- function(pres, genesets, dfobj, pres2) {
     if (length(pathways) < 1) {
       next
     }
-    # what genesets are enriched per each group.
 
     k <- sum(pathways) # selected ball
 
     gt <- sapply(1:length(pathways), function(j) {
       q <- pathways[j] # selected white ball, 1
       m <- unname(pres2Idx[names(pathways[j])]) # total white ball, 28
-      # n <- tot - m # total black ball
       round(1 - phyper(q - 1, m, tot - m, k), 4)
     })
 
@@ -560,7 +524,6 @@ groupTable <- function(pres, genesets, dfobj, pres2) {
   return(res)
 }
 
-# values <- c("Carbs" = "carbs", "Proteins" = "prots", "BMI" = "bmi")
 default_genesets <- c(
   "Reactome", # 2022
   "Human-WikiPathway", # 2021
@@ -580,6 +543,7 @@ CellEnrichUI <- function() {
   library(shinymaterial)
   library(highcharter)
   library(sortable)
+  
   if(!require(farver)){
     install.packages('farver') # install 'farver' if not installed.
     
@@ -727,11 +691,6 @@ CellEnrichUI <- function() {
                                "),
                   HTML("<font color='black' size='3'>User defined geneset</font>"),
                   fileInput("other", "", placeholder = "RData format is required!"),
-                  # fileInput("other", "User's geneset input", accept=".Rdata, .RData"),
-                  # checkboxInput("header", "Header", TRUE),
-                  # shinyjs::hidden(
-                  #   actionButton("addgeneset", "Add geneset", style="color: #ffffff; background-color: #1976d2;")
-                  # )
                 )
               ),
               width = 4
@@ -746,7 +705,6 @@ CellEnrichUI <- function() {
           depth = 3
         ),
         width = 12, # 6
-        # offset = 3 # center half layout
       )
     ),
 
@@ -812,8 +770,6 @@ CellEnrichUI <- function() {
               title = shiny::tags$h4("User chosen Pathways"), divider = TRUE,
               my_ranklist<-rank_list(text = "", labels = "Switch any pathway position ONCE to activate the plot",
                                      input_id = "sortList", css_id = "mysortableCell"),
-              # rank_list_ui(text = "", labels = "Drag & drop to change pathway positions ONCE!",
-              #                        input_id = "sortList", css_id = "mysortableCell"),
               material_row(
                 material_button("Emphasize", "Plot the Selected Pathways", color = "blue darken-2"),
                 material_button("ClearList", "Clear List", color = "blue darken-2"),
@@ -868,10 +824,6 @@ CellEnrichUI <- function() {
               plotOutput("heatPlot", height = "900px"),
               width = 10
             ),
-            # material_column(
-            # DT::dataTableOutput('bitable'),
-            # width = 2
-            # ),
             material_column(
               material_row(
                 shiny::downloadButton("heatplotdn", "Save Heatmap", style = "background-color : #616161 !important")
@@ -996,7 +948,7 @@ emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres, genesets, seu,
   cell_pval <- c()
   maxall <- max(presTab)
   minall <- min(presTab)
-  # print(maxall)
+  
   cellidx <- unlist(cellValues, use.names = FALSE)
   for (cell in cellidx){
     sgs <- names(genesets)[pres[[cell]]]
@@ -1014,13 +966,6 @@ emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres, genesets, seu,
     }
   }
 
-  # # scale to [0, 1]
-  # pval_scaling <- function(x){(x-min(x))/(max(x)-min(x))}
-  # cell_pval <- c(cell_pval, maxall)
-  # cell_pval <- pval_scaling(cell_pval)
-  # cell_pval <-ifelse(is.nan(cell_pval),0. ,cell_pval)
-  # cell_pval <- cell_pval[1:(length(cell_pval)-1)]
-
   # absolute scale 0~0.001; 0.001~0.01; 0.01~0.05; 0.05~0.1; 0.1~1
   pval_scaling <- function(x){(x-min(x))/(max(x)-min(x))}
   cell_pval <- c(cell_pval, c(maxall, minall))
@@ -1029,13 +974,7 @@ emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres, genesets, seu,
   cell_pval <- cell_pval[1:(length(cell_pval)-2)]
 
   for (i in 1:length(cellidx)){
-    # colV[cellidx[i]]<- col2hcl(colV[cellidx[i]],
-    #                            c=min(100, 100*cell_pval[i]),
-    #                            l=min(100, 100*cell_pval[i]))
-
     tmp <- farver::decode_colour(colV[cellidx[i]], to="hcl")
-    # tmp[2] <- min (100, tmp[2] * cell_pval[i])
-    # tmp[3] <- min (100, tmp[3] + 100 * (1 - cell_pval[i]))
     tmp[3] <- min (100, 100 * cell_pval[i])
     colV[cellidx[i]] <- encode_colour(tmp, from = 'hcl')
   }
@@ -1043,7 +982,6 @@ emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres, genesets, seu,
   ap <- ifelse(ap=='#E5E5E5', 0.2, 1)
 
   rownames(dfobj_new) <- NULL
-  #, alpha=ap
   graphString <- "ggobj2 <-  ggplot(dfobj_new, aes(x = x, y = y)) + geom_point(colour = colV, alpha=ap) +
                             theme(panel.background = element_rect(fill = 'white', colour = 'white'),
                             panel.border = element_rect(colour = 'black', fill=NA, size=0.25)
@@ -1148,7 +1086,6 @@ emphasizePathway <-
 
         # find the best value
         tmp <- presTab[gsid, cell]
-        # cell_pval <- c(cell_pval, max(tmp))
 
         # find the best geneset
         bestgsid <- gsid[which(tmp == max(tmp))]
@@ -1167,12 +1104,7 @@ emphasizePathway <-
     cell_pval <- cell_pval[1:(length(cell_pval)-2)]
 
     for (i in 1:length(cellidx)){
-      # colV[cellidx[i]]<- col2hcl(colV[cellidx[i]],
-      #                            c=min(100, 100*cell_pval[i]),
-      #                            l=min(100, 100*cell_pval[i]))
-
       tmp <- farver::decode_colour(colV[cellidx[i]], to="hcl")
-      # tmp[2] <- min (100, tmp[2] * cell_pval[i])
       tmp[3] <- min (100, 100 * cell_pval[i])
       colV[cellidx[i]] <- encode_colour(tmp, from = 'hcl')
     }
@@ -1307,19 +1239,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                 return((B / K) / (A / N))
               })
             ), 4)
-          
-          # #### Ceiling the max tab
-          # non_zero_or <- tab[, i][tab[, i] > 0]
-          # outlier_or <- round(mean(non_zero_or) + 2*sd(non_zero_or), 4)
-          # # retrieval
-          # extreme_values <- tab[, i][tab[, i] > outlier_or]
-          # extreme_min <- max(tab[, i][tab[, i] < min(extreme_values)])
-          # # rescale extreme values respecting to the ranks
-          # variation <- 1:length(extreme_values) /10 + sapply(1:length(extreme_values), function(i){ return (rbeta(1, 2, 8))})
-          # converted_extreme <- round(extreme_min + 0.1*sd(non_zero_or) + variation, 4)
-          # ordx <- order(extreme_values)
-          # tab[, i][tab[, i] > outlier_or] <- sort(converted_extreme)[order(ordx)]
-          
           # Cell, Geneset, OR
           }
           
@@ -1422,17 +1341,12 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                  axis.text.x = element_text(size=axtxt, colour = 'black', hjust = 1),
                  axis.text.y = element_text(size=axtxt, colour = 'black', hjust = 1),
                  panel.grid.major = element_line(colour = "grey86"),
-                 # panel.grid.major.x = element_blank(),
-                 # panel.grid.minor.x = element_blank(),
-                 # panel.grid.minor.y = element_blank(),
                  panel.background = element_blank(),
                  panel.border = element_blank(),
                  panel.spacing.x = unit(0.5, "lines"),
                  panel.spacing.y = unit(1, "lines"),
                  strip.text = element_text(size=17, color="black"),
                  strip.background.x = element_rect(fill="#CDE8DF"),
-                 # strip.background.x = element_blank(),
-                 # strip.background.y = element_blank(),
                  legend.position="none")
 
      
@@ -1450,19 +1364,13 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       
       # First define your breaks
       col_breaks <- c(seq(0, ceiling(max(tab)), length.out=101))
-      # Then define wich color gradient you want for between each values
-      # Green - red radient not recommended !!
-      # NB : this will work only if the maximum value is > 3
       my_palette <- c(colorRampPalette(c("white", "red"))(length(col_breaks)-1))
       
-      # x11(width = 10/2.54, height = 10/2.54)
-      mat_data <- round(tab, 2) # probably better to round your values for easier reading
+      mat_data <- round(tab, 2) 
       
       library(gplots)
       HeatPlot <<- heatmap.2(mat_data,
-                # cellnote = mat_data,  # same data set for cell labels
                 main = hmtype, # heat map title
-                # notecol="black",      # change font color of cell labels to black
                 density.info="none",  # turns off density plot inside color legend
                 trace="none",         # turns off trace lines inside the heat map
                 margins =c(15,60),      # widens margins around plot
@@ -1471,11 +1379,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                 breaks=col_breaks,    # enable color transition at specified limits
                 dendrogram="row",    # only draw a row dendrogram
                 Colv=NA,            # turn off column clustering
-
-                # # add horizontal and vertical lines (but no box...)
-                # colsep = 3,
-                # rowsep = 3,
-                # sepcolor = "black",
                 
                 # additional control of the presentation
                 lhei = c(2, 13),       # adapt the relative areas devoted to the matrix
@@ -1497,12 +1400,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
     
     observeEvent(input$other,{
       other_geneset <- input$other
-      # print(other_geneset)
       ext <- tools::file_ext(other_geneset$datapath)
-      # print(ext)
       
       req(other_geneset)
-      # validate(need(!ext %in% c('RData', 'Rdata'), "Please upload a Rdata or RData file!"))
       inFile <- other_geneset$datapath
       
       otherVal <- other_geneset$name
@@ -1652,24 +1552,12 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       dfobj <<- dfobj
 
       cat("getTU Finished\n")
-      # ------ Disable radio button
-      shinyjs::runjs('$("form p label input").attr("disabled",true)')
-      shinyjs::runjs("$('.shinymaterial-slider-minGenesetSize').attr('disabled',true)")
-      shinyjs::runjs("$('.shinymaterial-slider-maxGenesetSize').attr('disabled',true)")
-      shinyjs::runjs("$('.shinymaterial-slider-qvalueCutoff').attr('disabled',true)")
 
       cat("running gc\n")
       gc()
 
       # ------ Find Significant Genes with Fold Change
-      
-      # CountData is normalized
-      # CountData <- NormalizeData(CountData, normalization.method = 'LogNormalize', scale.factor = 1e6)
-
       if (input$FCoption != "GSVA") {
-        # ------ need to build GSVA CASE
-
-        # s <- findSigGenes(CountData, 'median', GroupInfo)
         s <- findSigGenes(CountData, input$FCoption, GroupInfo)
       }
       cat("s Finished\n")
@@ -1694,14 +1582,11 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                       options = list(
                         autoWidth = TRUE,
                         dom = "ltp",
-                        # lengthChange = FALSE,
                         columnDefs = list(list(className = "dt-center", targets = 0:3))
                       ),
                       selection = "none",
         )
       )
-      
-      # saveRDS(s2, 'sigGeneGroup.rds')
       tmp_df <- data.frame()
 
       cat("biobj \n")
@@ -1773,10 +1658,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
           pres[[i]] <- which(p.adjust(prespv, "fdr") <= q0)
 
-          # prespv[which(prespv < 1e-20)] <- 1e-20 # -12
-
           presTab_pval <- cbind(presTab_pval, prespv)
-          # presTab <- cbind(presTab, -log10(prespv))
         }
         w$close()
         colnames(presTab_pval) <- colnames(CountData)
@@ -1786,8 +1668,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           prespv <- getHyperPvalue(rc[s[[i]]], genesets, A, lgs, q0, biobj)
 
           pres[[i]] <- which(p.adjust(prespv, "fdr") <= q0)
-
-          # prespv[which(prespv < 1e-20)] <- 1e-20  # -12
           
           presTab_pval <- cbind(presTab_pval, prespv) ### presTab_pval-> hyper P-value
         }
@@ -1808,11 +1688,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       presTab[which(presTab < 1e-20)] <- 1e-20
       presTab <- round(-log10(presTab), 4) ### presTab -log10(p-value) -> Q-value
       presTab <<- presTab
-      # saveRDS(presTab, 'presTab.rds')
 
       # pres : which gene-sets are significant for each cells.
       pres <<- pres
-      # saveRDS(pres, 'pres.rds')
       
       # pres2 : for each gene-sets, how many cells are significant that gene-sets.
       cat("pres2\n")
@@ -1821,8 +1699,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         names(pres2) <- names(genesets)[as.numeric(names(pres2))]
       }
       pres2 <<- pres2
-      # print(pres2)
-      
       
       # ------ CellPathwayDF
       CellPathwayDF <- buildCellPathwayDF(GroupInfo, pres, genesets)
@@ -1836,13 +1712,13 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         OR <<- OR
       }
       else {
-        # OR <- getOddRatio(GroupInfo, pres, pres2, genesets, 0.1)
         OR <<- getOddRatio(GroupInfo, pres, pres2, genesets, input$ORratio)
       }
       
       #### Ceiling the max OR 
       non_zero_or <- OR$OddRatio[OR$OddRatio > 0]
       outlier_or <- round(mean(non_zero_or) + 2*sd(non_zero_or), 4)
+      
       # retrieval
       extreme_values <- OR$OddRatio[OR$OddRatio > outlier_or]
       extreme_min <- max(OR$OddRatio[OR$OddRatio < min(extreme_values)])
@@ -1856,15 +1732,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       CellPathwayDFP <- CellPathwayDF %>%
         inner_join(PP) %>% inner_join(OR)  %>% select(-Pvalue)  # %>% filter(Qvalue > 1) 
       
-      # CellPathwayDFP <- CellPathwayDFP
-      # saveRDS(CellPathwayDFP, 'df_qval_odds.rds')
-      
-      # saveRDS(CellPathwayDF, 'cpdf.rds')
-      # saveRDS(CellPathwayDFP, 'cpdf_p.rds')
-      # saveRDS(PP, 'pp.rds')
-      # saveRDS(OR, 'or.rds')
-      
-      # CellPathwayDFP <- CellPathwayDFP %>% filter(Qvalue > 1)
       CellPathwayDFP <- CellPathwayDFP %>% filter(Qvalue > -log10(q0)) 
       output$tbldn <- downloadHandler(
         filename = "all_sig_pathways.csv",
@@ -1874,24 +1741,17 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       )
 
       ## significant OR > 1
-      # QVCUTOFF <- 4 ???
-      # CellPathwayDF <- CellPathwayDFP %>% filter(Qvalue > 4) %>% 
-      #                                     filter(OddRatio > 1)
-      
       OR <<- OR %>% filter(OddRatio > 1)
       CellPathwayDF <- CellPathwayDFP %>% filter(OddRatio > 1)
       
       CellPathwayDF <<- CellPathwayDF
-      # write.csv(CellPathwayDF, "cellpathwaydf_innerjoin.csv")
 
-      # l2
+      
       CellMarkers <- data.frame()
-
       Cells <- sort(unique(GroupInfo))
       Cells <<- Cells
 
       for (i in 1:length(Cells)) {
-        # thisCell <- Cells[i]
         thisCellPathways <- CellPathwayDF %>%
           filter(Cell == Cells[i]) %>%
           dplyr::select(Geneset)
@@ -1939,16 +1799,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       }
 
       if (nrow(CellMarkers)) {
-
-        # CellMarkers <- Genes Count Group
-
-        # CellMarkers <- CellMarkers %>%
-        # inner_join(s2) %>%
-        # filter(Top < 10)
-
         CellMarkers$Group <- as.factor(CellMarkers$Group)
         CellMarkers$Count <- as.numeric(CellMarkers$Count)
-        # CellMarkers$FDR <- as.numeric(CellMarkers$FDR)
 
         output$markerL2 <- DT::renderDataTable(
           DT::datatable(CellMarkers,
@@ -1957,7 +1809,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                         options = list(
                           autoWidth = TRUE,
                           dom = "ltp",
-                          # lengthChange = FALSE,
                           columnDefs = list(list(className = "dt-center", targets = 0:2))
                         ),
                         selection = "none",
@@ -2088,9 +1939,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       shinyjs::click('orbp')
       shinyjs::click('heat_orbp')
       
-      # shiny::showNotification("Please   DRAG & DROP   the pathway positions ONCE to activate 'EMPHASIZE' button!",
-      #                         type = "error", duration = NULL )
-
       print(proc.time() - pt)
       
       # ------ Enable Start Button Again
@@ -2173,10 +2021,10 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       for (i in 1:length(Cells)) {
 
         thisCellData <- CellPathwayDF %>% dplyr::filter(Cell == Cells[i])
-        # print (thisCellData)
+        
         if (nrow(thisCellData) >= 1) {
           thisCellData <- thisCellData %>% top_n(1, wt = OddRatio)
-          # print (thisCellData)
+        
           if (nrow(thisCellData) >= 1) {
             thisCellData <- thisCellData %>% top_n(-1, wt = Size)
             if (nrow(thisCellData) >= 1) {
@@ -2186,9 +2034,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
               }
             }
           }
-          # print (thisCellData)
+        
           res <- c(res, paste0(thisCellData$Geneset, " @", thisCellData$Cell))
-          # print (res)
         }
       }
 
@@ -2230,8 +2077,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
     
     
     # ##### trigger value
-    rv <- reactiveValues(select_clicked = 0)
-    # rv$select_clicked <- rv$select_clicked + 1
     
     for(i in 1:length(Cells)){
       tmp <- paste0("toSortButton", i)
@@ -2249,12 +2094,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         return(NULL)
       }
       shinyjs::runjs('$("#Emphasize").attr("disabled",true)')
-
-      # updateSelectInput(session, inputId = "sortList")
-
       res<-input$sortList
-
-      shinyjs::show("legenddn")
+      
       plotImg <- emphasize(FALSE, res, dfobj, Cells, pres, genesets, seu, presTab)
       compareImg <- emphasizePathway(res, dfobj, Cells, pres, genesets, seu, presTab)
       
@@ -2453,7 +2294,6 @@ buildGradientLegend <- function(sortList, img = FALSE, name = NULL, Cells) {
   }
   colnames(rlobj) <- c("Scale", "Pathway", "Group")
   currentGroup <- as.vector(rlobj$Group)
-  # currentGroup <- rlobj$Group
 
   if (img) {
     pdf(name)
