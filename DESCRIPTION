@@ -32,7 +32,6 @@ Imports:
     shinyFeedback,
     shinyjs,
     shinymaterial,
-    slingshot,
     sortable,
     SingleCellExperiment,
     waiter

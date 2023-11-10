@@ -49,6 +49,8 @@ getTU <- function(CountData, GroupInfo, plotOption='UMAP', topdims= 50) {
   nfeat <- nrow(CountData) 
   nfeat <- min(100*round(nfeat/100,0), 3000)
   
+  seu <- NormalizeData(seu)
+  seu@assays$RNA@layers$data <- seu@assays$RNA@layers$counts # restoration
   seu <- ScaleData(seu)
   seu <- FindVariableFeatures(seu, nfeatures = nfeat)
 
@@ -1388,7 +1390,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                 key.title = NA,
                 key.xlab = NA,
                 key.ylab = NA,
-                key.par = list(mar=c(5, 1, 2, 1),
+                key.par = list(mar=c(4, 1, 2, 1),
                                mgp=c(1.5, 0.5, 0),
                                cex=1)
       )  
@@ -2199,7 +2201,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                     key.title = NA,
                     key.xlab = NA,
                     key.ylab = NA,
-                    key.par = list(mar=c(5, 1, 2, 1),
+                    key.par = list(mar=c(4, 1, 2, 1),
                                    mgp=c(1.5, 0.5, 0),
                                    cex=1)
           )  
@@ -2264,7 +2266,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                     key.title = NA,
                     key.xlab = NA,
                     key.ylab = NA,
-                    key.par = list(mar=c(5, 1, 2, 1),
+                    key.par = list(mar=c(4, 1, 2, 1),
                                    mgp=c(1.5, 0.5, 0),
                                    cex=1)
           )  

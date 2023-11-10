@@ -65,7 +65,6 @@ The online manual and example with Alzheimer's data are available [here](https:/
 * [shinyjs](https://github.com/daattali/shinyjs) - 1.1
 * [shinymaterial](https://github.com/ericrayanderson/shinymaterial) - 1.0.1
 * [SingleCellExperiment](https://git.bioconductor.org/packages/SingleCellExperiment) - 1.8.0
-* [Slingshot](https://github.com/kstreet13/slingshot) - 1.9.1
 * [sortable](https://github.com/rstudio/sortable) - 0.4.2
 * [uwot](https://github.com/jlmelville/uwot) - 0.1.8
 * [waiter](https://github.com/JohnCoene/waiter) - 0.1.1.9000* 
