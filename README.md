@@ -1,9 +1,9 @@
 # CellEnrich 
 
-Pathway enrichment analysis/visualization for Single Cell Data
+Pathway enrichment analysis and visualization for Single Cell Data
 
 <img src="images/pbmc_scatter.png"> 
-<img src="images/pbmc_heatmap_or.png" width="1024"> 
+<img src="images/pbmc_heatmap_or.png" > 
 <img src="images/pbmc_biplot_or.png" > 
 
 ## Installation
