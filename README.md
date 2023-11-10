@@ -2,15 +2,16 @@
 
 Pathway enrichment analysis/visualization for Single Cell Data
 
-<img src="images/LPS_exp_freq.png"> 
-<img src="images/LPS_exp_biplot.png" width="1024"> 
+<img src="images/pbmc_scatter.png"> 
+<img src="images/pbmc_heatmap_or.png" width="1024"> 
+<img src="images/pbmc_biplot_or.png" > 
 
 ## Installation
 
 NOTE: on a fresh installation, users may need to install some required interpreter compilers for the system to install R packages further:
-* a C++ compiler 
-* a 'gfortran' compiler
-  
+* C++ compiler 
+* gfortran compiler (FYI: check for [MAC](https://cran.r-project.org/src/base/R-4/) users or [other OS](https://fortran-lang.org/learn/os_setup/install_gfortran/))
+
 
 ```R
 if(!require(remotes)){
