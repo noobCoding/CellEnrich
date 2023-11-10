@@ -5,7 +5,12 @@ Pathway enrichment analysis/visualization for Single Cell Data
 <img src="images/LPS_exp_freq.png"> 
 <img src="images/LPS_exp_biplot.png" width="1024"> 
 
-## Install
+## Installation
+
+NOTE: on a fresh installation, users may need to install some required interpreter compilers for the system to install R packages further:
+* a C++ compiler 
+* a 'gfortran' compiler
+  
 
 ```R
 if(!require(remotes)){
@@ -15,9 +20,33 @@ remotes::install_github('vqv/ggbiplot')
 install.packages('waiter')
 install.packages('farver')
 remotes::install_github('noobCoding/CellEnrich')
-
-library(CellEnrich)
 ```
+
+## Example with PBMC_3K data 
+
+```R
+# Download data, if not downloaded
+download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/pbmcData.RData','pbmcData.RData', mode = 'wb')
+download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/pbmcClustInfo.RData','pbmcClustInfo.RData', mode = 'wb')
+download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Reactome_2022.RData', 'Reactome_2022.RData', mode = 'wb')
+
+# Load library and data
+library(CellEnrich)
+library(Seurat)
+
+load("pbmcData.RData")
+load("pbmcClustInfo.RData")
+
+CountData <- pbmcData
+GroupInfo <- pbmcClustInfo
+
+# CellEnrich uses normalized count data as input
+CountData <- NormalizeData(CountData)
+
+# This will run CellEnrich
+CellEnrich(CountData, GroupInfo)
+```
+
 
 ## Example with Alzheimer's data 
 
@@ -28,12 +57,19 @@ download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Alzheime
 download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Reactome_2022.RData', 'Reactome_2022.RData', mode = 'wb')
 
 # Load library and data
+library(CellEnrich)
+library(Seurat)
+
 GroupInfo <- readRDS("Alzheimer_CellType_sampled.RDS")
 CountData <- readRDS("Alzheimer_Counts_sampled.RDS")
+
+# CellEnrich uses normalized count data as input
+CountData <- NormalizeData(CountData)
 
 # Run cellenrich
 CellEnrich(CountData, GroupInfo)
 ```
+
 
 ## Example with primary mouse dendritic cells (DCs) stimulated with lipopolysaccharide (LPS)
 
@@ -48,15 +84,14 @@ library(CellEnrich)
 LPS_exp <- readRDS("LPS_exp.rds")
 CountData <- LPS_exp$counts
 GroupInfo <- LPS_exp$meta
- 
+
+# CellEnrich uses normalized count data as input
+CountData <- NormalizeData(CountData)
+
 # Run cellenrich
 CellEnrich(CountData, GroupInfo)
 
 ```
-## Example with PBMC_3K data 
-
-The online manual and example with PBMC 3K data are available [here](https://github.com/noobCoding/CellEnrich/wiki)
-
 
 ## Dependency
 
@@ -84,7 +119,7 @@ The online manual and example with PBMC 3K data are available [here](https://git
 * [waiter](https://github.com/JohnCoene/waiter) - 0.1.1.9000* 
 
 ## Authors
-* Dr. Hai Nguyen *hainct@unist.ac.kr* -- [@noobCoding](http://github.com/noobCoding)
+* Hai Nguyen *hainct@unist.ac.kr* -- [@noobCoding](http://github.com/noobCoding)
 * Jinhwan Kim [@jhk0530](http://github.com/jhk0530)
 * Prof. Dougu Nam *dougnam@unist.ac.kr* 
 
