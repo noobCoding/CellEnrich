@@ -14,12 +14,13 @@ NOTE: on a fresh installation, users may need to install some required interpret
 
 
 ```R
-if(!require(remotes)){
-  install.packages('remotes') 
-}
-remotes::install_github('vqv/ggbiplot')
+# install required packages
+install.packages('remotes')
 install.packages('waiter')
 install.packages('farver')
+remotes::install_github('vqv/ggbiplot')
+
+# install CellEnrich
 remotes::install_github('noobCoding/CellEnrich')
 ```
 
