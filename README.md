@@ -15,6 +15,24 @@ remotes::install_github('vqv/ggbiplot')
 install.packages('waiter')
 install.packages('farver')
 remotes::install_github('noobCoding/CellEnrich')
+
+library(CellEnrich)
+```
+
+## Example with Alzheimer's data 
+
+```R
+# Download Alzheimer's data to the working directory
+download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Alzheimer_Counts_sampled.RDS','Alzheimer_Counts_sampled.RDS', mode = 'wb')
+download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Alzheimer_CellType_sampled.RDS','Alzheimer_CellType_sampled.RDS', mode = 'wb')
+download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Reactome_2022.RData', 'Reactome_2022.RData', mode = 'wb')
+
+# Load library and data
+GroupInfo <- readRDS("Alzheimer_CellType_sampled.RDS")
+CountData <- readRDS("Alzheimer_Counts_sampled.RDS")
+
+# Run cellenrich
+CellEnrich(CountData, GroupInfo)
 ```
 
 ## Example with primary mouse dendritic cells (DCs) stimulated with lipopolysaccharide (LPS)
@@ -38,10 +56,6 @@ CellEnrich(CountData, GroupInfo)
 ## Example with PBMC_3K data 
 
 The online manual and example with PBMC 3K data are available [here](https://github.com/noobCoding/CellEnrich/wiki)
-
-## Example with Alzheimer's data 
-
-The online manual and example with Alzheimer's data are available [here](https://noobcoding.github.io/CellEnrich/)
 
 
 ## Dependency
