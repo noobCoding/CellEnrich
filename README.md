@@ -11,7 +11,7 @@ Pathway enrichment analysis and visualization for Single Cell Data
 NOTE: on a fresh installation, users may need to install some required interpreter compilers for the system to install R packages further:
 * C++ compiler 
 * gfortran compiler (FYI: check for [MAC](https://cran.r-project.org/src/base/R-4/) users or [other OS](https://fortran-lang.org/learn/os_setup/install_gfortran/))
-
+<br />  
 
 ```R
 # install required packages
@@ -23,6 +23,7 @@ remotes::install_github('vqv/ggbiplot')
 # install CellEnrich
 remotes::install_github('noobCoding/CellEnrich')
 ```
+<br /> 
 
 ## Example with PBMC_3K data 
 
@@ -48,7 +49,8 @@ CountData <- NormalizeData(CountData)
 # This will run CellEnrich
 CellEnrich(CountData, GroupInfo)
 ```
-
+<br />  
+<br /> 
 
 ## Example with Alzheimer's data 
 
@@ -71,7 +73,7 @@ CountData <- NormalizeData(CountData)
 # Run cellenrich
 CellEnrich(CountData, GroupInfo)
 ```
-
+<br /> 
 
 ## Example with primary mouse dendritic cells (DCs) stimulated with lipopolysaccharide (LPS)
 
@@ -94,6 +96,7 @@ CountData <- NormalizeData(CountData)
 CellEnrich(CountData, GroupInfo)
 
 ```
+<br />  
 
 ## Dependency
 
