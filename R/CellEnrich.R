@@ -738,8 +738,8 @@ CellEnrichUI <- function() {
           ),
           material_row(
             material_column(
-              material_button("freqbtn", "Frequency", icon = "menu", color = "blue darken-2"),
               material_button("sigbtn", "Odds Ratio", icon = "sort", color = "blue darken-2"), 
+              material_button("freqbtn", "Frequency", icon = "menu", color = "blue darken-2"),
               width = 3
             ), 
             material_column(
@@ -770,12 +770,12 @@ CellEnrichUI <- function() {
           material_row(
             material_card(
               title = shiny::tags$h4("User chosen Pathways"), divider = TRUE,
-              my_ranklist<-rank_list(text = "", labels = "Switch any pathway position ONCE to activate the plot",
+              my_ranklist<-rank_list(text = "", labels = "Switch any pathway position ONCE to activate the plot button",
                                      input_id = "sortList", css_id = "mysortableCell"),
               material_row(
                 material_button("Emphasize", "Plot the Selected Pathways", color = "blue darken-2"),
                 material_button("ClearList", "Clear List", color = "blue darken-2"),
-                material_button("nonrun", "Please switch any element's position to activate the plot & button", color = "red")
+                material_button("nonrun", "Please switch any element's position to activate the plot button", color = "orange")
               ),
              
             ),
@@ -873,7 +873,7 @@ myDnButton <- function(outputId, label = "Download", type = "default", ...) {
   )
 }
 
-emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres, genesets, seu, presTab) {
+emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres, genesets, seu, presTab, maptitle='Odds Ratio') {
   
   cat("emphasize\n")
   buildRlobj <- function(items) {
@@ -984,17 +984,21 @@ emphasize <- function(path = FALSE, inputObj, dfobj, Cells, pres, genesets, seu,
   ap <- ifelse(ap=='#E5E5E5', 0.2, 1)
 
   rownames(dfobj_new) <- NULL
-  graphString <- "ggobj2 <-  ggplot(dfobj_new, aes(x = x, y = y)) + geom_point(colour = colV, alpha=ap) +
+  graphString <- "ggobj2 <- ggplot(dfobj_new, aes(x = x, y = y)) + geom_point(colour = colV, alpha=ap) +
                             theme(panel.background = element_rect(fill = 'white', colour = 'white'),
-                            panel.border = element_rect(colour = 'black', fill=NA, size=0.25)
-                                )"
+                            panel.border = element_rect(colour = 'black', fill=NA, size=0.25),
+                            plot.title = element_text(size = 18, face = 'bold'))"
+  
+  graphString <-  paste0(graphString, '+ggtitle(maptitle)')
+  
+  
   eval(parse(text = graphString))
 
   return(ggobj2)
 }
 
 emphasizePathway <-
-  function(inputObj, dfobj, Cells, pres, genesets, seu, presTab) {
+  function(inputObj, dfobj, Cells, pres, genesets, seu, presTab, maptitle=' ') {
     cat("emphasize pathways\n")
     buildRlobj <- function(items) {
       rlobj <- data.frame(stringsAsFactors = FALSE)
@@ -1116,8 +1120,10 @@ emphasizePathway <-
     rownames(dfobj_new) <- NULL
     graphString <- "ggobj2 <-  ggplot(dfobj_new, aes(x = x, y = y)) + geom_point(color = colV, alpha=ap ) +
                              theme(panel.background = element_rect(fill = 'white', colour = 'white'),
-                                  panel.border = element_rect(colour = 'black', fill=NA, size=0.25)
-                                )"
+                              panel.border = element_rect(colour = 'black', fill=NA, size=0.25),
+                            plot.title = element_text(size = 18, face = 'bold'))"
+    
+    graphString <-  paste0(graphString, '+ggtitle(maptitle)')
 
 
     eval(parse(text = graphString))
@@ -1977,7 +1983,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         buildGradientLegend(res, Cells = Cells)
       )
 
-      plotImg <- emphasize(FALSE, res, dfobj, Cells, pres, genesets, seu, presTab)
+      plotImg <- emphasize(FALSE, res, dfobj, Cells, pres, genesets, seu, presTab, maptitle='Frequency')
       compareImg <- emphasizePathway(res, dfobj, Cells, pres, genesets, seu, presTab)
       
       output$cmpdn <- downloadHandler(
@@ -2003,7 +2009,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       output$legenddn <- downloadHandler(
         filename = "mylegend.pdf",
         content = function(file) {
-          buildGradientLegend(res, img = TRUE, name = file, Cells = Cells)
+          buildLegend(res, img = TRUE, name = file, GroupInfo = GroupInfo)
         }
       )
 
