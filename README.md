@@ -22,6 +22,32 @@ install.packages('farver')
 remotes::install_github('noobCoding/CellEnrich')
 ```
 
+## Example with PBMC_3K data 
+
+```R
+# Download data, if not downloaded
+download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/pbmcData.RData','pbmcData.RData', mode = 'wb')
+download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/pbmcClustInfo.RData','pbmcClustInfo.RData', mode = 'wb')
+download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Reactome_2022.RData', 'Reactome_2022.RData', mode = 'wb')
+
+# Load library and data
+library(CellEnrich)
+library(Seurat)
+
+load("pbmcData.RData")
+load("pbmcClustInfo.RData")
+
+CountData <- pbmcData
+GroupInfo <- pbmcClustInfo
+
+# CellEnrich uses normalized count data as input
+CountData <- NormalizeData(CountData)
+
+# This will run CellEnrich
+CellEnrich(CountData, GroupInfo)
+```
+
+
 ## Example with Alzheimer's data 
 
 ```R
@@ -43,31 +69,6 @@ CountData <- NormalizeData(CountData)
 # Run cellenrich
 CellEnrich(CountData, GroupInfo)
 ```
-
-## Example with PBMC_3K data 
-
-```R
-# Download data, if not downloaded
-download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/pbmcData.RData','pbmcData.RData', mode = 'wb')
-download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/pbmcClustInfo.RData','pbmcClustInfo.RData', mode = 'wb')
-
-# Load library and data
-library(CellEnrich)
-library(Seurat)
-
-load("pbmcData.RData")
-load("pbmcClustInfo.RData")
-
-CountData <- pbmcData
-GroupInfo <- pbmcClustInfo
-
-# CellEnrich uses normalized count data as input
-CountData <- NormalizeData(CountData)
-
-# This will run CellEnrich
-CellEnrich(CountData, GroupInfo)
-```
-
 
 
 ## Example with primary mouse dendritic cells (DCs) stimulated with lipopolysaccharide (LPS)
