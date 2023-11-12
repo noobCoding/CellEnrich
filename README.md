@@ -50,7 +50,6 @@ CountData <- NormalizeData(CountData)
 CellEnrich(CountData, GroupInfo)
 ```
 <br />  
-<br /> 
 
 ## Example with Alzheimer's data 
 
