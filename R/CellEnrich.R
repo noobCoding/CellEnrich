@@ -1,4 +1,4 @@
-## 23.11.09
+## 23.11.16
 if(!require(farver)){
   install.packages('waiter') # install 'waiter' if not installed.
 }
@@ -701,7 +701,7 @@ CellEnrichUI <- function() {
           solvedButton(
             inputId = "StartCellEnrich",
             label = "RUN",
-            style = "margin-left:45%; background-color: #1976d2",
+            style = "margin-left:40%; background-color: #1976d2; height:60px; width:360px; font-size : 32px;",
             onClick = 'console.log("CellEnrich");'
           ),
           depth = 3
@@ -1381,7 +1381,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                 main = hmtype, # heat map title
                 density.info="none",  # turns off density plot inside color legend
                 trace="none",         # turns off trace lines inside the heat map
-                margins =c(15,60),      # widens margins around plot
+                margins =c(15,70),      # widens margins around plot
                 col=my_palette,       # use on color palette defined earlier
                 scale = "none",
                 breaks=col_breaks,    # enable color transition at specified limits
@@ -1391,7 +1391,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                 # additional control of the presentation
                 lhei = c(2, 13),       # adapt the relative areas devoted to the matrix
                 lwid = c(2, 10),
-                cexRow = 2,
+                cexRow = 1.5,
                 cexCol = 2,
                 key.title = NA,
                 key.xlab = NA,
@@ -2186,12 +2186,12 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           revRowInd <- match(c(1:length(HeatPlot$rowInd)), HeatPlot$rowInd)
           revColInd <- match(c(1:length(HeatPlot$colInd)), HeatPlot$colInd)
           
-          pdf(file, width = 18, height = 12)
+          pdf(file, width = 24, height = 16)
           heatmap.2(t(HeatPlot$carpet)[revRowInd, revColInd],
                     main = "Frequency based Heatmap", # heat map title
                     density.info="none",  # turns off density plot inside color legend
                     trace="none",         # turns off trace lines inside the heat map
-                    margins =c(15,50),      # widens margins around plot
+                    margins =c(15,70),      # widens margins around plot
                     col=HeatPlot$col,       # use on color palette defined earlier
                     scale = "none",
                     breaks=HeatPlot$breaks,    # enable color transition at specified limits
@@ -2202,7 +2202,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                     # # additional control of the presentation
                     lhei = c(2, 13),       # adapt the relative areas devoted to the matrix
                     lwid = c(2, 10),
-                    cexRow = 2,
+                    cexRow = 1.5,
                     cexCol = 2,
                     key.title = NA,
                     key.xlab = NA,
@@ -2251,12 +2251,12 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           revRowInd <- match(c(1:length(HeatPlot$rowInd)), HeatPlot$rowInd)
           revColInd <- match(c(1:length(HeatPlot$colInd)), HeatPlot$colInd)
           
-          pdf(file, width = 18, height = 12)
+          pdf(file, width = 24, height = 16)
           heatmap.2(t(HeatPlot$carpet)[revRowInd, revColInd],
                     main = "Odds Ratio based Heatmap", # heat map title
                     density.info="none",  # turns off density plot inside color legend
                     trace="none",         # turns off trace lines inside the heat map
-                    margins =c(15,50),      # widens margins around plot
+                    margins =c(15,70),      # widens margins around plot
                     col=HeatPlot$col,       # use on color palette defined earlier
                     scale = "none",
                     breaks=HeatPlot$breaks,    # enable color transition at specified limits
@@ -2267,7 +2267,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                     # # additional control of the presentation
                     lhei = c(2, 13),       # adapt the relative areas devoted to the matrix
                     lwid = c(2, 10),
-                    cexRow = 2,
+                    cexRow = 1.5,
                     cexCol = 2,
                     key.title = NA,
                     key.xlab = NA,
