@@ -1,26 +1,29 @@
 # CellEnrich 
 
-Pathway enrichment analysis/visualization for Single Cell Data
+Pathway enrichment analysis and visualization for Single Cell Data
 
-<img src="images/LPS_exp_freq.png"> 
-<img src="images/LPS_exp_biplot.png" width="1024"> 
+<img src="images/pbmc_scatter.png"> 
+<img src="images/pbmc_heatmap_or.png" > 
+<img src="images/pbmc_biplot_or.png" > 
 
 ## Installation
 
 NOTE: on a fresh installation, users may need to install some required interpreter compilers for the system to install R packages further:
-* a C++ compiler 
-* a 'gfortran' compiler
-  
+* C++ compiler 
+* gfortran compiler (FYI: tips for [MAC](https://cran.r-project.org/src/base/R-4/) users or [other OS](https://fortran-lang.org/learn/os_setup/install_gfortran/))
+<br />  
 
 ```R
-if(!require(remotes)){
-  install.packages('remotes') 
-}
-remotes::install_github('vqv/ggbiplot')
+# install required packages
+install.packages('remotes')
 install.packages('waiter')
 install.packages('farver')
+remotes::install_github('vqv/ggbiplot')
+
+# install CellEnrich
 remotes::install_github('noobCoding/CellEnrich')
 ```
+<br /> 
 
 ## Example with PBMC_3K data 
 
@@ -46,7 +49,7 @@ CountData <- NormalizeData(CountData)
 # This will run CellEnrich
 CellEnrich(CountData, GroupInfo)
 ```
-
+<br />  
 
 ## Example with Alzheimer's data 
 
@@ -69,7 +72,7 @@ CountData <- NormalizeData(CountData)
 # Run cellenrich
 CellEnrich(CountData, GroupInfo)
 ```
-
+<br /> 
 
 ## Example with primary mouse dendritic cells (DCs) stimulated with lipopolysaccharide (LPS)
 
@@ -92,6 +95,7 @@ CountData <- NormalizeData(CountData)
 CellEnrich(CountData, GroupInfo)
 
 ```
+<br />  
 
 ## Dependency
 
