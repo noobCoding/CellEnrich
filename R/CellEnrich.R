@@ -2207,7 +2207,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                     key.title = NA,
                     key.xlab = NA,
                     key.ylab = NA,
-                    key.par = list(mar=c(4, 1, 2, 1),
+                    key.par = list(mar=c(5, 1, 2, 1),
                                    mgp=c(1.5, 0.5, 0),
                                    cex=1)
           )  
@@ -2272,7 +2272,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                     key.title = NA,
                     key.xlab = NA,
                     key.ylab = NA,
-                    key.par = list(mar=c(4, 1, 2, 1),
+                    key.par = list(mar=c(5, 1, 2, 1),
                                    mgp=c(1.5, 0.5, 0),
                                    cex=1)
           )  
@@ -2304,7 +2304,7 @@ buildGradientLegend <- function(sortList, img = FALSE, name = NULL, Cells) {
   currentGroup <- as.vector(rlobj$Group)
 
   if (img) {
-    pdf(name)
+    pdf(name, width=16, height = 9)
     plot(NULL, xaxt = "n", yaxt = "n", bty = "n", ylab = "", xlab = "", xlim = 0:1, ylim = 0:1)
     legend(
       "center",
@@ -2373,7 +2373,7 @@ buildLegend <- function(sortList, img = FALSE, name = NULL, GroupInfo) {
   currentGroup <- rlobj$Group
 
   if (img) {
-    pdf(name)
+    pdf(name, width=16, height = 9)
     plot(NULL, xaxt = "n", yaxt = "n", bty = "n", ylab = "", xlab = "", xlim = 0:1, ylim = 0:1)
     legend(
       "center",
