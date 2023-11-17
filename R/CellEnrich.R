@@ -798,7 +798,7 @@ CellEnrichUI <- function() {
             ),
             material_column(
               material_row(
-                numericInput("biCount", label = "Top Pathways in each Group", value = 5, min = 1, max = 10, step = 1),
+                numericInput("biCount", label = "Top Pathways in each Group", value = 3, min = 1, max = 10, step = 1),
                 numericInput("biFont", label = "Cell Type Label", value = 5, min = 1, max = 10, step = 1),
                 numericInput("gsFont", label = "Pathway Label", value = 5, min = 1, max = 10, step = 1),
                 numericInput("biX", label = "Range of X-axis", value = 5, min = 1, max = 10, step = 1),
