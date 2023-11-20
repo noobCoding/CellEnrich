@@ -1378,28 +1378,35 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       
       library(gplots)
       HeatPlot <<- heatmap.2(mat_data,
-                main = hmtype, # heat map title
-                density.info="none",  # turns off density plot inside color legend
-                trace="none",         # turns off trace lines inside the heat map
-                margins =c(15,70),      # widens margins around plot
-                col=my_palette,       # use on color palette defined earlier
-                scale = "none",
-                breaks=col_breaks,    # enable color transition at specified limits
-                dendrogram="row",    # only draw a row dendrogram
-                Colv=NA,            # turn off column clustering
-                
-                # additional control of the presentation
-                lhei = c(2, 13),       # adapt the relative areas devoted to the matrix
-                lwid = c(2, 10),
-                cexRow = 1.75,
-                cexCol = 2,
-                key.title = NA,
-                key.xlab = NA,
-                key.ylab = NA,
-                key.par = list(mar=c(4, 1, 2, 1),
-                               mgp=c(1.5, 0.5, 0),
-                               cex=1.5)
-      )  
+                             # cellnote = mat_data,  # same data set for cell labels
+                             main = hmtype, # heat map title
+                             # notecol="black",      # change font color of cell labels to black
+                             density.info="none",  # turns off density plot inside color legend
+                             trace="none",         # turns off trace lines inside the heat map
+                             margins =c(15,70),      # widens margins around plot
+                             col=my_palette,       # use on color palette defined earlier
+                             scale = "none",
+                             breaks=col_breaks,    # enable color transition at specified limits
+                             dendrogram="row",    # only draw a row dendrogram
+                             Colv=NA,            # turn off column clustering
+                             
+                             # # add horizontal and vertical lines (but no box...)
+                             # colsep = 3,
+                             # rowsep = 3,
+                             # sepcolor = "black",
+                             
+                             # additional control of the presentation
+                             lhei = c(2, 13),       # adapt the relative areas devoted to the matrix
+                             lwid = c(2, 10),
+                             cexRow = 1.5,
+                             cexCol = 2,
+                             key.title = NA,
+                             key.xlab = NA,
+                             key.ylab = NA,
+                             key.par = list(mar=c(4, 1, 2, 1),
+                                            mgp=c(1.5, 0.5, 0),
+                                            cex=1)
+      )
       # saveRDS(HeatPlot, 'hm.rds')
       return(HeatPlot)
     }
