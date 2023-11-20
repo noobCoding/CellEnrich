@@ -11,6 +11,7 @@ Pathway enrichment analysis and visualization for Single Cell Data
 NOTE: on a fresh installation, users may need to install some required interpreter compilers for the system to install other R packages:
 * C++ compiler 
 * gfortran compiler (FYI: tips for [MAC](https://cran.r-project.org/src/base/R-4/) users or [other OS](https://fortran-lang.org/learn/os_setup/install_gfortran/))
+* Seurat >= 5.0.0 is REQUIRED
 <br />  
 
 ```R
