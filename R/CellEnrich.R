@@ -1185,6 +1185,7 @@ solvedButton <- function(inputId, label, style = NULL, onClick = NULL, ...) {
 #' @import ggbiplot
 #' @import magrittr
 #' @import waiter
+#' @import Seurat
 #' @import farver
 #' @rawNamespace import(shinyjs, except = runExample)
 #' @import scales
@@ -2107,7 +2108,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
     
     
     # ##### trigger value
-    
+    rv <- reactiveValues(select_clicked = 0)
     for(i in 1:length(Cells)){
       tmp <- paste0("toSortButton", i)
       observeEvent(input[[tmp]],{
