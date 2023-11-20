@@ -348,10 +348,17 @@ getOddRatio <- function(GroupInfo, pres, pres2, genesets, ratio) {
         return(0)
       }
       N <- total # 전체 Cell 수
-
       K <- length(thisCellIdx)
-
-      return((B / K) / (A / N))
+      
+      if (is.na(N - A) || (N==A) ){
+        return (0)
+      }
+      
+      if (is.na(K - B) || (K==B) ){
+        return (0)
+      }
+      
+      return( (B/(K - B)) / (A/(N - A)) )
     }))
 
     OR <- round(OR, 4)
@@ -1243,8 +1250,16 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                 }
                 N <- total
                 K <- length(thisCellIdx)
-      
-                return((B / K) / (A / N))
+                
+                if (is.na(N - A) || (N==A) ){
+                  return (0)
+                }
+                
+                if (is.na(K - B) || (K==B) ){
+                  return (0)
+                }
+                
+                return( (B/(K - B)) / (A/(N - A)) )
               })
             ), 4)
           # Cell, Geneset, OR
