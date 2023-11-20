@@ -799,7 +799,7 @@ CellEnrichUI <- function() {
             material_column(
               material_row(
                 numericInput("biCount", label = "Top Pathways in each Group", value = 3, min = 1, max = 10, step = 1),
-                numericInput("biFont", label = "Cell Type Label", value = 5, min = 1, max = 10, step = 1),
+                numericInput("biFont", label = "Cell Type Label", value = 7, min = 1, max = 10, step = 1),
                 numericInput("gsFont", label = "Pathway Label", value = 5, min = 1, max = 10, step = 1),
                 numericInput("biX", label = "Range of X-axis", value = 5, min = 1, max = 10, step = 1),
                 numericInput("biY", label = "Range of Y-axis", value = 2, min = 1, max = 10, step = 1),
@@ -1391,14 +1391,14 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
                 # additional control of the presentation
                 lhei = c(2, 13),       # adapt the relative areas devoted to the matrix
                 lwid = c(2, 10),
-                cexRow = 1.5,
+                cexRow = 1.75,
                 cexCol = 2,
                 key.title = NA,
                 key.xlab = NA,
                 key.ylab = NA,
                 key.par = list(mar=c(4, 1, 2, 1),
                                mgp=c(1.5, 0.5, 0),
-                               cex=1)
+                               cex=1.5)
       )  
       # saveRDS(HeatPlot, 'hm.rds')
       return(HeatPlot)
