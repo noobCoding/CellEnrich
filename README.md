@@ -16,7 +16,7 @@ NOTE: on a fresh installation, users may need to install some required interpret
 
 ```R
 # install required packages
-install.packages('Seurat') # Seurat v5.0.1, RStudio may need a RESTART to be activated
+install.packages('Seurat') # RStudio may need a RESTART for Seurat v5.0.1 to be activated
 install.packages('remotes')
 install.packages('waiter')
 install.packages('farver')
@@ -114,7 +114,7 @@ CellEnrich(CountData, GroupInfo)
 * [scales](https://github.com/r-lib/scales) - 1.1.0
 * [scMerge](https://github.com/SydneyBioX/scMerge) - 1.5.0
 * [scran](https://git.bioconductor.org/packages/scran) - 1.14.6
-* [Seurat](https://github.com/satijalab/seurat) - 5.0.0
+* [Seurat](https://github.com/satijalab/seurat) - 5.0.1
 * [shiny](https://github.com/rstudio/shiny) - 1.4.0.2
 * [shinyFeedback](https://github.com/merlinoa/shinyFeedback) - 0.2.0
 * [shinyjs](https://github.com/daattali/shinyjs) - 1.1
