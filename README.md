@@ -112,7 +112,7 @@ CellEnrich(CountData, GroupInfo)
 * [scales](https://github.com/r-lib/scales) - 1.1.0
 * [scMerge](https://github.com/SydneyBioX/scMerge) - 1.5.0
 * [scran](https://git.bioconductor.org/packages/scran) - 1.14.6
-* [Seurat](https://github.com/satijalab/seurat) - 3.2.0
+* [Seurat](https://github.com/satijalab/seurat) - 5.0.0
 * [shiny](https://github.com/rstudio/shiny) - 1.4.0.2
 * [shinyFeedback](https://github.com/merlinoa/shinyFeedback) - 0.2.0
 * [shinyjs](https://github.com/daattali/shinyjs) - 1.1
