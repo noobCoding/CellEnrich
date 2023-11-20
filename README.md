@@ -16,7 +16,7 @@ NOTE: on a fresh installation, users may need to install some required interpret
 
 ```R
 # install required packages
-install.packages('Seurat') # Seurat v5
+install.packages('Seurat') # Seurat v5.0.1, RStudio may need a RESTART to be activated
 install.packages('remotes')
 install.packages('waiter')
 install.packages('farver')
