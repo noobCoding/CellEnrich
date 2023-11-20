@@ -2,7 +2,7 @@
 
 Pathway enrichment analysis and visualization for Single Cell Data
 
-<img src="images/ce_options_bar.png"> 
+<img src="images/ce_options_run.png"> 
 <img src="images/pbmc_scatter.png"> 
 <img src="images/pbmc_heatmap_or.png" > 
 <img src="images/pbmc_biplot_or.png" > 
