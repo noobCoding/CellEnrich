@@ -2195,7 +2195,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           "mybiplot.pdf"
         },
         content = function(file) {
-          ggsave(file, device = "pdf")
+          ggsave(file, device = "pdf", width = 24, height = 16)
         }
       )
       
@@ -2260,7 +2260,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           "mybiplot.pdf"
         },
         content = function(file) {
-          ggsave(file, device = "pdf")
+          ggsave(file, device = "pdf", width = 24, height = 16)
         }
       )
       
