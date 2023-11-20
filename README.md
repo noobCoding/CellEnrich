@@ -11,10 +11,12 @@ Pathway enrichment analysis and visualization for Single Cell Data
 NOTE: on a fresh installation, users may need to install some required interpreter compilers for the system to install other R packages:
 * C++ compiler 
 * gfortran compiler (FYI: tips for [MAC](https://cran.r-project.org/src/base/R-4/) users or [other OS](https://fortran-lang.org/learn/os_setup/install_gfortran/))
+* Seurat >= 5.0.0 is REQUIRED
 <br />  
 
 ```R
 # install required packages
+install.packages('Seurat') # RStudio may need a RESTART for Seurat v5.0.1 to be activated
 install.packages('remotes')
 install.packages('waiter')
 install.packages('farver')
@@ -112,7 +114,7 @@ CellEnrich(CountData, GroupInfo)
 * [scales](https://github.com/r-lib/scales) - 1.1.0
 * [scMerge](https://github.com/SydneyBioX/scMerge) - 1.5.0
 * [scran](https://git.bioconductor.org/packages/scran) - 1.14.6
-* [Seurat](https://github.com/satijalab/seurat) - 3.2.0
+* [Seurat](https://github.com/satijalab/seurat) - 5.0.1
 * [shiny](https://github.com/rstudio/shiny) - 1.4.0.2
 * [shinyFeedback](https://github.com/merlinoa/shinyFeedback) - 0.2.0
 * [shinyjs](https://github.com/daattali/shinyjs) - 1.1
