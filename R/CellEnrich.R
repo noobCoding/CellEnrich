@@ -368,14 +368,14 @@ getOddRatio <- function(GroupInfo, pres, pres2, genesets, ratio) {
       data.frame(
         Cell = as.character(thisCell),
         Geneset = as.character(names(genesets)),
-        OddRatio = as.numeric(OR), stringsAsFactors = FALSE
+        OddsRatio = as.numeric(OR), stringsAsFactors = FALSE
       )
     )
   }
 
-  colnames(res) <- c("Cell", "Geneset", "OddRatio")
+  colnames(res) <- c("Cell", "Geneset", "OddsRatio")
 
-  # res <- res %>% filter(OddRatio > 1)
+  # res <- res %>% filter(OddsRatio > 1)
 
   return(res)
 }
@@ -1210,12 +1210,12 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
 
   server <- function(input, output, session) {
     
-    toptab <- function (genesets, TOPN = 5, oddratio = TRUE, myplot='biplot'){
+    toptab <- function (genesets, TOPN = 5, OddsRatio = TRUE, myplot='biplot'){
       Cells <- sort(unique(GroupInfo))
       # pres : which gene-sets are significant for each cells.
       # pres2 : for each gene-sets, how many cells are significant that gene-sets.
       
-      if (oddratio) { ## ODDRATIO
+      if (OddsRatio) { ## OddsRatio
         total <- length(GroupInfo)
         
         dat <- OR %>%
@@ -1269,7 +1269,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           # adjusted to original OR values
           for (i in 1:length(Cells)){
             corGeneset <- dat$Geneset[dat$Cell == Cells[i]]
-            corOddRatio <- dat$OddRatio[dat$Cell == Cells[i]]
+            corOddRatio <- dat$OddsRatio[dat$Cell == Cells[i]]
             for (g in corGeneset){
               tab[g, Cells[i]] <- corOddRatio[corGeneset==g]
             }
@@ -1319,11 +1319,11 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
     }
     
 
-    buildbiplot <- function(biFont, biX, biY, genesets, TOPN = 5, oddratio = TRUE, gsFont=5, axtxt=13, axlab=15,
+    buildbiplot <- function(biFont, biX, biY, genesets, TOPN = 5, OddsRatio = TRUE, gsFont=5, axtxt=13, axlab=15,
                             myplot='biplot', tab=matrix(0, 0, 0)) {
     
       hmtype <- 'Odds Ratio based Biplot'
-      if (!oddratio){
+      if (!OddsRatio){
         hmtype <- 'Frequency based Biplot'
       }
       ##########  BiPlot
@@ -1377,12 +1377,12 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       return(BiPlot)
     }
     
-    buildheatplot <- function(biFont, biX, biY, genesets, TOPN = 5, oddratio = TRUE, gsFont=5, axtxt=13, axlab=15, 
+    buildheatplot <- function(biFont, biX, biY, genesets, TOPN = 5, OddsRatio = TRUE, gsFont=5, axtxt=13, axlab=15, 
                               myplot='biplot', tab=maxtrix(0, 0, 0)) {
       
       ###########   Heatmap 
       hmtype <- 'Odds Ratio based Heatmap'
-      if (!oddratio){
+      if (!OddsRatio){
         hmtype <- 'Frequency based Heatmap'
       }
       
@@ -1664,7 +1664,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
             data.frame(
               cell = colnames(tmp_pres)[i],
               pathway = pathways,
-              oddratio = unname(ors[pathways])
+              OddsRatio = unname(ors[pathways])
             )
           )
         }
@@ -1736,10 +1736,10 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       
       PP <- pathwayPvalue(GroupInfo, pres, pres2, genesets) 
 
-      # OR -> # Group / PATHWAY / ODDRATIO        
+      # OR -> # Group / PATHWAY / OddsRatio        
       if (nrow(tmp_df) > 0) {
         OR <- tmp_df
-        colnames(OR) <- c("Cell", "Geneset", "OddRatio")
+        colnames(OR) <- c("Cell", "Geneset", "OddsRatio")
         OR <<- OR
       }
       else {
@@ -1747,17 +1747,17 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       }
       
       #### Ceiling the max OR 
-      non_zero_or <- OR$OddRatio[OR$OddRatio > 0]
+      non_zero_or <- OR$OddsRatio[OR$OddsRatio > 0]
       outlier_or <- round(mean(non_zero_or) + 2*sd(non_zero_or), 4)
       
       # retrieval
-      extreme_values <- OR$OddRatio[OR$OddRatio > outlier_or]
-      extreme_min <- max(OR$OddRatio[OR$OddRatio < min(extreme_values)])
+      extreme_values <- OR$OddsRatio[OR$OddsRatio > outlier_or]
+      extreme_min <- max(OR$OddsRatio[OR$OddsRatio < min(extreme_values)])
       # rescale extreme values respecting to the ranks
       variation <- 1:length(extreme_values) /10 + sapply(1:length(extreme_values), function(i){ return (rbeta(1, 2, 8))})
       converted_extreme <- round(extreme_min + 0.1*sd(non_zero_or) + variation, 4)
       ordx <- order(extreme_values)
-      OR$OddRatio[OR$OddRatio > outlier_or] <- sort(converted_extreme)[order(ordx)]
+      OR$OddsRatio[OR$OddsRatio > outlier_or] <- sort(converted_extreme)[order(ordx)]
       
       
       CellPathwayDFP <- CellPathwayDF %>%
@@ -1772,8 +1772,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       )
 
       ## significant OR > 1
-      OR <<- OR %>% filter(OddRatio > 1)
-      CellPathwayDF <- CellPathwayDFP %>% filter(OddRatio > 1)
+      OR <<- OR %>% filter(OddsRatio > 1)
+      CellPathwayDF <- CellPathwayDFP %>% filter(OddsRatio > 1)
       
       CellPathwayDF <<- CellPathwayDF
 
@@ -1992,7 +1992,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
           if (nrow(thisCellData) >= 1) {
             thisCellData <- thisCellData %>% top_n(-1, wt = Size)
             if (nrow(thisCellData) >= 1) {
-              thisCellData <- thisCellData %>% top_n(1, wt = OddRatio)
+              thisCellData <- thisCellData %>% top_n(1, wt = OddsRatio)
               if (nrow(thisCellData) >= 1) {
                 thisCellData <- thisCellData %>% top_n(1)
               }
@@ -2054,7 +2054,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         thisCellData <- CellPathwayDF %>% dplyr::filter(Cell == Cells[i])
         
         if (nrow(thisCellData) >= 1) {
-          thisCellData <- thisCellData %>% top_n(1, wt = OddRatio)
+          thisCellData <- thisCellData %>% top_n(1, wt = OddsRatio)
         
           if (nrow(thisCellData) >= 1) {
             thisCellData <- thisCellData %>% top_n(-1, wt = Size)
@@ -2183,13 +2183,13 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       
       output$biPlot <- renderPlot(buildbiplot(input$biFont, input$biX, input$biY, genesets, TOPN = input$biCount,
                                               gsFont = input$gsFont, axtxt = input$axtxt, axlab = input$axlab,
-                                              oddratio = FALSE, 
-                                              tab=toptab(genesets, TOPN = input$biCount, oddratio = FALSE)))
+                                              OddsRatio = FALSE, 
+                                              tab=toptab(genesets, TOPN = input$biCount, OddsRatio = FALSE)))
       
       output$heatPlot <- renderPlot(buildheatplot(input$biFont, input$biX, input$biY, genesets, TOPN = input$biCount,
                                               gsFont = input$gsFont, axtxt = input$axtxt, axlab = input$axlab,
-                                              oddratio = FALSE,
-                                              tab=toptab(genesets, TOPN = input$biCount, oddratio = FALSE)))
+                                              OddsRatio = FALSE,
+                                              tab=toptab(genesets, TOPN = input$biCount, OddsRatio = FALSE)))
    
       output$biplotdn <- downloadHandler(
         filename = function() {
@@ -2248,13 +2248,13 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       
       output$biPlot <- renderPlot(buildbiplot(input$biFont, input$biX, input$biY, genesets, TOPN = input$biCount,
                                               gsFont = input$gsFont, axtxt = input$axtxt, axlab = input$axlab,
-                                              oddratio = TRUE,
-                                              tab = toptab(genesets, TOPN = input$biCount, oddratio = TRUE)))
+                                              OddsRatio = TRUE,
+                                              tab = toptab(genesets, TOPN = input$biCount, OddsRatio = TRUE)))
 
       output$heatPlot <- renderPlot(buildheatplot(input$biFont, input$biX, input$biY, genesets, TOPN = input$biCount,
                                                 gsFont = input$gsFont, axtxt = input$axtxt, axlab = input$axlab,
-                                                oddratio = TRUE,
-                                                tab=toptab(genesets, TOPN = input$biCount, oddratio = TRUE)))
+                                                OddsRatio = TRUE,
+                                                tab=toptab(genesets, TOPN = input$biCount, OddsRatio = TRUE)))
       
       output$biplotdn <- downloadHandler(
         filename = function() {
