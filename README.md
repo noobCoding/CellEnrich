@@ -85,6 +85,7 @@ download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/LPS_exp.
 download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/WikiPathways_2019_Mouse.RData', 'WikiPathways_2019_Mouse.RData', mode = 'wb')
 
 # Load library and data
+library(Seurat)
 library(CellEnrich)
 
 LPS_exp <- readRDS("LPS_exp.rds")
