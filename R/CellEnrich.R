@@ -319,8 +319,8 @@ pathwayPvalue <- function(GroupInfo, pres, pres2, genesets) {
   return(res)
 }
 
-# pres : which gene-sets are significant for each cells.
-# pres2 : for each gene-sets, how many cells are significant that gene-sets.
+# pres: which gene sets are significant for each cells?
+# pres2: for each gene set, how many cells are significant in that gene-sets.
 
 # 전체 그룹에서 유의한 회수 20 # pres2[genesets[i]]
 # 특정 그룹에서 유의한 회수 6 # pres2[thiscell[idx]
@@ -421,9 +421,7 @@ getColv <- function(GroupInfo) {
   
   UniqueCol <- briterhex(scales::hue_pal(h = c(20, 350),
                                          c = 100, l = 65, h.start = 0,
-                                         direction = 1)(length(Cells)))
-  # print(UniqueCol)
-  # "#FF998D" "#FFBD00" "#BFDD00" "#00F148" "#00FACE" "#00F0FF" "#7ECAFF" "#FF94FF" "#FF7EFD"
+                                         direction = 1)(length(Cells)))  
   names(UniqueCol) <- Cells
   
   x <- c()
@@ -439,8 +437,7 @@ getColv <- function(GroupInfo) {
 }
 
 getCellHistogram <- function(GroupInfo, colV) {
-  cat("getCellHistogram\n")
-  # library(ggplot2)
+  cat("getCellHistogram\n")  
   library(highcharter)
   Cells <- unique(sort(GroupInfo))
   
@@ -465,8 +462,7 @@ getCellHistogram <- function(GroupInfo, colV) {
 
 getCellPlot <- function(dfobj, Cells) {
   cat("getCellPlot\n")
-  library(ggplot2)
-  # library(highcharter)
+  library(ggplot2)  
   
   colnames(dfobj) <- c("x", "y", "col")
   dfobj <<- dfobj
@@ -482,33 +478,15 @@ getCellPlot <- function(dfobj, Cells) {
   ap <- colV
   ap <- ifelse(ap=='#E5E5E5', 0.2, 1)
   
-  p <- ggplot(dfobj, aes(x = x, y = y)) +    geom_point(colour = colV, alpha=ap)
-  # p <- p + scale_color_manual(values = method_col)
-  # p <- p + labs(x= NULL, y= "Percentage")
-  # p <- p + theme(legend.position=0)+ coord_flip()
+  p <- ggplot(dfobj, aes(x = x, y = y)) +    geom_point(colour = colV, alpha=ap) 
   p <- p + theme(axis.title.y = element_text(size = 15, vjust= 0.5))
   p <- p + theme(axis.text = element_text(size = 12))
-  # p <- p + geom_hline(data=df, aes(yintercept=median),linetype="dashed", color='black')
-  # p <- p + theme(axis.text.y = element_text(size=14, color = a))
   
-  p <- p + theme(
-    # axis.line = element_line(color = "black", size = 0.5, linetype = "solid"),
-    axis.title.x = element_text(size=15),
-    # axis.title.y = element_blank(),
-    # axis.text.x = element_text(size=14, colour = 'black', hjust = 1),
-    # panel.grid.major = element_line(colour = "grey86"),
-    # panel.grid.major.x = element_blank(),
-    # panel.grid.minor.x = element_blank(),
-    # panel.grid.minor.y = element_blank(),
-    # panel.background = element_blank(),
+  
+  p <- p + theme(  
+    axis.title.x = element_text(size=15),    
     panel.background = element_rect(fill = 'white', colour = 'white'),
-    panel.border = element_rect(fill = NA, colour = 'black', size=0.25 ),
-    # panel.spacing.x = unit(0.5, "lines"),
-    # panel.spacing.y = unit(1, "lines"),
-    # strip.text = element_text(size=17, color="black"),
-    # strip.background.x = element_rect(fill="#CDE8DF"),
-    # strip.background.x = element_blank(),
-    # strip.background.y = element_blank(),
+    panel.border = element_rect(fill = NA, colour = 'black', size=0.25 ),    
     legend.position="none")
   
   return(p)
