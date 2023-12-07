@@ -1,4 +1,4 @@
-## 23.12.05
+## 23.12.07
 if(!require(waiter)){
   install.packages('waiter') # install 'waiter' if not installed.
 }
@@ -88,10 +88,6 @@ findSigGenes <- function(v, method = "CellEnrich - HALF median", Name) {
   rownames(v) <- colnames(v) <- NULL
   
   res <- list()
-  
-  # if (method == "Fisher") {
-  #   return(res)
-  # }
   
   if (method == "CellEnrich - mixture") {
     v <- gnm(v)
@@ -197,9 +193,7 @@ getHyperPvalue <- function(genes, genesets, A, lgs, q0, biobj) {
     k <- lg # selected ball
     1 - phyper(q - 1, m, n, k)
   })
-  # names(pv) <- names(genesets)
   return(pv)
-  # return(which(pv < q0))
 }
 
 buildCellPathwayDF <- function(GroupInfo, pres, genesets) {
@@ -319,8 +313,8 @@ pathwayPvalue <- function(GroupInfo, pres, pres2, genesets) {
   return(res)
 }
 
-# pres: which gene sets are significant for each cells?
-# pres2: for each gene set, how many cells are significant in that gene-sets.
+# pres : which gene-sets are significant for each cells.
+# pres2 : for each gene-sets, how many cells are significant that gene-sets.
 
 # 전체 그룹에서 유의한 회수 20 # pres2[genesets[i]]
 # 특정 그룹에서 유의한 회수 6 # pres2[thiscell[idx]
@@ -328,7 +322,7 @@ pathwayPvalue <- function(GroupInfo, pres, pres2, genesets) {
 # 전체 그룹 Cell 수 : N
 # 특정 그룹 Cell 수 : K
 
-# Group_specific_OR = (6/K) / (14/N)
+# Group_specific_OR = (6/(K-6)) / (14/(N-14))
 
 getOddRatio <- function(GroupInfo, pres, pres2, genesets, ratio) {
   cat("getOddRatio\n")
@@ -378,11 +372,7 @@ getOddRatio <- function(GroupInfo, pres, pres2, genesets, ratio) {
       )
     )
   }
-  
   colnames(res) <- c("Cell", "Pathway", "OddsRatio")
-  
-  # res <- res %>% filter(OddsRatio > 1)
-  
   return(res)
 }
 
@@ -421,7 +411,7 @@ getColv <- function(GroupInfo) {
   
   UniqueCol <- briterhex(scales::hue_pal(h = c(20, 350),
                                          c = 100, l = 65, h.start = 0,
-                                         direction = 1)(length(Cells)))  
+                                         direction = 1)(length(Cells)))
   names(UniqueCol) <- Cells
   
   x <- c()
@@ -437,7 +427,7 @@ getColv <- function(GroupInfo) {
 }
 
 getCellHistogram <- function(GroupInfo, colV) {
-  cat("getCellHistogram\n")  
+  cat("getCellHistogram\n")
   library(highcharter)
   Cells <- unique(sort(GroupInfo))
   
@@ -462,7 +452,8 @@ getCellHistogram <- function(GroupInfo, colV) {
 
 getCellPlot <- function(dfobj, Cells) {
   cat("getCellPlot\n")
-  library(ggplot2)  
+  library(ggplot2)
+  # library(highcharter)
   
   colnames(dfobj) <- c("x", "y", "col")
   dfobj <<- dfobj
@@ -478,15 +469,14 @@ getCellPlot <- function(dfobj, Cells) {
   ap <- colV
   ap <- ifelse(ap=='#E5E5E5', 0.2, 1)
   
-  p <- ggplot(dfobj, aes(x = x, y = y)) +    geom_point(colour = colV, alpha=ap) 
+  p <- ggplot(dfobj, aes(x = x, y = y)) +    geom_point(colour = colV, alpha=ap)
   p <- p + theme(axis.title.y = element_text(size = 15, vjust= 0.5))
   p <- p + theme(axis.text = element_text(size = 12))
   
-  
-  p <- p + theme(  
-    axis.title.x = element_text(size=15),    
+  p <- p + theme(
+    axis.title.x = element_text(size=15),
     panel.background = element_rect(fill = 'white', colour = 'white'),
-    panel.border = element_rect(fill = NA, colour = 'black', size=0.25 ),    
+    panel.border = element_rect(fill = NA, colour = 'black', size=0.25 ),
     legend.position="none")
   
   return(p)
@@ -513,7 +503,6 @@ groupTable <- function(pres, genesets, dfobj, pres2) {
       next
     }
     # what genesets are enriched per each group.
-    
     k <- sum(pathways) # selected ball
     
     gt <- sapply(1:length(pathways), function(j) {
@@ -541,7 +530,6 @@ groupTable <- function(pres, genesets, dfobj, pres2) {
   return(res)
 }
 
-# values <- c("Carbs" = "carbs", "Proteins" = "prots", "BMI" = "bmi")
 default_genesets <- c(
   "Human-Reactome", # 2022
   "Human-WikiPathway", # 2021
@@ -586,7 +574,7 @@ CellEnrichUI <- function(GroupInfo) {
   }
 
   .tabs .tab a:hover {
-    color: #1976f2;
+    color: #00ffff;
     cursor: pointer;
   }
 
@@ -607,7 +595,7 @@ CellEnrichUI <- function(GroupInfo) {
     tags$head(tags$style(type = "text/css", ".display.dataTable.no-footer{width : 100% !important;}
                                             ")),
     # waitress declare
-    use_waitress(color = "#1976d2", percent_color = "#333333"),
+    use_waitress(color = "#1976d2", percent_color = "#223344"),
     title = paste0(
       "CellEnrich ",
       "<a href = 'https://github.com/noobCoding/cellenrich' target = 'https://github.com/noobCoding/CellEnrich'> ", # github link
@@ -724,7 +712,6 @@ CellEnrichUI <- function(GroupInfo) {
                     tags$span(style = "color:black", "Mouse-GOMF")
                   ),
                   choiceValues = default_genesets,
-                  # color= "#1976d2",
                   selected= default_genesets[1] #"Reactome_2022"
                 ),
                 sidebarPanel(
@@ -742,12 +729,12 @@ CellEnrichUI <- function(GroupInfo) {
             )
           ),
           shiny::tags$div(class = "runbutton", 
-            solvedButton(
-              inputId = "StartCellEnrich",
-              label = "RUN",
-              style = "background-color: #1976d2; height:60px; width:360px; font-size : 32px;",
-              onClick = 'console.log("CellEnrich");'
-            )
+                          solvedButton(
+                            inputId = "StartCellEnrich",
+                            label = "RUN",
+                            style = "background-color: #1976d2; height:60px; width:360px; font-size : 32px;",
+                            onClick = 'console.log("CellEnrich");'
+                          )
           )
           ,
           depth = 3
@@ -1257,7 +1244,7 @@ solvedButton <- function(inputId, label, style = NULL, onClick = NULL, ...) {
 #'
 #' @export
 
-CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
+CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) {
   library(dplyr)
   library(shiny)
   
@@ -1268,6 +1255,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
   library(ggbiplot)
   library(ggrepel)
   options(useFancyQuotes = FALSE)
+  
+  reRun <- FALSE
   
   server <- function(input, output, session) {
     
@@ -1520,8 +1509,63 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       shinyjs::runjs('$("#Emphasize_freq").attr("disabled",true)')
       
       # ------ Load Genesets
-      # Check that data object exists and is data frame.
-      if (is.null(genesets)) {
+      if (!reRun){
+        
+        # Check that data object exists and is data frame.
+        if (is.null(genesets)) {
+          if (input$genesetOption == "Human-Reactome") load("Human_Reactome.RData")
+          if (input$genesetOption == "Human-WikiPathway") load("Human_WikiPathways.RData")
+          if (input$genesetOption == "Human-KEGG") load("Human_KEGG.RData")
+          if (input$genesetOption == "Human-GOBP") load("Human_GOBP.RData")
+          if (input$genesetOption == "Human-GOCC") load("Human_GOCC.RData")
+          if (input$genesetOption == "Human-GOMF") load("Human_GOMF.RData")
+          if (input$genesetOption == "Mouse-Reactome") load("Mouse_Reactome.RData")
+          if (input$genesetOption == "Mouse-WikiPathway") load("Mouse_WikiPathways.RData")
+          if (input$genesetOption == "Mouse-KEGG") load("Mouse_KEGG.RData")
+          if (input$genesetOption == "Mouse-GOBP") load("Mouse_GOBP.RData")
+          if (input$genesetOption == "Mouse-GOCC") load("Mouse_GOCC.RData")
+          if (input$genesetOption == "Mouse-GOMF") load("Mouse_GOMF.RData")
+        }
+        
+        read_Input_geneset<-function(gs){
+          genesets <- ''
+          if (endsWith(gs, '.xlsx')){
+            genesets <- read_excel(gs)
+          } else if (endsWith(gs, '.csv')){
+            genesets <- read_csv(gs)
+          } else
+            if (endsWith(gs, '.RData') || endsWith(gs, 'Rdata')){
+              load(gs)
+            }
+          return(genesets)
+        }
+        
+        if (is.null(genesets)) {
+          genesets <- read_Input_geneset(usergs)
+          
+          if (is.null(genesets)){
+            shiny::showNotification("Geneset file is invalid!", type = "error", duration = 20)
+            return(NULL)
+          }
+        }
+        
+        if (is.null(genesets)) {
+          shiny::showNotification("Geneset file is missing!", type = "error", duration = 20)
+          return(NULL)
+        }
+        
+        if (length(rownames(CountData))==0) {
+          shiny::showNotification("This dataset has not enough significant genes!", type = "error", duration = 60)
+          return(NULL)
+          stop("This dataset has not enough significant genes!")
+        }
+        
+        if (length(genesets)==0) {
+          shiny::showNotification("This dataset has no significant pathway detected based on current genesets!", type = "error", duration = 60)
+          return(NULL)
+          stop("This dataset has no significant pathway detected!")
+        }
+      } else{  # RE-RUN
         if (input$genesetOption == "Human-Reactome") load("Human_Reactome.RData")
         if (input$genesetOption == "Human-WikiPathway") load("Human_WikiPathways.RData")
         if (input$genesetOption == "Human-KEGG") load("Human_KEGG.RData")
@@ -1534,45 +1578,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
         if (input$genesetOption == "Mouse-GOBP") load("Mouse_GOBP.RData")
         if (input$genesetOption == "Mouse-GOCC") load("Mouse_GOCC.RData")
         if (input$genesetOption == "Mouse-GOMF") load("Mouse_GOMF.RData")
-      }
-      
-      read_Input_geneset<-function(gs){
-        genesets <- ''
-        if (endsWith(gs, '.xlsx')){
-          genesets <- read_excel(gs)
-        } else if (endsWith(gs, '.csv')){
-          genesets <- read_csv(gs)
-        } else
-          if (endsWith(gs, '.RData') || endsWith(gs, 'Rdata')){
-            load(gs)
-          }
-        return(genesets)
-      }
-      
-      if (is.null(genesets)) {
-        genesets <- read_Input_geneset(usergs)
-        
-        if (is.null(genesets)){
-          shiny::showNotification("Geneset file is invalid!", type = "error", duration = 20)
-          return(NULL)
-        }
-      }
-      
-      if (is.null(genesets)) {
-        shiny::showNotification("Geneset file is missing!", type = "error", duration = 20)
-        return(NULL)
-      }
-      
-      if (length(rownames(CountData))==0) {
-        shiny::showNotification("This dataset has not enough significant genes!", type = "error", duration = 60)
-        return(NULL)
-        stop("This dataset has not enough significant genes!")
-      }
-      
-      if (length(genesets)==0) {
-        shiny::showNotification("This dataset has no significant pathway detected based on current genesets!", type = "error", duration = 60)
-        return(NULL)
-        stop("This dataset has no significant pathway detected!")
       }
       
       genesets <<- genesets
@@ -2090,10 +2095,10 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
       for (i in 1:length(Cells)) {
         
         thisCellData <- CellPathwayDF %>% dplyr::filter(Cell == Cells[i])
-      
+        
         if (nrow(thisCellData) >= 1) {
           thisCellData <- thisCellData %>% top_n(1, wt = OddsRatio)
-      
+          
           if (nrow(thisCellData) >= 1) {
             thisCellData <- thisCellData %>% top_n(-1, wt = Size)
             if (nrow(thisCellData) >= 1) {
@@ -2425,7 +2430,14 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL) {
   
   ui <- CellEnrichUI(GroupInfo)
   
-  shiny::shinyApp(ui, server)#, options = list(launch.browser = TRUE))
+  
+  if (use.browser){
+    shiny::shinyApp(ui, server, options = list(launch.browser = TRUE))
+  } else {
+    shiny::shinyApp(ui, server)
+  }
+  
+  
 }
 
 buildGradientLegend <- function(sortList, img = FALSE, name = NULL, Cells) {
