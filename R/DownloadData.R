@@ -12,24 +12,22 @@ DownloadData <- function(type='test') {
 
     filelist <- c(
       # Gene-sets
-      "Reactome_2022.RData",
-      "WikiPathways_2021_Human.RData",
-      "WikiPathways_2019_Mouse.RData",
-      "KEGG_2021_Human.RData",
-      "KEGG_2019_Mouse.RData",
-      "humanGO.RData",
-      "humanGOBP.RData",
-      "humanGOCC.RData",
-      "humanGOMF.RData",
-      "humanKEGG.RData",
-      "mouseGO.RData",
-      "mouseGOBP.RData",
-      "mouseGOCC.RData",
-      "mouseGOMF.RData",
-      "mouseKEGG.RData",
+      "Human-Reactome", # 2022
+      "Human-WikiPathway", # 2021
+      "Human-KEGG", # KEGG 2021
+      "Human-GOBP",
+      "Human-GOCC",
+      "Human-GOMF",
+      "Mouse-Reactome",
+      "Mouse-WikiPathway", # 2019
+      "Mouse-KEGG", # 2019
+      "Mouse-GOBP",
+      "Mouse-GOCC",
+      "Mouse-GOMF",
       # Datasets
       'Alzheimer_Counts_sampled.RDS',
       'Alzheimer_CellType_sampled.RDS',
+      "LPS_exp.rds",
       "koh.RData",
       "kohInfo.RData",
       "mouseClustInfo.RData",
@@ -40,18 +38,13 @@ DownloadData <- function(type='test') {
   } else if (type=='test') {
     filelist <- c(
       # Gene-sets
-      "Reactome_2022.RData",
-      "WikiPathways_2021_Human.RData",
-      "KEGG_2021_Human.RData",
-      "humanGO.RData",
-      "humanGOBP.RData",
-      "humanGOCC.RData",
-      "humanGOMF.RData",
-      "humanKEGG.RData",
-
+      "Human-Reactome",
+      "Mouse-WikiPathway",
+      
       # Datasets
       'Alzheimer_Counts_sampled.RDS',
       'Alzheimer_CellType_sampled.RDS',
+      "LPS_exp.rds",
       "pbmcClustInfo.RData",
       "pbmcData.RData"
     )
