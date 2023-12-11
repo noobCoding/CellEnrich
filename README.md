@@ -35,7 +35,7 @@ remotes::install_github('noobCoding/CellEnrich')
 # Download data, if not downloaded
 download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/pbmcData.RData','pbmcData.RData', mode = 'wb')
 download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/pbmcClustInfo.RData','pbmcClustInfo.RData', mode = 'wb')
-download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Reactome_2022.RData', 'Reactome_2022.RData', mode = 'wb')
+download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Human_Reactome.RData', 'Human_Reactome.RData', mode = 'wb')
 
 # Load library and data
 library(CellEnrich)
@@ -61,7 +61,7 @@ CellEnrich(CountData, GroupInfo)
 # Download Alzheimer's data to the working directory
 download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Alzheimer_Counts_sampled.RDS','Alzheimer_Counts_sampled.RDS', mode = 'wb')
 download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Alzheimer_CellType_sampled.RDS','Alzheimer_CellType_sampled.RDS', mode = 'wb')
-download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Reactome_2022.RData', 'Reactome_2022.RData', mode = 'wb')
+download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Human_Reactome.RData', 'Human_Reactome.RData', mode = 'wb')
 
 # Load library and data
 library(CellEnrich)
@@ -83,7 +83,7 @@ CellEnrich(CountData, GroupInfo)
 ```R
 # download minimal data to the working directory
 download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/LPS_exp.rds','LPS_exp.rds', mode = 'wb')
-download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/WikiPathways_2019_Mouse.RData', 'WikiPathways_2019_Mouse.RData', mode = 'wb')
+download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Mouse_WikiPathways.RData', 'Mouse_WikiPathways.RData', mode = 'wb')
 
 # Load library and data
 library(Seurat)
