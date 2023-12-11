@@ -1,6 +1,6 @@
-## 23.12.07
+## 23.12.11
 if(!require(waiter)){
-  install.packages('waiter') # install 'waiter' if not installed.
+  install.packages('waiter') 
 }
 if(!require(Seurat)){
   install.packages('Seurat')
@@ -34,7 +34,7 @@ GeneFlush <- function(genes, genesets) {
   gsgenes <- unique(unlist(genesets))
   remgenes <- sapply(setdiff(genes, gsgenes), function(i) {
     which(i == genes)
-  }, USE.NAMES = TRUE)  # changed to TRUE - Hai
+  }, USE.NAMES = TRUE)  
   return(remgenes)
 }
 
@@ -47,9 +47,6 @@ getTU <- function(CountData, GroupInfo, plotOption='UMAP', topdims= 50) {
   cat("Mapping is started\n")
   # CountData is normalized
   seu <- CreateSeuratObject(CountData)
-  
-  # run sctransform
-  # seu <- SCTransform(seu)
   
   nfeat <- nrow(CountData) 
   nfeat <- min(100*round(nfeat/100,0), 3000)
@@ -1619,8 +1616,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       A <<- getBackgroundGenes(genesets)
       
       # ------ Calculate TSNE / UMAP First
-      # library(Matrix)
-      
       seu <- getTU(CountData, GroupInfo, input$plotOption, topdims=input$topdims)
       seu <<- seu
       
