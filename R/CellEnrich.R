@@ -719,7 +719,7 @@ CellEnrichUI <- function(GroupInfo) {
                                }
                                "),
                   HTML("<font color='black' size='3'>User defined geneset</font>"),
-                  fileInput("other", "", placeholder = "RData format is required!"),
+                  fileInput("user_gs", "", placeholder = "RData format is required!"),
                 )
               ),
               width = 4
@@ -1466,21 +1466,22 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       return(HeatPlot)
     }
     
-    usergs <- ""
+    glob_options <- reactiveValues(usergs = NULL, 
+                                   reRun = FALSE
+    )
     
-    observeEvent(input$other,{
-      other_geneset <- input$other
+    observeEvent(input$user_gs,{
+      other_geneset <- input$user_gs
       ext <- tools::file_ext(other_geneset$datapath)
       
       req(other_geneset)
-      inFile <- other_geneset$datapath
+      glob_options$usergs  <- other_geneset$datapath
       
       otherVal <- other_geneset$name
-      usergs <<- inFile
       updatedValues <- c(default_genesets, otherVal)
       
       updateRadioButtons(session, "genesetOption", choices = updatedValues, selected= otherVal)
-      print(usergs)
+      print(glob_options$usergs )
       cat("Geneset added!")
     })
     
@@ -1494,6 +1495,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
     CellHistogram <- ""
     BiPlot <- HeatPlot <- OR <- ""
     
+    
     # ##### trigger value
     observeEvent(input$StartCellEnrich, {
       pt <- proc.time()
@@ -1505,9 +1507,22 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       shinyjs::runjs('$("#Emphasize").attr("disabled",true)')
       shinyjs::runjs('$("#Emphasize_freq").attr("disabled",true)')
       
+      
       # ------ Load Genesets
-      if (!reRun){
-        
+      read_Input_geneset<-function(gs){
+        genesets <- ''
+        if (endsWith(gs, '.xlsx')){
+          genesets <- read_excel(gs)
+        } else if (endsWith(gs, '.csv')){
+          genesets <- read_csv(gs)
+        } else
+          if (endsWith(gs, '.RData') || endsWith(gs, 'Rdata')){
+            load(gs)
+          }
+        return(genesets)
+      }
+      
+      if (!glob_options$reRun){
         # Check that data object exists and is data frame.
         if (is.null(genesets)) {
           if (input$genesetOption == "Human-Reactome") load("Human_Reactome.RData")
@@ -1524,19 +1539,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           if (input$genesetOption == "Mouse-GOMF") load("Mouse_GOMF.RData")
         }
         
-        read_Input_geneset<-function(gs){
-          genesets <- ''
-          if (endsWith(gs, '.xlsx')){
-            genesets <- read_excel(gs)
-          } else if (endsWith(gs, '.csv')){
-            genesets <- read_csv(gs)
-          } else
-            if (endsWith(gs, '.RData') || endsWith(gs, 'Rdata')){
-              load(gs)
-            }
-          return(genesets)
-        }
-        
         if (is.null(genesets)) {
           genesets <- read_Input_geneset(usergs)
           
@@ -1545,24 +1547,22 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
             return(NULL)
           }
         }
-        
         if (is.null(genesets)) {
           shiny::showNotification("Geneset file is missing!", type = "error", duration = 20)
           return(NULL)
         }
+        glob_options$reRun <- TRUE
         
-        if (length(rownames(CountData))==0) {
-          shiny::showNotification("This dataset has not enough significant genes!", type = "error", duration = 60)
-          return(NULL)
-          stop("This dataset has not enough significant genes!")
-        }
-        
-        if (length(genesets)==0) {
-          shiny::showNotification("This dataset has no significant pathway detected based on current genesets!", type = "error", duration = 60)
-          return(NULL)
-          stop("This dataset has no significant pathway detected!")
-        }
       } else{  # RE-RUN
+        
+        if (!is.null(glob_options$user_gs)) {
+          genesets <- read_Input_geneset(glob_options$user_gs)
+          if (is.null(genesets)){
+            shiny::showNotification("Geneset file is invalid!", type = "error", duration = 20)
+            return(NULL)
+          }
+        }
+        
         if (input$genesetOption == "Human-Reactome") load("Human_Reactome.RData")
         if (input$genesetOption == "Human-WikiPathway") load("Human_WikiPathways.RData")
         if (input$genesetOption == "Human-KEGG") load("Human_KEGG.RData")
@@ -1575,8 +1575,18 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         if (input$genesetOption == "Mouse-GOBP") load("Mouse_GOBP.RData")
         if (input$genesetOption == "Mouse-GOCC") load("Mouse_GOCC.RData")
         if (input$genesetOption == "Mouse-GOMF") load("Mouse_GOMF.RData")
+        
+        if (is.null(genesets)) {
+          shiny::showNotification("Geneset file is missing!", type = "error", duration = 20)
+          return(NULL)
+        }
+        
+        if (is.null(genesets)) {
+          shiny::showNotification("Geneset file is missing!", type = "error", duration = 20)
+          return(NULL)
+        }
+        
       }
-      
       genesets <<- genesets
       
       # ------ for test
