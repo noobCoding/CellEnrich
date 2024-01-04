@@ -16,14 +16,16 @@ Depends:
 biocViews:
 Imports:
     dplyr,
-    plyr,
-    farver,
-    DT,
+    DT,    
+    farver,    
+    fgsea,
     ggplot2,
     ggrepel,
     highcharter,
     htmltools,
     magrittr,
+    plyr,
+    purrr,    
     Rtsne,
     scMerge,
     scran,
@@ -34,6 +36,7 @@ Imports:
     shinymaterial,
     sortable,
     SingleCellExperiment,
+    tidyr,
     waiter
 Suggests: 
     testthat (>= 2.1.0)
