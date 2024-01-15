@@ -1,4 +1,4 @@
-## 23.12.11
+## 24.01.15
 if(!require(waiter)){
   install.packages('waiter') # install 'waiter' if not installed.
 }
@@ -701,7 +701,7 @@ CellEnrichUI <- function(GroupInfo) {
                   initial_value = 0.05,
                   step_size = 0.01
                 )
-               
+                
               ),
               width = 4
             ),
@@ -742,12 +742,12 @@ CellEnrichUI <- function(GroupInfo) {
             )
           ),
           shiny::tags$div(class = "runbutton", 
-            solvedButton(
-              inputId = "StartCellEnrich",
-              label = "RUN",
-              style = "background-color: #1976d2; height:60px; width:360px; font-size : 32px;",
-              onClick = 'console.log("CellEnrich");'
-            )
+                          solvedButton(
+                            inputId = "StartCellEnrich",
+                            label = "RUN",
+                            style = "background-color: #1976d2; height:60px; width:360px; font-size : 32px;",
+                            onClick = 'console.log("CellEnrich");'
+                          )
           )
           ,
           depth = 3
@@ -1489,7 +1489,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
     
     glob_options <- reactiveValues(usergs = NULL, 
                                    reRun = FALSE
-                                   )
+    )
     
     observeEvent(input$user_gs,{
       other_geneset <- input$user_gs
@@ -1557,18 +1557,18 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       # Check that data object exists and is data frame.
       if (is.null(genesets)) {
         gs_file <- switch( input$genesetOption, 
-                            "Human-Reactome" = "Human_Reactome.RData",
-                            "Human-WikiPathway" ="Human_WikiPathways.RData",
-                            "Human-KEGG" ="Human_KEGG.RData",
-                            "Human-GOBP" ="Human_GOBP.RData",
-                            "Human-GOCC" ="Human_GOCC.RData",
-                            "Human-GOMF" ="Human_GOMF.RData",
-                            "Mouse-Reactome" ="Mouse_Reactome.RData",
-                            "Mouse-WikiPathway" ="Mouse_WikiPathways.RData",
-                            "Mouse-KEGG" ="Mouse_KEGG.RData",
-                            "Mouse-GOBP" ="Mouse_GOBP.RData",
-                            "Mouse-GOCC" ="Mouse_GOCC.RData",
-                            "Mouse-GOMF" ="Mouse_GOMF.RData", "Human_Reactome.RData")
+                           "Human-Reactome" = "Human_Reactome.RData",
+                           "Human-WikiPathway" ="Human_WikiPathways.RData",
+                           "Human-KEGG" ="Human_KEGG.RData",
+                           "Human-GOBP" ="Human_GOBP.RData",
+                           "Human-GOCC" ="Human_GOCC.RData",
+                           "Human-GOMF" ="Human_GOMF.RData",
+                           "Mouse-Reactome" ="Mouse_Reactome.RData",
+                           "Mouse-WikiPathway" ="Mouse_WikiPathways.RData",
+                           "Mouse-KEGG" ="Mouse_KEGG.RData",
+                           "Mouse-GOBP" ="Mouse_GOBP.RData",
+                           "Mouse-GOCC" ="Mouse_GOCC.RData",
+                           "Mouse-GOMF" ="Mouse_GOMF.RData", "Human_Reactome.RData")
         load(gs_file)
       }
       
@@ -1631,8 +1631,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       A <<- getBackgroundGenes(genesets)
       
       # ------ Calculate TSNE / UMAP First
-      # library(Matrix)
-      
       seu <- getTU(CountData, GroupInfo, input$plotOption, topdims=input$topdims)
       seu <<- seu
       
@@ -1671,22 +1669,28 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         
         ### sampling cells if N-cell > Nmax
         Nmax <- input$fgseaNsample
-        Nmax <- ifelse(is.null(Nmax), 50, Nmax)
-        shiny::showNotification("At least 50 samples are required to estimate via FGSEA. 50 samples are used.", type = "error", duration = 30)
         
-        Nmax <- ifelse(Nmax <= 50, 50, Nmax)
-        shiny::showNotification("At least 50 samples are required to estimate via FGSEA. 50 samples are used.", type = "error", duration = 30)
+        if (is.null(Nmax)){
+          shiny::showNotification("At least 50 samples are required to estimate via FGSEA. 50 samples are used.", type = "error", duration = 30)
+          Nmax = 50
+        }
         
-        Nmax <- ifelse(Nmax > ncol(scaleCount), ncol(scaleCount), Nmax)
-        shiny::showNotification("Cannot sample more than available cells. All cells are used.", type = "error", duration = 30)
-        # print(Nmax)
+        if (Nmax < 50){
+          shiny::showNotification("At least 50 samples are required to estimate via FGSEA. 50 samples are used.", type = "error", duration = 30)
+          Nmax = 50
+        }
+        
+        if (Nmax > ncol(scaleCount)){
+          shiny::showNotification("Cannot sample more than available cells. All cells are used.", type = "error", duration = 30)
+          Nmax <- ncol(scaleCount)
+        }
         
         sample_idx <- NULL
         
         if (ncol(scaleCount) > Nmax){
           n_group <- unique(GroupInfo)
           sample_per_group <- Nmax %/% length(n_group)
-
+          
           sample_idx <- lapply(n_group, function(g){
             id_g <- which(GroupInfo==g)
             if(length(id_g) > sample_per_group){
@@ -2231,10 +2235,10 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       for (i in 1:length(Cells)) {
         
         thisCellData <- CellPathwayDF %>% dplyr::filter(Cell == Cells[i])
-      
+        
         if (nrow(thisCellData) >= 1) {
           thisCellData <- thisCellData %>% top_n(1, wt = OddsRatio)
-      
+          
           if (nrow(thisCellData) >= 1) {
             thisCellData <- thisCellData %>% top_n(-1, wt = Size)
             if (nrow(thisCellData) >= 1) {
