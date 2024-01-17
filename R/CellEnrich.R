@@ -1710,7 +1710,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           sample_idx <- sort(sample_idx)
           scaleCount <- scaleCount[, sample_idx]
         }
-        conditions <- colnames(scaleCount) %>%  set_names()
+        conditions <- colnames(scaleCount)
+        names(conditions) <- conditions
         permtimes = 100
         
         # 
