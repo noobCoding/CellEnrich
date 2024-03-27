@@ -240,6 +240,7 @@ buildCellPathwayDF <- function(GroupInfo, pres, genesets) {
 }
 
 pathwayPvalue <- function(GroupInfo, pres, pres2, genesets) {
+  # GroupInfo <- pbmcClustInfo
   cat("pathwayPvalue\n")
   res <- c()
   Cells <- unique(GroupInfo)
@@ -300,12 +301,24 @@ pathwayPvalue <- function(GroupInfo, pres, pres2, genesets) {
   res$Cell <- as.character(res$Cell)
   res$Pathway <- as.character(res$Pathway)
   res$Pvalue <- as.numeric(as.character(res$Pvalue))  
+  res$Pvalue[is.na(res$Pvalue)] <- 1
   
   res$Qvalue <- res$Pvalue
-  res$Qvalue[which(res$Qvalue < 1e-20)] <- 1e-20
-  res$Qvalue <- round(-log10(res$Qvalue), 4)  ## -log10(p-value) ->> Q-value
+    
+  #### Extreme Qvalue
+  common_qv <- res$Qvalue[res$Qvalue >= 1e-20]
+  extreme_id <- which(res$Qvalue < 1e-20)
+  extreme_qv <- res$Qvalue[extreme_id]
+  extreme_min <- min(common_qv)
   
-  # colnames(res) <- c("Cell", "Pathway", "Pvalue", "-log10 Qvalue") 
+  res$Qvalue[extreme_id] <- 1e-20
+  res$Qvalue <- round(-log10(res$Pvalue), 4)
+
+  # rescale extreme values respecting to the ranks
+  variation <- 1:length(extreme_qv) /10 + sapply(1:length(extreme_qv), function(i){ return (rbeta(1, 2, 8))})
+  converted_extreme <- round(-log10(extreme_min) + 0.1*sd(-log10(common_qv)) + variation, 4)
+  ordx <- order(extreme_qv)
+  res$Qvalue[extreme_id] <- sort(converted_extreme)[order(ordx)]
   
   return(res)
 }
@@ -1929,9 +1942,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       }
       rownames(presTab_pval) <- names(genesets)
       
-      # saveRDS(pres, "pres.rds")
-      # saveRDS(presTab_pval, "pres.rds")
-        
       # presTab_pval
       output$sppcdn <- downloadHandler(
         filename = "cell_pw_pval.csv",
@@ -1946,8 +1956,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       presTab[which(presTab < 1e-20)] <- 1e-20
       presTab <- round(-log10(presTab), 4) ### presTab -log10(p-value) -> Q-value
       presTab <<- presTab
+      
       pres <<- pres
-      # saveRDS(pres, "pres.rds")
+      saveRDS(pres, "pres.rds")
       
       # pres : which gene-sets are significant for each cells.
       # pres2 : for each gene-sets, how many cells are significant that gene-sets.
@@ -1961,6 +1972,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       
       # ------ CellPathwayDF
       CellPathwayDF <- buildCellPathwayDF(GroupInfo, pres, genesets)
+      saveRDS(genesets, "filtered_gs.rds")
       
       PP <- pathwayPvalue(GroupInfo, pres, pres2, genesets) 
       
