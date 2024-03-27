@@ -224,7 +224,7 @@ buildCellPathwayDF <- function(GroupInfo, pres, genesets) {
     nid <- which(CellPathwayDF$Cell == Cells[i])
     nSample_per_group[nid] <- length(nid)
   }
-  CellPathwayDF$N_cell <- as.character(nSample_per_group)
+  CellPathwayDF$N_cell <- paste0("/", as.character(nSample_per_group))
   # CellPathwayDF$Frequency <- round(CellPathwayDF$Frequency/nSample_per_group, 4)
   
   # ------ add length column
@@ -765,8 +765,10 @@ CellEnrichUI <- function(GroupInfo) {
       material_column(
         
         material_card(
-          title = shiny::tags$h4("Scatter & Bar"), depth = 3,
-          
+          title = shiny::tags$h4("Scatter & Bar"), depth = 3, 
+          material_row(
+            shiny::downloadButton("sctdn", "Scatter", style = "background-color : #616161 !important")
+          ),
           # Bar
           material_row(
             material_column(width = 6,
@@ -778,6 +780,11 @@ CellEnrichUI <- function(GroupInfo) {
           ),
           # Cell - Comparison
           material_row(
+              material_button("sigbtn", "Odds Ratio", icon = "sort", color = "blue darken-2"),
+              material_button("freqbtn", "Frequency", icon = "menu", color = "blue darken-2")
+          ),
+          
+          material_row(
             material_column(width = 6,
                             plotOutput("CellPlot", height = "480px")
             ),
@@ -786,29 +793,22 @@ CellEnrichUI <- function(GroupInfo) {
                             plotOutput("Comparison", height = "480px") # cell distribution
             )
           ),
+          
           material_row(
             material_column(
-              material_button("sigbtn", "Odds Ratio", icon = "sort", color = "blue darken-2"), 
-              material_button("freqbtn", "Frequency", icon = "menu", color = "blue darken-2"),
-              width = 3
-            ), 
-            material_column(
-              shiny::downloadButton("sctdn", "Save Scatter", style = "background-color : #616161 !important"),
-              shiny::downloadButton("imgdn", "Pathway Significance in each Group", style = "background-color : #616161 !important"),
-              shiny::downloadButton("cmpdn", "Pathway Significance in whole data", style = "background-color : #616161 !important")
-              , width = 6
-            )
-          ),
-          material_row(
-            material_column( 
-              width = 3
+              width = 2
             ),
             material_column(
-              shiny::downloadButton("sppcdn", "Cell-Pathway (P-values)", style = "background-color : #616161 !important"),
-              shiny::downloadButton("tbldn", " All Significant Pathways", style = "background-color : #616161 !important")
-              , width = 6
+              shiny::downloadButton("imgdn", "Pathway Significance in each Group", style = "background-color : #616161 !important")
+              , width = 4
+            ),
+            material_column(
+              width = 2
+            ),
+            material_column(
+              shiny::downloadButton("cmpdn", "Pathway Significance in whole data", style = "background-color : #616161 !important")
+              , width = 4
             )
-            
           ),
           material_row(
             material_card(
@@ -825,7 +825,10 @@ CellEnrichUI <- function(GroupInfo) {
                 material_button("Emphasize", "Plot the Selected Pathways", color = "blue darken-2"),
                 material_button("ClearList", "Clear List", color = "blue darken-2")
               ),
-              
+              material_row(
+                  shiny::downloadButton("sppcdn", "Cell-Pathway (P-values)", style = "background-color : #616161 !important"),
+                  shiny::downloadButton("tbldn", " All Significant Pathways", style = "background-color : #616161 !important")
+              )
             ),
             tags$head(
               tags$style(HTML(custom_css))
@@ -1863,7 +1866,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           sigidx <- which(p.adjust(tmp_pv, "fdr") <= q0)  # q-values cutoff 0.05
           tmp_pres[sigidx, i] <- unname(tG[tmp_cells[i]])
 
-          tmp_pv[which(tmp_pv < 1e-20)] <- 1e-20  # -12
+          tmp_pv[which(tmp_pv < 1e-20)] <- 1e-20  
 
           tmp_genes <- sapply(tmp_genes, function(i) {
             which(rc == i)
@@ -2164,7 +2167,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       lapply(1:length(Cells), function(i) {
         output[[paste0("dynamicGroupTable", i)]] <- DT::renderDataTable(
           DT::datatable(CellPathwayDF[which(CellPathwayDF$Cell==Cells[i]), -1],
-                        colnames = c("-log10 Qvalue" = "Qvalue", "N cells "="N_cell"),
+                        colnames = c("-log10 Qvalue" = "Qvalue", " "="N_cell"),
                         rownames=FALSE,
                         selection = 'single',
                         options=list(dom='ltp',
