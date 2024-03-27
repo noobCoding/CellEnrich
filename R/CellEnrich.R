@@ -1,4 +1,4 @@
-## 24.01.15
+## 24.03.25
 if(!require(waiter)){
   install.packages('waiter') # install 'waiter' if not installed.
 }
@@ -81,8 +81,12 @@ gnm <- function(v) {
   return(mat_discretised)
 }
 
-findSigGenes <- function(v, method = "CellEnrich - HALF median", Name) {
-  if (!method %in% c("Fast-GSEA", "CellEnrich - HALF median", "CellEnrich - median", "CellEnrich - mixture")) stop("wrong method")
+findSigGenes <- function(v, method = "CellEnrich - median", Name, coef=0.5) {
+  
+  if (!method %in% c("CellEnrich - median", 
+                     # "CellEnrich - WilcoxRankSum", 
+                     # "CellEnrich - mixture",
+                     "CellEnrich - FGSEA")) stop("wrong method")
   
   cat("findSigGenes started\n")
   rownames(v) <- colnames(v) <- NULL
@@ -98,25 +102,16 @@ findSigGenes <- function(v, method = "CellEnrich - HALF median", Name) {
     cat("scaling\n")
     
     cat("define Lists\n")
-    med2 <- function(v) {
+    med <- function(v, coef=0.5) {
       v <- v[which(v > 0)]
-      return(median(v) / 2)
+      return(median(v) * coef)
     }
     
-    medfull <- function(v) {
-      v <- v[which(v > 0)]
-      return(median(v))
-    }
-    
-    if (method == "CellEnrich - HALF median") {
+    if (method == "CellEnrich - median") {
       for (i in 1:ncol(v)) {
-        res[[i]] <- which(v[, i] > med2(v[, i]))
+        res[[i]] <- which(v[, i] > med(v[, i], coef=coef))
       }
-    } else if (method == "CellEnrich - median") {
-      for (i in 1:ncol(v)) {
-        res[[i]] <- which(v[, i] > medfull(v[, i]))
-      }
-    }
+    } 
   }
   
   names(res) <- Name
@@ -183,8 +178,6 @@ getHyperPvalue <- function(genes, genesets, A, lgs, q0, biobj) {
     biobj <- unname(colSums(biobj[genes, ]))
   }
   
-  # ------
-  
   pv <- sapply(1:length(genesets), function(i) {
     q <- biobj[i] # selected white ball
     m <- lgs[i] # white ball
@@ -224,22 +217,25 @@ buildCellPathwayDF <- function(GroupInfo, pres, genesets) {
   colnames(CellPathwayDF) <- c("Cell", "Pathway", "Frequency")
   CellPathwayDF$Cell <- as.character(CellPathwayDF$Cell)
   CellPathwayDF$Pathway <- names(genesets)[as.numeric(as.character(CellPathwayDF$Pathway))]
-  
   CellPathwayDF$Frequency <- as.numeric(as.character(CellPathwayDF$Frequency))
   
-  # ------ add length column
+  nSample_per_group <- CellPathwayDF$Frequency
+  for (i in 1:length(Cells)) {
+    nid <- which(CellPathwayDF$Cell == Cells[i])
+    nSample_per_group[nid] <- length(nid)
+  }
+  CellPathwayDF$N_cell <- as.character(nSample_per_group)
+  # CellPathwayDF$Frequency <- round(CellPathwayDF$Frequency/nSample_per_group, 4)
   
-  # Length <- getlgs(CellPathwayDF$Pathway)
+  # ------ add length column
   Size <- getlgs(genesets[as.character(CellPathwayDF$Pathway)])
   CellPathwayDF <- cbind(CellPathwayDF, Size)
-  
   # ------ select genesets with count > 1
   
   if(length(pres) != length(Cells)){
     CellPathwayDF <- CellPathwayDF %>%
       dplyr::filter(Frequency > 1)
   }
-  
   return(CellPathwayDF)
 }
 
@@ -308,6 +304,8 @@ pathwayPvalue <- function(GroupInfo, pres, pres2, genesets) {
   res$Qvalue <- res$Pvalue
   res$Qvalue[which(res$Qvalue < 1e-20)] <- 1e-20
   res$Qvalue <- round(-log10(res$Qvalue), 4)  ## -log10(p-value) ->> Q-value
+  
+  # colnames(res) <- c("Cell", "Pathway", "Pvalue", "-log10 Qvalue") 
   
   return(res)
 }
@@ -621,18 +619,25 @@ CellEnrichUI <- function(GroupInfo) {
                   "FCoption",
                   label = HTML("<font color='black' size='5'>Methods</font>"),#"Methods",
                   choiceNames = list(
-                    HTML("<font color='black'>CellEnrich - Fast GSEA</font>"),
-                    HTML("<font color='black'>CellEnrich - HALF median (coef = 0.5)</font>"),
-                    HTML("<font color='black'>CellEnrich - Median (coef = 1)</font>"),
-                    HTML("<font color='black'>CellEnrich - Mixture</font>")
-                    # HTML("<font color='black'>Fisher</font>")
+                    HTML("<font color='black'>CellEnrich - Median</font>"),
+                    # HTML("<font color='black'>CellEnrich - Wilcoxon RankSum</font>"),
+                    # HTML("<font color='black'>CellEnrich - Mixture</font>"),
+                    HTML("<font color='black'>CellEnrich - Fast GSEA</font>")
                   ),
-                  choiceValues = c("CellEnrich - FGSEA",
-                                   "CellEnrich - HALF median", 
-                                   "CellEnrich - median", 
-                                   "CellEnrich - mixture"),
+                  choiceValues = c("CellEnrich - median", 
+                                   # "CellEnrich - WilcoxRankSum", 
+                                   # "CellEnrich - mixture",
+                                   "CellEnrich - FGSEA"),
                   
-                  selected = "CellEnrich - HALF median",
+                  selected = "CellEnrich - median",
+                ),
+                material_number_box(
+                  input_id = "fgseaNsample",
+                  label = HTML("<font color='black' size='5'>FGSEA - Percentage (%) of Top-depth samples</font>"),
+                  min_value = 1,
+                  max_value = 100,
+                  initial_value = 10,
+                  step_size = 1
                 )
               ),
               material_card(
@@ -662,12 +667,12 @@ CellEnrichUI <- function(GroupInfo) {
             material_column(
               material_card(
                 material_number_box(
-                  input_id = "fgseaNsample",
-                  label = HTML("<font color='black' size='4'>FGSEA - N samples</font>"),
-                  min_value = 50,
-                  max_value = 1000,
-                  initial_value = 150,
-                  step_size = 50
+                  input_id = "medianCoefficient",
+                  label = HTML("<font color='black' size='4'>Median coefficient</font>"), 
+                  min_value = 0,
+                  max_value = 1,
+                  initial_value = 0.5,
+                  step_size = 0.05
                 ),
                 material_number_box(
                   input_id = "minGenesetSize",
@@ -701,7 +706,6 @@ CellEnrichUI <- function(GroupInfo) {
                   initial_value = 0.05,
                   step_size = 0.01
                 )
-                
               ),
               width = 4
             ),
@@ -1594,6 +1598,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       lgs <- getlgs(genesets)
       
       # ------ Genesetsize Flush
+      # genesets <- GenesetsizeFlush(genesets, lgs, 15, 500)
       genesets <- GenesetsizeFlush(genesets, lgs, input$minGenesetSize, input$maxGenesetSize)
       
       # ------ Gene Flush
@@ -1631,6 +1636,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       A <<- getBackgroundGenes(genesets)
       
       # ------ Calculate TSNE / UMAP First
+      # seu <- getTU(CountData, GroupInfo, "CellEnrich - FGSEA", topdims=50)
       seu <- getTU(CountData, GroupInfo, input$plotOption, topdims=input$topdims)
       seu <<- seu
       
@@ -1651,7 +1657,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       dfobj <<- dfobj
       
       cat("getTU Finished\n")
-      
       cat("running gc\n")
       gc()
       
@@ -1663,12 +1668,13 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         
         ###  genes & cells  matching 
         scaleCount <-  seu@assays$RNA@layers$scale.data
-        rownames(scaleCount) <- rownames(CountData)
+        rownames(scaleCount) <- rownames(seu)
         scaleCount <- scaleCount[rownames(scaleCount) %in% unique(unlist(genesets)),]
         colnames(scaleCount) <- colnames(CountData)
         
         ### sampling cells if N-cell > Nmax
-        Nmax <- input$fgseaNsample
+        # Nmax <- ncol(CountData) %/% 100 * input$fgseaNsample
+        Nmax <- 50
         
         if (is.null(Nmax)){
           shiny::showNotification("At least 50 samples are required to estimate via FGSEA. 50 samples are used.", type = "error", duration = 30)
@@ -1693,8 +1699,13 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           
           sample_idx <- lapply(n_group, function(g){
             id_g <- which(GroupInfo==g)
+            
             if(length(id_g) > sample_per_group){
-              id_g <- sample(id_g, sample_per_group, replace = F)
+              # id_g <- sample(id_g, sample_per_group, replace = F)
+              group_lib <- colSums(scaleCount[, id_g])
+              group_lib <- sort(group_lib, decreasing = T)
+              top <- names(group_lib[1:sample_per_group])
+              return(which(colnames(scaleCount) %in% top))
             }
             return(id_g)
           })
@@ -1704,12 +1715,19 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           if (length(sample_idx) < Nmax){
             x <- 1:ncol(scaleCount)
             x <- setdiff(x, sample_idx)
-            more_idx <- sample(x, Nmax-length(sample_idx), replace = F)
+            
+            # more_idx <- sample(x, Nmax-length(sample_idx), replace = F)
+            group_lib <- colSums(scaleCount[, x])
+            group_lib <- sort(group_lib, decreasing = T)
+            top <- names(group_lib[1:(Nmax-length(sample_idx))])
+            more_idx <- which(colnames(scaleCount) %in% top)
+            
             sample_idx <- c(sample_idx, more_idx)
           }
           sample_idx <- sort(sample_idx)
           scaleCount <- scaleCount[, sample_idx]
         }
+        
         conditions <- colnames(scaleCount)
         names(conditions) <- conditions
         permtimes = 100
@@ -1763,15 +1781,21 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           mylist <- sapply(GroupInfo,function(x) {})
           mylist[sample_idx] <- s
           
-          t = 1
           for (i in 1:length(mylist)){
-            if (i == sample_idx[t]){
-              if (t < length(sample_idx)){
-                t = t + 1
+            # i = 1
+            if (!i %in% sample_idx){    ## length == 0, empty
+              ti <- which(GroupInfo[sample_idx] == GroupInfo[i])
+              
+              best_next <- which(sample_idx[ti] > i)
+              
+              if (length(best_next) > 0){
+                best_next <- min(best_next)
+                
+              } else { 
+                best_next <- length(ti) ## 240325
               }
-            } else {
-              mylist[i] <- s[t]
-            }
+              mylist[i] <- s[best_next]
+            } 
           }
           s <- mylist
           names(s) <- GroupInfo
@@ -1782,10 +1806,10 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       }
       cat("s Finished\n")
       
-      # ------ Find Significant Genes with findMarkers
+      
+      # ------ Find Significant Genes with findMarkers ###################
       s2 <- findSigGenesGroup(CountData, GroupInfo, q0, TopCutoff = 5)
       rc <- rownames(CountData)
-      
       # ------ free memory to calculate biobj
       rm(CountData)
       
@@ -1817,7 +1841,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         }
       )
       
-      #############################################################################3
+      ############################################################################################3
       tmp_df <- data.frame()
       
       cat("biobj \n")
@@ -1834,29 +1858,29 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
             dplyr::select(genes) %>%
             unlist() %>%
             unname()
-          
+
           tmp_pv <- getHyperPvalue(tmp_genes, genesets, A, lgs, q0, biobj)
           sigidx <- which(p.adjust(tmp_pv, "fdr") <= q0)  # q-values cutoff 0.05
           tmp_pres[sigidx, i] <- unname(tG[tmp_cells[i]])
-          
+
           tmp_pv[which(tmp_pv < 1e-20)] <- 1e-20  # -12
-          
+
           tmp_genes <- sapply(tmp_genes, function(i) {
             which(rc == i)
           }, USE.NAMES = FALSE)
-          
+
           s[[i]] <- tmp_genes
-          
+
           names(s)[i] <- tmp_cells[i]
         }
-        
+
         colnames(tmp_pres) <- tmp_cells
         rownames(tmp_pres) <- names(genesets)
-        
+
         # fisher ODD RATIO
         ors <- rowSums(tmp_pres) / sum(tG)
         ors[which(ors != 0)] <- 1 / ors[which(ors != 0)]
-        
+
         for (i in 1:ncol(tmp_pres)) {
           pathways <- names(which(tmp_pres[, i] != 0))
           tmp_df <- rbind(
@@ -1875,19 +1899,18 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       lens <- length(s)
       lens100 <- round(lens / 100)
       
-      pres <- list()
-      
       cat("pres declare\n")
+      pres <- list()
       presTab_pval <- presTab <- c()
-      
       
       if (lens >= 100) {
         w$start()
         for (i in 1:lens) {
           if (i %% lens100 == 0) w$inc(1)
           prespv <- getHyperPvalue(rc[s[[i]]], genesets, A, lgs, q0, biobj)
-          pres[[i]] <- which(p.adjust(prespv, "fdr") <= q0)
-          presTab_pval <- cbind(presTab_pval, prespv)
+          pres[[i]] <- which(p.adjust(prespv, "fdr") < q0)
+          presTab_pval <- cbind(presTab_pval, p.adjust(prespv, "fdr"))
+          # presTab_pval <- cbind(presTab_pval, prespv)
         }
         w$close()
         colnames(presTab_pval) <- colnames(CountData)
@@ -1895,13 +1918,17 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       else {
         for (i in 1:lens) {
           prespv <- getHyperPvalue(rc[s[[i]]], genesets, A, lgs, q0, biobj)
-          pres[[i]] <- which(p.adjust(prespv, "fdr") <= q0)
-          presTab_pval <- cbind(presTab_pval, prespv) ### presTab_pval-> hyper P-value
+          pres[[i]] <- which(p.adjust(prespv, "fdr") < q0)
+          presTab_pval <- cbind(presTab_pval, p.adjust(prespv, "fdr"))
+          # presTab_pval <- cbind(presTab_pval, prespv) ### presTab_pval-> hyper P-value
         }
         colnames(presTab_pval) <- names(s)
       }
       rownames(presTab_pval) <- names(genesets)
       
+      # saveRDS(pres, "pres.rds")
+      # saveRDS(presTab_pval, "pres.rds")
+        
       # presTab_pval
       output$sppcdn <- downloadHandler(
         filename = "cell_pw_pval.csv",
@@ -1910,12 +1937,14 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         }
       )
       
+      ##############################################################################
       cat("pres defined\n")
       presTab <- presTab_pval 
       presTab[which(presTab < 1e-20)] <- 1e-20
       presTab <- round(-log10(presTab), 4) ### presTab -log10(p-value) -> Q-value
       presTab <<- presTab
       pres <<- pres
+      # saveRDS(pres, "pres.rds")
       
       # pres : which gene-sets are significant for each cells.
       # pres2 : for each gene-sets, how many cells are significant that gene-sets.
@@ -1925,6 +1954,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         names(pres2) <- names(genesets)[as.numeric(names(pres2))]
       }
       pres2 <<- pres2
+      saveRDS(pres2, "pres2.rds")
       
       # ------ CellPathwayDF
       CellPathwayDF <- buildCellPathwayDF(GroupInfo, pres, genesets)
@@ -1938,23 +1968,22 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         OR <<- OR
       }
       else {
-        # OR <- getOddRatio(GroupInfo, pres, pres2, genesets, 0.1)
         OR <<- getOddRatio(GroupInfo, pres, pres2, genesets, input$ORratio)
       }
       
-      #### Ceiling the max OR 
-      non_zero_or <- OR$OddsRatio[OR$OddsRatio > 0]
-      outlier_or <- round(mean(non_zero_or) + 2*sd(non_zero_or), 4)
-      
-      # retrieval
-      extreme_values <- OR$OddsRatio[OR$OddsRatio > outlier_or]
-      extreme_min <- max(OR$OddsRatio[OR$OddsRatio < min(extreme_values)])
-      
-      # rescale extreme values respecting to the ranks
-      variation <- 1:length(extreme_values) /10 + sapply(1:length(extreme_values), function(i){ return (rbeta(1, 2, 8))})
-      converted_extreme <- round(extreme_min + 0.1*sd(non_zero_or) + variation, 4)
-      ordx <- order(extreme_values)
-      OR$OddsRatio[OR$OddsRatio > outlier_or] <- sort(converted_extreme)[order(ordx)]
+      # #### Ceiling the max OR
+      # non_zero_or <- OR$OddsRatio[OR$OddsRatio > 0]
+      # outlier_or <- round(mean(non_zero_or) + 2*sd(non_zero_or), 4)
+      # 
+      # # retrieval
+      # extreme_values <- OR$OddsRatio[OR$OddsRatio > outlier_or]
+      # extreme_min <- max(OR$OddsRatio[OR$OddsRatio < min(extreme_values)])
+      # 
+      # # rescale extreme values respecting to the ranks
+      # variation <- 1:length(extreme_values) /10 + sapply(1:length(extreme_values), function(i){ return (rbeta(1, 2, 8))})
+      # converted_extreme <- round(extreme_min + 0.1*sd(non_zero_or) + variation, 4)
+      # ordx <- order(extreme_values)
+      # OR$OddsRatio[OR$OddsRatio > outlier_or] <- sort(converted_extreme)[order(ordx)]
       
       
       CellPathwayDFP <- CellPathwayDF %>%
@@ -2135,6 +2164,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       lapply(1:length(Cells), function(i) {
         output[[paste0("dynamicGroupTable", i)]] <- DT::renderDataTable(
           DT::datatable(CellPathwayDF[which(CellPathwayDF$Cell==Cells[i]), -1],
+                        colnames = c("-log10 Qvalue" = "Qvalue", "N cells "="N_cell"),
                         rownames=FALSE,
                         selection = 'single',
                         options=list(dom='ltp',
