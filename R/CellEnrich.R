@@ -1824,7 +1824,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       
       
       # ------ Find Significant Genes with findMarkers ###################
-      s2 <- findSigGenesGroup(CountData, GroupInfo, q0, TopCutoff = 5, coef = input$medianCoefficient)
+      s2 <- findSigGenesGroup(CountData, GroupInfo, q0, TopCutoff = 5)
       rc <- rownames(CountData)
       # ------ free memory to calculate biobj
       rm(CountData)
