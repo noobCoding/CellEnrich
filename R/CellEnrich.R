@@ -84,35 +84,33 @@ gnm <- function(v) {
 findSigGenes <- function(v, method = "CellEnrich - median", Name, coef=0.5) {
   
   if (!method %in% c("CellEnrich - median", 
-                     # "CellEnrich - WilcoxRankSum", 
-                     # "CellEnrich - mixture",
                      "CellEnrich - FGSEA")) stop("wrong method")
   
   cat("findSigGenes started\n")
   rownames(v) <- colnames(v) <- NULL
   
   res <- list()
-  if (method == "CellEnrich - mixture") {
-    v <- gnm(v)
+  # if (method == "CellEnrich - mixture") {
+  #   v <- gnm(v)
+  #   for (i in 1:ncol(v)) {
+  #     res[[i]] <- which(v[, i] > 0)
+  #   }
+  # }
+  # else { # median
+  cat("scaling\n")
+  
+  cat("define Lists\n")
+  med <- function(v, coef=0.5) {
+    v <- v[which(v > 0)]
+    return(median(v) * coef)
+  }
+  
+  if (method == "CellEnrich - median") {
     for (i in 1:ncol(v)) {
-      res[[i]] <- which(v[, i] > 0)
+      res[[i]] <- which(v[, i] > med(v[, i], coef=coef))
     }
-  }
-  else { # median
-    cat("scaling\n")
-    
-    cat("define Lists\n")
-    med <- function(v, coef=0.5) {
-      v <- v[which(v > 0)]
-      return(median(v) * coef)
-    }
-    
-    if (method == "CellEnrich - median") {
-      for (i in 1:ncol(v)) {
-        res[[i]] <- which(v[, i] > med(v[, i], coef=coef))
-      }
-    } 
-  }
+  } 
+  # }
   
   names(res) <- Name
   return(res)
@@ -663,7 +661,7 @@ CellEnrichUI <- function(GroupInfo) {
                   step_size = 10
                 )
               )
-              , width = 3 ## column width
+              , width = 2 ## column width
             ),
             
             material_column(
@@ -672,20 +670,20 @@ CellEnrichUI <- function(GroupInfo) {
                   input_id = "medianCoefficient",
                   label = HTML("<font color='black' size='4'>Median coefficient</font>"), 
                   min_value = 0,
-                  max_value = 1,
+                  max_value = 2,
                   initial_value = 1,
                   step_size = 0.05
                 ),
                 material_number_box(
                   input_id = "fgseaNsample",
                   label = HTML("<font color='black' size='4'>FGSEA - N(%) of Top-depth samples</font>"),
-                  min_value = 1,
+                  min_value = 0,
                   max_value = 100,
                   initial_value = 10,
                   step_size = 1
                 )
               )
-              , width = 2 ## column width
+              , width = 3 ## column width
             ),
             material_column(
               material_card(
@@ -720,7 +718,7 @@ CellEnrichUI <- function(GroupInfo) {
                   fileInput("user_gs", "", placeholder = "RData format is required!"),
                 )
               ),
-              width = 4
+              width = 3
             ),
             material_column(
               material_card( title = HTML("<font color='black' size='5'> </font>"),
@@ -1820,13 +1818,13 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         }
         
       } else { ### other cases
-        s <- findSigGenes(CountData, input$FCoption, GroupInfo)
+        s <- findSigGenes(CountData, input$FCoption, GroupInfo, coef = input$medianCoefficient)
       }
       cat("s Finished\n")
       
       
       # ------ Find Significant Genes with findMarkers ###################
-      s2 <- findSigGenesGroup(CountData, GroupInfo, q0, TopCutoff = 5)
+      s2 <- findSigGenesGroup(CountData, GroupInfo, q0, TopCutoff = 5, coef = input$medianCoefficient)
       rc <- rownames(CountData)
       # ------ free memory to calculate biobj
       rm(CountData)
