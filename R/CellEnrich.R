@@ -1,4 +1,4 @@
-## 24.03.25
+## 24.03.29
 if(!require(waiter)){
   install.packages('waiter') # install 'waiter' if not installed.
 }
@@ -188,7 +188,8 @@ getHyperPvalue <- function(genes, genesets, A, lgs, q0, biobj) {
   return(pv)
 }
 
-buildCellPathwayDF <- function(GroupInfo, pres, genesets) {
+buildCellPathwayDF <- function(GroupInfo, pres, genesets, pwFrequency=0.1) {
+  # pwFrequency = 0.1
   cat("buildCellPathwayDF\n")
   Cells <- unique(GroupInfo)
   CellPathwayDF <- data.frame(stringsAsFactors = FALSE)
@@ -205,6 +206,7 @@ buildCellPathwayDF <- function(GroupInfo, pres, genesets) {
   }
   else{
     for (i in 1:length(Cells)) {
+      # i = 1
       thisCell <- Cells[i]
       tt <- table(unlist(pres[which(thisCell == GroupInfo)]))
       
@@ -220,22 +222,19 @@ buildCellPathwayDF <- function(GroupInfo, pres, genesets) {
   CellPathwayDF$Frequency <- as.numeric(as.character(CellPathwayDF$Frequency))
   
   nSample_per_group <- CellPathwayDF$Frequency
-  for (i in 1:length(Cells)) {
-    nid <- which(CellPathwayDF$Cell == Cells[i])
-    nSample_per_group[nid] <- length(nid)
+  for (i in 1:length(nSample_per_group)) {
+    nid <- which(GroupInfo == CellPathwayDF$Cell[i])
+    nSample_per_group[i] <- length(nid)
   }
   CellPathwayDF$N_cell <- paste0("/", as.character(nSample_per_group))
-  # CellPathwayDF$Frequency <- round(CellPathwayDF$Frequency/nSample_per_group, 4)
   
   # ------ add length column
   Size <- getlgs(genesets[as.character(CellPathwayDF$Pathway)])
   CellPathwayDF <- cbind(CellPathwayDF, Size)
   # ------ select genesets with count > 1
   
-  if(length(pres) != length(Cells)){
-    CellPathwayDF <- CellPathwayDF %>%
-      dplyr::filter(Frequency > 1)
-  }
+  CellPathwayDF <- CellPathwayDF %>% dplyr::filter(Frequency > 1)
+  
   return(CellPathwayDF)
 }
 
@@ -334,7 +333,7 @@ pathwayPvalue <- function(GroupInfo, pres, pres2, genesets) {
 
 # Group_specific_OR = (6/(K-6)) / (14/(N-14))
 
-getOddRatio <- function(GroupInfo, pres, pres2, genesets, ratio) {
+getOddRatio <- function(GroupInfo, pres, pres2, genesets, pwFrequency) {
   cat("getOddRatio\n")
   
   res <- data.frame(stringsAsFactors = FALSE)
@@ -349,7 +348,7 @@ getOddRatio <- function(GroupInfo, pres, pres2, genesets, ratio) {
       if (is.na(B)) {
         return(0)
       }
-      if (B < length(thisCellIdx) * ratio) {
+      if (B < length(thisCellIdx) * pwFrequency) {
         return(0)
       }
       A <- pres2[names(genesets)[k]] # 전체 Cell에서 유의한 회수
@@ -626,31 +625,20 @@ CellEnrichUI <- function(GroupInfo) {
           divider = TRUE,
           style = "border : solid 0.5em #1976d2",
           material_row(
+            
             material_column(
               material_card(
                 radioButtons(
                   "FCoption",
                   label = HTML("<font color='black' size='5'>Methods</font>"),#"Methods",
                   choiceNames = list(
-                    HTML("<font color='black'>CellEnrich - Median</font>"),
-                    # HTML("<font color='black'>CellEnrich - Wilcoxon RankSum</font>"),
-                    # HTML("<font color='black'>CellEnrich - Mixture</font>"),
-                    HTML("<font color='black'>CellEnrich - Fast GSEA</font>")
+                    HTML("<font color='black' size='4'>CellEnrich - Median</font>"),
+                    HTML("<font color='black' size='4'>CellEnrich - Fast GSEA</font>")
                   ),
                   choiceValues = c("CellEnrich - median", 
-                                   # "CellEnrich - WilcoxRankSum", 
-                                   # "CellEnrich - mixture",
                                    "CellEnrich - FGSEA"),
                   
                   selected = "CellEnrich - median",
-                ),
-                material_number_box(
-                  input_id = "fgseaNsample",
-                  label = HTML("<font color='black' size='5'>FGSEA - Percentage (%) of Top-depth samples</font>"),
-                  min_value = 1,
-                  max_value = 100,
-                  initial_value = 10,
-                  step_size = 1
                 )
               ),
               material_card(
@@ -658,9 +646,9 @@ CellEnrichUI <- function(GroupInfo) {
                   "plotOption",
                   label = HTML("<font color='black' size='5'>Scatter Plot</font>"),#"Scatter Plot",
                   choiceNames = list(
-                    tags$span(style = "color:black", "PCA"),
-                    tags$span(style = "color:black", "TSNE"),
-                    tags$span(style = "color:black", "UMAP")
+                    HTML("<font color='black' size='4'>PCA</font>"),
+                    HTML("<font color='black' size='4'>TSNE</font>"),
+                    HTML("<font color='black' size='4'>UMAP</font>")
                   ),
                   choiceValues = c("PCA", "TSNE", "UMAP"),
                   selected = "UMAP"
@@ -668,59 +656,36 @@ CellEnrichUI <- function(GroupInfo) {
                 
                 material_number_box(
                   input_id = "topdims",
-                  label = HTML("<font color='black' size='5'>Top-N dims</font>"), # top dims
+                  label = HTML("<font color='black' size='4'>Top-N dims</font>"), # top dims
                   min_value = 30,
                   max_value = 100,
                   initial_value = 50,
                   step_size = 10
                 )
-              ),
-              width = 4
+              )
+              , width = 3 ## column width
             ),
+            
             material_column(
-              material_card(
+              material_card(  title = HTML("<font color='black' size='4'> </font>"), 
                 material_number_box(
                   input_id = "medianCoefficient",
                   label = HTML("<font color='black' size='4'>Median coefficient</font>"), 
                   min_value = 0,
                   max_value = 1,
-                  initial_value = 0.5,
+                  initial_value = 1,
                   step_size = 0.05
                 ),
                 material_number_box(
-                  input_id = "minGenesetSize",
-                  label = HTML("<font color='black' size='4'>Minimum Gene-set Size</font>"), #"Minimum Gene-set Size",
-                  min_value = 10,
-                  max_value = 30,
-                  initial_value = 15,
-                  step_size = 5
-                ),
-                material_number_box(
-                  input_id = "maxGenesetSize",
-                  label = HTML("<font color='black' size='4'>Maximum Gene-set Size</font>"), #"Maximum Gene-set Size",
-                  min_value = 250,
-                  max_value = 750,
-                  initial_value = 500,
-                  step_size = 5
-                ),
-                material_number_box(
-                  input_id = "ORratio",
-                  label = HTML("<font color='black' size='4'>Pathway Frequency</font>"),
-                  min_value = 0,
-                  max_value = 0.5,
-                  initial_value = 0.1,
-                  step_size = 0.05
-                ),
-                material_number_box(
-                  input_id = "qvalueCutoff",
-                  label = HTML("<font color='black' size='4'>Q-value threshold</font>"),
-                  min_value = 0,
-                  max_value = 0.25,
-                  initial_value = 0.05,
-                  step_size = 0.01
+                  input_id = "fgseaNsample",
+                  label = HTML("<font color='black' size='4'>FGSEA - N(%) of Top-depth samples</font>"),
+                  min_value = 1,
+                  max_value = 100,
+                  initial_value = 10,
+                  step_size = 1
                 )
-              ),
-              width = 4
+              )
+              , width = 2 ## column width
             ),
             material_column(
               material_card(
@@ -756,6 +721,43 @@ CellEnrichUI <- function(GroupInfo) {
                 )
               ),
               width = 4
+            ),
+            material_column(
+              material_card( title = HTML("<font color='black' size='5'> </font>"),
+                material_number_box(
+                  input_id = "minGenesetSize",
+                  label = HTML("<font color='black' size='4.5'>Minimum Geneset Size</font>"), #"Minimum Gene-set Size",
+                  min_value = 10,
+                  max_value = 30,
+                  initial_value = 15,
+                  step_size = 5
+                ),
+                material_number_box(
+                  input_id = "maxGenesetSize",
+                  label = HTML("<font color='black' size='4.5'>Maximum Geneset Size</font>"), #"Maximum Gene-set Size",
+                  min_value = 250,
+                  max_value = 750,
+                  initial_value = 500,
+                  step_size = 5
+                ),
+                material_number_box(
+                  input_id = "pwFrequency",
+                  label = HTML("<font color='black' size='4.5'>Pathway Frequency</font>"),
+                  min_value = 0,
+                  max_value = 0.5,
+                  initial_value = 0.1,
+                  step_size = 0.05
+                ),
+                material_number_box(
+                  input_id = "qvalueCutoff",
+                  label = HTML("<font color='black' size='4.5'>Q-value threshold</font>"),
+                  min_value = 0,
+                  max_value = 1,
+                  initial_value = 0.05,
+                  step_size = 0.01
+                )
+              ),
+              width = 2
             )
           ),
           shiny::tags$div(class = "runbutton", 
@@ -1950,7 +1952,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         }
       )
       
-      ##############################################################################
       cat("pres defined\n")
       presTab <- presTab_pval 
       presTab[which(presTab < 1e-20)] <- 1e-20
@@ -1971,8 +1972,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       saveRDS(pres2, "pres2.rds")
       
       # ------ CellPathwayDF
-      CellPathwayDF <- buildCellPathwayDF(GroupInfo, pres, genesets)
-      saveRDS(genesets, "filtered_gs.rds")
+      CellPathwayDF <- buildCellPathwayDF(GroupInfo, pres, genesets, input$pwFrequency)
+      # saveRDS(genesets, "filtered_gs.rds")
       
       PP <- pathwayPvalue(GroupInfo, pres, pres2, genesets) 
       
@@ -1983,7 +1984,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         OR <<- OR
       }
       else {
-        OR <<- getOddRatio(GroupInfo, pres, pres2, genesets, input$ORratio)
+        OR <<- getOddRatio(GroupInfo, pres, pres2, genesets, input$pwFrequency)
       }
       
       # #### Ceiling the max OR
@@ -2187,7 +2188,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                                      scrollX = TRUE,
                                      autoWidth = TRUE,
                                      lengthChange = FALSE,
-                                     order = list(list(4,'desc'))) # odds ratio based
+                                     order = list(list(5,'desc'))) # odds ratio based
           ))
       })
       
