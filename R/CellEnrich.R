@@ -1,4 +1,4 @@
-## 24.04.05
+## 24.04.04
 if(!require(waiter)){
   install.packages('waiter') # install 'waiter' if not installed.
 }
@@ -90,13 +90,6 @@ findSigGenes <- function(v, method = "CellEnrich - median", Name, coef=1) {
   rownames(v) <- colnames(v) <- NULL
 
   res <- list()
-  # if (method == "CellEnrich - mixture") {
-  #   v <- gnm(v)
-  #   for (i in 1:ncol(v)) {
-  #     res[[i]] <- which(v[, i] > 0)
-  #   }
-  # }
-  # else { # median
   cat("scaling\n")
 
   cat("define Lists\n")
@@ -110,8 +103,6 @@ findSigGenes <- function(v, method = "CellEnrich - median", Name, coef=1) {
       res[[i]] <- which(v[, i] > med(v[, i], coef=coef))
     }
   }
-  # }
-
   names(res) <- Name
   return(res)
 }
@@ -870,7 +861,7 @@ CellEnrichUI <- function(GroupInfo) {
           ),
 
           material_card(
-            title = shiny::tags$h4("Gene activity"), divider = TRUE,
+            title = shiny::tags$h4("Gene Activity (GA) Map"), divider = TRUE,
             material_row(
               material_column(
                 plotOutput("geneAct", height = "1000px")
@@ -879,11 +870,15 @@ CellEnrichUI <- function(GroupInfo) {
             ),
             material_row(
               material_column(
-                width = 5
+                width = 3
               ),
               material_column(
-                shiny::downloadButton("actScore", "Save Gene Activity Map", style = "background-color : #616161 !important")
-                , width = 7
+                shiny::downloadButton("actScore", "Save GA Map", style = "background-color : #616161 !important"),
+                shiny::downloadButton("actScoredata", "Save GA Data", style = "background-color : #616161 !important")
+                , width = 6
+              ),
+              material_column(
+                 width = 3
               )
             )
           )
@@ -1313,6 +1308,10 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
   library(ggrepel)
   options(useFancyQuotes = FALSE)
 
+  if (is.factor(GroupInfo)){
+    GroupInfo <- unfactor(GroupInfo)
+  }
+
   server <- function(input, output, session) {
 
     toptab <- function (genesets, TOPN = 3, OddsRatio = TRUE, myplot='biplot'){
@@ -1366,7 +1365,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
               }
 
               return( (B/(K - B)) / (A/(N - A)) )
-              # return((B / K) / (A / N))
             })
           ), 4)
           # Cell, Pathway, OR
@@ -1382,9 +1380,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         }
 
         ## log scale for OR
-        # tab <- ortab
         tab <- log1p(tab)
-
       }
       else { # FREQUENCY
 
@@ -1424,10 +1420,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         tab <- tab[high, ]
       }
 
-      saveRDS(tab, "ortab.rds")
+      # saveRDS(tab, "ortab.rds")
       return(tab)
     }
-
 
     buildbiplot <- function(biFont, biX, biY, genesets, TOPN = 5, OddsRatio = TRUE, gsFont=5, axtxt=13, axlab=15,
                             myplot='biplot', tab=matrix(0, 0, 0)) {
@@ -1530,58 +1525,50 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       return(HeatPlot)
     }
 
-    buildGeneActivity <- function(selected_pathway, group, seu, genesets) {
+    buildGeneActivity <- function(selected_pathway, group, genesets, logtab) {
 
       if (!is.null(selected_pathway) && !is.null(group)){
 
         memGenes <- genesets[selected_pathway]
         memGenes <- unlist(memGenes)
-        memGenes <- memGenes[memGenes %in% rownames(seu)]
-        sub <- seu[memGenes, ]
-
-        ##---
-        tab <- apply(sub@assays$RNA@layers$data, 1, function(v){
-          v <- v - median(v[(v > 0)])
-        })
-        tab <- t(tab)
-        tab <- tab[, which(sub$cell_type==group)]
-        rownames(tab) <- memGenes
+        memGenes <- memGenes[memGenes %in% rownames(logtab)]
+        mat_data <- logtab[memGenes, which(colnames(logtab)==group)]
 
         ### sorting genes
-        avga <- rowMeans(tab)
-        tab <- tab[memGenes[order(avga, decreasing = T)], ]
+        avga <- rowMeans(mat_data)
+        mat_data <- mat_data[memGenes[order(avga, decreasing = T)], ]
 
-        mat_data <- as.matrix(round(tab, 2))
+        mat_data <- round(mat_data, 2)
         col_breaks <- c(seq(min(mat_data), max(mat_data), length.out=101))
-        my_palette <- c(colorRampPalette(c("blue", "white", "red"))(length(col_breaks)-1))
+        my_palette <- c(colorRampPalette(c("blue2", "white", "red2"))(length(col_breaks)-1))
 
         library(gplots)
         actMap <<- heatmap.2(mat_data,
-                             main = paste0(selected_pathway, " @", group),
-                             density.info="none",
-                             trace="none",
-                             margins =c(1,10),
-                             col=my_palette,
-                             scale = "none",
-                             breaks=col_breaks,
-                             dendrogram="col",
-                             Colv=TRUE,
-                             Rowv = FALSE,
-                             labRow = NULL,
-                             labCol = NA,
-                             symkey=T,
+                               main = paste0(selected_pathway, " @", group),
+                               density.info="histogram",
+                               trace="none",
+                               margins =c(1,10),
+                               col=my_palette,
+                               scale = "none",
+                               breaks=col_breaks,
+                               dendrogram="col",
+                               Colv=TRUE,
+                               Rowv = FALSE,
+                               labRow = NULL,
+                               labCol = NA,
+                               symkey=T,
 
-                             # additional control of the presentation
-                             lhei = c(2, 10),       # adapt the relative areas devoted to the matrix
-                             lwid = c(2, 13),
-                             cexRow = 1,
-                             cexCol = 1,
-                             key.title = NA,
-                             key.xlab = NA,
-                             key.ylab = NA,
-                             key.par = list(mar=c(4, 1, 2, 1),
-                                            mgp=c(1.5, 0.5, 0),
-                                            cex=1)
+                               # additional control of the presentation
+                               lhei = c(2, 8),       # adapt the relative areas devoted to the matrix
+                               lwid = c(2, 8),
+                               cexRow = 1,
+                               cexCol = 1,
+                               key.title = NA,
+                               key.xlab = NA,
+                               key.ylab = NA,
+                               key.par = list(mar=c(4, 1, 2, 1),
+                                              mgp=c(1.5, 0.5, 0),
+                                              cex=1)
         )
         return(actMap)
       } else {
@@ -1610,7 +1597,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
     ### CODES
     # variable initialize
 
-    dtobj <- dfobj <- pres <- pres2 <- presTab <- ""
+    dtobj <- dfobj <- pres <- pres2 <- presTab <- logtab <- ""
     CellPathwayDF <- ""
     gt <- Cells <- A <- ""
     CellScatter <- ""
@@ -1737,6 +1724,14 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       seu <- getTU(CountData, GroupInfo, input$plotOption, topdims=input$topdims)
       seu <<- seu
 
+      # apply logtab ####
+      logtab <- apply(seu@assays$RNA$data, 1, function(v){
+        v <- v - median(v[v > 0])
+      })
+      logtab <- t(logtab)
+      colnames(logtab) <- GroupInfo
+      logtab <<- logtab
+
       #PCA
       if (input$plotOption == "PCA") {
         dfobj <- data.frame(Embeddings(seu, 'pca')[,1:2], col = GroupInfo, stringsAsFactors = FALSE)
@@ -1798,6 +1793,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
             id_g <- which(GroupInfo==g)
 
             if(length(id_g) > sample_per_group){
+              # id_g <- sample(id_g, sample_per_group, replace = F)
               group_lib <- colSums(scaleCount[, id_g])
               group_lib <- sort(group_lib, decreasing = T)
               top <- names(group_lib[1:sample_per_group])
@@ -1812,6 +1808,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
             x <- 1:ncol(scaleCount)
             x <- setdiff(x, sample_idx)
 
+            # more_idx <- sample(x, Nmax-length(sample_idx), replace = F)
             group_lib <- colSums(scaleCount[, x])
             group_lib <- sort(group_lib, decreasing = T)
             top <- names(group_lib[1:(Nmax-length(sample_idx))])
@@ -1864,7 +1861,10 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           })
           tmp <- as.numeric(unlist(tmp))
         })
-        print(toc())
+
+        mytoc <- toc()
+        print(mytoc)
+        # saveRDS(mytoc, 'mytoc.rds')
 
         if (is.null(sample_idx)){
           names(s) <- GroupInfo
@@ -1901,6 +1901,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
       # ------ Find Significant Genes with findMarkers ####
       s2 <- findSigGenesGroup(CountData, GroupInfo, q0, TopCutoff = 5)
+      s2 <<- s2
+
       rc <- rownames(CountData)
       # ----- Free memory to calculate biobj ####
       rm(CountData)
@@ -2002,6 +2004,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           prespv <- getHyperPvalue(rc[s[[i]]], genesets, A, lgs, q0, biobj)
           pres[[i]] <- which(p.adjust(prespv, "fdr") < q0)
           presTab_pval <- cbind(presTab_pval, p.adjust(prespv, "fdr"))
+          # presTab_pval <- cbind(presTab_pval, prespv)
         }
         w$close()
         colnames(presTab_pval) <- colnames(CountData)
@@ -2011,6 +2014,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           prespv <- getHyperPvalue(rc[s[[i]]], genesets, A, lgs, q0, biobj)
           pres[[i]] <- which(p.adjust(prespv, "fdr") < q0)
           presTab_pval <- cbind(presTab_pval, p.adjust(prespv, "fdr"))
+          # presTab_pval <- cbind(presTab_pval, prespv) ### presTab_pval-> hyper P-value
         }
         colnames(presTab_pval) <- names(s)
       }
@@ -2031,7 +2035,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       presTab <<- presTab
 
       pres <<- pres
-      saveRDS(pres, "pres.rds")
+      # saveRDS(pres, "pres.rds")
 
       # pres : which gene-sets are significant for each cells.
       # pres2 : for each gene-sets, how many cells are significant that gene-sets.
@@ -2041,10 +2045,11 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         names(pres2) <- names(genesets)[as.numeric(names(pres2))]
       }
       pres2 <<- pres2
-      saveRDS(pres2, "pres2.rds")
+      # saveRDS(pres2, "pres2.rds")
 
       # ------ CellPathwayDF
       CellPathwayDF <- buildCellPathwayDF(GroupInfo, pres, genesets, input$pwFrequency)
+      # saveRDS(genesets, "filtered_gs.rds")
 
       PP <- pathwayPvalue(GroupInfo, pres, pres2, genesets)
 
@@ -2164,6 +2169,11 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       }
 
 
+
+      # group 별 significant pathways
+      # group 별DE Genes
+
+      # is counted
       dtobj <<- buildDT(pres2)
 
       # ------ Color define
@@ -2212,6 +2222,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                       paste0("dynamicGroupTable", i),
                       width = "100%",
                       height = "100%"
+                      # height = "500px"
                     )
 
                   )
@@ -2225,6 +2236,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
 
       # ------ fill dynamic table
+      # ordered by Count , not length;
       lapply(1:length(Cells), function(i) {
         output[[paste0("dynamicGroupTable", i)]] <- DT::renderDataTable(
           DT::datatable(CellPathwayDF[which(CellPathwayDF$Cell==Cells[i]), -1],
@@ -2421,11 +2433,18 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         }
 
         #---- Gene Activity triggered ####
-        output$geneAct <- renderPlot(buildGeneActivity(rdf$current_pw, rdf$current_group, seu, genesets))
+        output$geneAct <- renderPlot(buildGeneActivity(rdf$current_pw, rdf$current_group, genesets, logtab))
+
+        output$actScoredata <-  downloadHandler(
+          filename = "GA_data.csv",
+          content = function(file) {
+            write.csv(actMap$carpet, file, row.names = FALSE)
+          }
+        )
 
         output$actScore <- downloadHandler(
           filename = function() {
-            "geneactivity.pdf"
+            "GA_map.pdf"
           },
           content = function(file) {
 
@@ -2448,7 +2467,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                       symkey=T,
 
                       # additional control of the presentation
-                      lhei = c(2, 13),
+                      lhei = c(2, 13),       # adapt the relative areas devoted to the matrix
                       lwid = c(2, 10),
                       cexRow = 1.5,
                       cexCol = 2,
