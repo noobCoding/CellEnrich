@@ -1,4 +1,4 @@
-## 24.04.04
+## 24.04.05
 if(!require(waiter)){
   install.packages('waiter') # install 'waiter' if not installed.
 }
@@ -1798,7 +1798,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
             id_g <- which(GroupInfo==g)
 
             if(length(id_g) > sample_per_group){
-              # id_g <- sample(id_g, sample_per_group, replace = F)
               group_lib <- colSums(scaleCount[, id_g])
               group_lib <- sort(group_lib, decreasing = T)
               top <- names(group_lib[1:sample_per_group])
@@ -1813,7 +1812,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
             x <- 1:ncol(scaleCount)
             x <- setdiff(x, sample_idx)
 
-            # more_idx <- sample(x, Nmax-length(sample_idx), replace = F)
             group_lib <- colSums(scaleCount[, x])
             group_lib <- sort(group_lib, decreasing = T)
             top <- names(group_lib[1:(Nmax-length(sample_idx))])
@@ -1866,10 +1864,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           })
           tmp <- as.numeric(unlist(tmp))
         })
-
-        mytoc <- toc()
-        print(mytoc)
-        # saveRDS(mytoc, 'mytoc.rds')
+        print(toc())
 
         if (is.null(sample_idx)){
           names(s) <- GroupInfo
@@ -2007,7 +2002,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           prespv <- getHyperPvalue(rc[s[[i]]], genesets, A, lgs, q0, biobj)
           pres[[i]] <- which(p.adjust(prespv, "fdr") < q0)
           presTab_pval <- cbind(presTab_pval, p.adjust(prespv, "fdr"))
-          # presTab_pval <- cbind(presTab_pval, prespv)
         }
         w$close()
         colnames(presTab_pval) <- colnames(CountData)
@@ -2017,7 +2011,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           prespv <- getHyperPvalue(rc[s[[i]]], genesets, A, lgs, q0, biobj)
           pres[[i]] <- which(p.adjust(prespv, "fdr") < q0)
           presTab_pval <- cbind(presTab_pval, p.adjust(prespv, "fdr"))
-          # presTab_pval <- cbind(presTab_pval, prespv) ### presTab_pval-> hyper P-value
         }
         colnames(presTab_pval) <- names(s)
       }
@@ -2052,7 +2045,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
       # ------ CellPathwayDF
       CellPathwayDF <- buildCellPathwayDF(GroupInfo, pres, genesets, input$pwFrequency)
-      # saveRDS(genesets, "filtered_gs.rds")
 
       PP <- pathwayPvalue(GroupInfo, pres, pres2, genesets)
 
@@ -2066,25 +2058,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         OR <<- getOddRatio(GroupInfo, pres, pres2, genesets, input$pwFrequency)
       }
 
-      # #### Ceiling the max OR
-      # non_zero_or <- OR$OddsRatio[OR$OddsRatio > 0]
-      # outlier_or <- round(mean(non_zero_or) + 2*sd(non_zero_or), 4)
-      #
-      # # retrieval
-      # extreme_values <- OR$OddsRatio[OR$OddsRatio > outlier_or]
-      # extreme_min <- max(OR$OddsRatio[OR$OddsRatio < min(extreme_values)])
-      #
-      # # rescale extreme values respecting to the ranks
-      # variation <- 1:length(extreme_values) /10 + sapply(1:length(extreme_values), function(i){ return (rbeta(1, 2, 8))})
-      # converted_extreme <- round(extreme_min + 0.1*sd(non_zero_or) + variation, 4)
-      # ordx <- order(extreme_values)
-      # OR$OddsRatio[OR$OddsRatio > outlier_or] <- sort(converted_extreme)[order(ordx)]
-
-
       CellPathwayDFP <- CellPathwayDF %>%
         inner_join(PP) %>% inner_join(OR)  %>% select(-Pvalue)  # %>% filter(Qvalue > 1)
 
-      # CellPathwayDFP <- CellPathwayDFP %>% filter(Qvalue > 1)
       CellPathwayDFP <- CellPathwayDFP %>% filter(Qvalue > -log10(q0))
       output$tbldn <- downloadHandler(
         filename = "all_sig_pathways.csv",
@@ -2188,11 +2164,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       }
 
 
-
-      # group 별 significant pathways
-      # group 별DE Genes
-
-      # is counted
       dtobj <<- buildDT(pres2)
 
       # ------ Color define
@@ -2241,7 +2212,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                       paste0("dynamicGroupTable", i),
                       width = "100%",
                       height = "100%"
-                      # height = "500px"
                     )
 
                   )
@@ -2255,7 +2225,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
 
       # ------ fill dynamic table
-      # ordered by Count , not length;
       lapply(1:length(Cells), function(i) {
         output[[paste0("dynamicGroupTable", i)]] <- DT::renderDataTable(
           DT::datatable(CellPathwayDF[which(CellPathwayDF$Cell==Cells[i]), -1],
@@ -2479,7 +2448,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                       symkey=T,
 
                       # additional control of the presentation
-                      lhei = c(2, 13),       # adapt the relative areas devoted to the matrix
+                      lhei = c(2, 13),
                       lwid = c(2, 10),
                       cexRow = 1.5,
                       cexCol = 2,
