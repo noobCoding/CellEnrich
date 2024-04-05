@@ -1572,8 +1572,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                              symkey=T,
 
                              # additional control of the presentation
-                             lhei = c(2, 8),       # adapt the relative areas devoted to the matrix
-                             lwid = c(2, 8),
+                             lhei = c(2, 10),       # adapt the relative areas devoted to the matrix
+                             lwid = c(2, 13),
                              cexRow = 1,
                              cexCol = 1,
                              key.title = NA,
