@@ -16,7 +16,8 @@ Depends:
 biocViews:
 Imports:
     dplyr,
-    DT,    
+    DT,
+    tictoc,
     farver,    
     fgsea,
     ggplot2,
