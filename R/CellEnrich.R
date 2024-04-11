@@ -1859,7 +1859,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
             ct <- data.frame(table(tmp))
 
             # res <- ct[ct$Freq >= quantile(ct$Freq)["75%"],]
-            res <- ct[ct$Freq >= quantile(ct$Freq)["0%"],]
+            res <- ct[ct$Freq >= quantile(ct$Freq)["50%"],]
             idx <- paste0(sapply(res$tmp, function(x){which(rownames(CountData)==x)}), collapse = ', ')
           })
         }, .id = "condition")
