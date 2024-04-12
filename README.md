@@ -16,6 +16,11 @@ NOTE: on a fresh installation, users may need to install some required interpret
 * Seurat >= 5.0.0 is REQUIRED
 <br />  
 
+Install Dependent Packages:
+*	Some packages require to be installed from sources that need compilation and a proper version of [RTools](https://cran.r-project.org/bin/windows/Rtools/) installed.
+*	It’s recommended to install devtools, and BiocManager packages first, to install the following packages in Github / Bioconductor (not in CRAN).
+
+
 ```R
 # install required packages
 install.packages('Seurat') # RStudio may need a RESTART for Seurat v5.0.1 to be activated
