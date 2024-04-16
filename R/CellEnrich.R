@@ -1696,7 +1696,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       }
 
       ## -- remove non-expressed genes ####
-      rs <- rowSums2(CountData)
+      rs <- rowSums(CountData)
       non_exped_genes <- rownames(CountData)[rs==0]
       CountData <- CountData[!(rownames(CountData) %in% names(non_exped_genes)),]
 
