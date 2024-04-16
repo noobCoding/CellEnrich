@@ -1,4 +1,4 @@
-## 24.04.04
+## 24.04.16
 if(!require(waiter)){
   install.packages('waiter') # install 'waiter' if not installed.
 }
@@ -55,7 +55,7 @@ getTU <- function(CountData, GroupInfo, plotOption='UMAP', topdims= 50) {
 
   seu <- NormalizeData(seu)
   seu@assays$RNA@layers$data <- seu@assays$RNA@layers$counts
-  seu <- ScaleData(seu)
+  seu <- ScaleData(seu, do.center=FALSE)
   seu <- FindVariableFeatures(seu, nfeatures = nfeat)
 
   # Add cell type annotation to metadata
@@ -1561,7 +1561,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         my_palette <- c(colorRampPalette(c("blue2", "white", "red2"))(length(col_breaks)-1))
 
         library(gplots)
-        actMap <- heatmap.2(mat_data,
+        actMap <<- heatmap.2(mat_data,
                                main = paste0(selected_pathway, " @", group),
                                density.info="none",
                                trace="none",
@@ -1696,11 +1696,11 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       }
 
       ## -- remove non-expressed genes ####
-      rs <- rowSums(CountData)
+      rs <- rowSums2(CountData)
       non_exped_genes <- rownames(CountData)[rs==0]
       CountData <- CountData[!(rownames(CountData) %in% names(non_exped_genes)),]
 
-      #
+      # CountData <- pbmc
       genes <- rownames(CountData)
       genesets <- GenesetFlush(genes, genesets)
       lgs <- getlgs(genesets)
@@ -1767,13 +1767,13 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         library(tidyr)
 
         ###  genes & cells  matching
-        scaleCount <-  seu@assays$RNA@layers$scale.data
+        scaleCount <- as.matrix(seu@assays$RNA$scale.data)
         rownames(scaleCount) <- rownames(seu)
         scaleCount <- scaleCount[rownames(scaleCount) %in% unique(unlist(genesets)),]
-        colnames(scaleCount) <- colnames(CountData)
+        colnames(scaleCount) <- colnames(seu)
 
         ### sampling cells if N-cell > Nmax
-        Nmax <- ncol(CountData) %/% 100 * input$fgseaNsample
+        Nmax <- round(ncol(CountData) / 100 * input$fgseaNsample)
         # Nmax <- 50
 
         if (is.null(Nmax)){
@@ -1790,7 +1790,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           shiny::showNotification("Cannot sample more than available cells. All cells are used.", type = "error", duration = 30)
           Nmax <- ncol(scaleCount)
         }
-
         sample_idx <- NULL
 
         if (ncol(scaleCount) > Nmax){
@@ -1831,7 +1830,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
         conditions <- colnames(scaleCount)
         names(conditions) <- conditions
-        permtimes = 100
+        permtimes = 1000
 
         #
         library(tictoc)
@@ -1851,18 +1850,25 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
             result <- suppressWarnings(do.call(what = fgsea::fgsea, args = options))
 
             result$leadingEdge = sapply(seq_len(nrow(result)), function(x)paste0(result$leadingEdge[x][[1]], collapse = ', '))
-            tmp <- unlist(result$leadingEdge)
+
+            tres <- result %>% filter(padj < q0) ### CRITICAL!
+            if (nrow(tres) == 0){
+              tres <- result %>% arrange(pval) %>% top_n(-1, pval)
+            }
+
+            tmp <- unlist(tres$leadingEdge)
             tmp <- lapply(tmp, function(x){
               strsplit(x, ", ")[[1]]
             })
             tmp <- unlist(tmp)
             ct <- data.frame(table(tmp))
 
-            # res <- ct[ct$Freq >= quantile(ct$Freq)["75%"],]
-            res <- ct[ct$Freq >= quantile(ct$Freq)["25%"],]
+            res <- ct[ct$Freq >= 1,] #quantile(ct$Freq)["0%"],]
             idx <- paste0(sapply(res$tmp, function(x){which(rownames(CountData)==x)}), collapse = ', ')
           })
         }, .id = "condition")
+
+        saveRDS(finalres, "finalres3.rds")
 
         s <- lapply(finalres, function(x){
           tmp <- unlist(x)
@@ -1871,6 +1877,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           })
           tmp <- as.numeric(unlist(tmp))
         })
+
+        saveRDS(s, "s.rds")
 
         mytoc <- toc()
         print(mytoc)
@@ -1883,7 +1891,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         seu <<- seu
 
         # if (is.null(sample_idx)){
-          names(s) <- GroupInfo
+        names(s) <- GroupInfo
 
         # } else {
         #   mylist <- sapply(GroupInfo,function(x) {})
@@ -2511,7 +2519,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                       breaks=actMap$breaks,
                       dendrogram = "row",
                       Rowv = actMap$rowDendrogram,
-                      Colv=NA,
+                      Colv=TRUE,
+                      Rowv = FALSE,
+                      labRow = NULL,
                       labCol = NA,
                       symkey=T,
 
