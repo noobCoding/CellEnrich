@@ -1,4 +1,4 @@
-## 24.04.16
+## 24.04.04
 if(!require(waiter)){
   install.packages('waiter') # install 'waiter' if not installed.
 }
@@ -1561,7 +1561,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         my_palette <- c(colorRampPalette(c("blue2", "white", "red2"))(length(col_breaks)-1))
 
         library(gplots)
-        actMap <<- heatmap.2(mat_data,
+        actMap <- heatmap.2(mat_data,
                                main = paste0(selected_pathway, " @", group),
                                density.info="none",
                                trace="none",
@@ -1696,7 +1696,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       }
 
       ## -- remove non-expressed genes ####
-      rs <- rowSums(CountData)
+      rs <- rowSums2(CountData)
       non_exped_genes <- rownames(CountData)[rs==0]
       CountData <- CountData[!(rownames(CountData) %in% names(non_exped_genes)),]
 
@@ -1830,7 +1830,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
         conditions <- colnames(scaleCount)
         names(conditions) <- conditions
-        permtimes = 100
+        permtimes = 1000
 
         #
         library(tictoc)
@@ -2517,8 +2517,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                       col=actMap$col,
                       scale = "none",
                       breaks=actMap$breaks,
-                      dendrogram = "row",
-                      Rowv = actMap$rowDendrogram,
+                      dendrogram = "col",
                       Colv=TRUE,
                       Rowv = FALSE,
                       labRow = NULL,
@@ -2646,7 +2645,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       output$legenddn <- downloadHandler(
         filename = "mylegend.pdf",
         content = function(file) {
-          buildLegend(res, img = TRUE, name = file, Cells=Cells)
+          buildLegend(res, img = TRUE, name = file)
         }
       )
     })
