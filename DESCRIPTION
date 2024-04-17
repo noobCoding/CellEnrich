@@ -16,7 +16,7 @@ Depends:
 biocViews:
 Imports:
     dplyr,
-    matrixStats,
+    MatrixGenerics,
     DT,
     tictoc,
     farver,    
