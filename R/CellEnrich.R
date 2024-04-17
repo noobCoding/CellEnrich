@@ -1270,6 +1270,9 @@ solvedButton <- function(inputId, label, style = NULL, onClick = NULL, ...) {
 #'
 #' @rawNamespace import(SingleCellExperiment, except = show)
 #' @import tidyr
+#' @import purrr
+#' @import magrittr
+#' @import scales
 #' @import plyr
 #' @import dplyr
 #' @rawNamespace import(shiny, except = dataTableOutput)
@@ -1279,17 +1282,14 @@ solvedButton <- function(inputId, label, style = NULL, onClick = NULL, ...) {
 #' @import uwot
 #' @import htmltools
 #' @import ggbiplot
-#' @import magrittr
 #' @import waiter
 #' @import Seurat
 #' @import farver
 #' @rawNamespace import(shinyjs, except = runExample)
-#' @import scales
 #' @import sortable
 #' @import scran
 #' @import ggrepel
 #' @import fgsea
-#' @import purrr
 #' @import shinyFeedback
 #'
 #' @export
@@ -1696,7 +1696,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       }
 
       ## -- remove non-expressed genes ####
-      rs <- rowSums2(CountData)
+      rs <- rowSums(CountData)
       non_exped_genes <- rownames(CountData)[rs==0]
       CountData <- CountData[!(rownames(CountData) %in% names(non_exped_genes)),]
 
