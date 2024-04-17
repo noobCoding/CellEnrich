@@ -1291,7 +1291,7 @@ solvedButton <- function(inputId, label, style = NULL, onClick = NULL, ...) {
 #' @import ggrepel
 #' @import fgsea
 #' @import shinyFeedback
-#' @import matrixStats
+#' @import MatrixGenerics
 #'
 #' @export
 
