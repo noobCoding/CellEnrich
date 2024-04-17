@@ -1830,7 +1830,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
         conditions <- colnames(scaleCount)
         names(conditions) <- conditions
-        permtimes = 100
+        permtimes = 1000
 
         #
         library(tictoc)
