@@ -1562,7 +1562,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         my_palette <- c(colorRampPalette(c("blue2", "white", "red2"))(length(col_breaks)-1))
 
         library(gplots)
-        actMap <- heatmap.2(mat_data,
+        actMap <<- heatmap.2(mat_data,
                                main = paste0(selected_pathway, " @", group),
                                density.info="none",
                                trace="none",
