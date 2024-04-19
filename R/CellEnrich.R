@@ -1533,15 +1533,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         memGenes <- unlist(memGenes)
         memGenes <- memGenes[memGenes %in% rownames(logtab)]
 
-        ### fgsea??
-        # if (!is.null(rdf$fgsea_sample_idx)){
-        #   fullpw_data <- logtab[memGenes, rdf$fgsea_sample_idx]
-        #   fullpw_data <- fullpw_data[ , which(colnames(fullpw_data)==group)]
-        #
-        # } else { # NULL
-          # fullpw_data <- logtab[memGenes, which(colnames(logtab)==group)]
         fullpw_data <- logtab[memGenes, which(GroupInfo == group)]
-        # }
         # saveRDS(fullpw_data, "pw_data.rds")
 
         ### sorting genes
@@ -1761,6 +1753,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       if (input$plotOption == "UMAP") {
         ori_dfobj <- data.frame(Embeddings(seu, 'umap'), col = GroupInfo, stringsAsFactors = FALSE)
       }
+      colnames(ori_dfobj) <- c("x", "y", "col")
 
       # ----- FGSEA ####
       if (input$FCoption == "CellEnrich - FGSEA") {
@@ -1893,33 +1886,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         seu <- seu[, sample_idx]
         seu <<- seu
 
-        # if (is.null(sample_idx)){
         names(s) <- GroupInfo
-
-        # } else {
-        #   mylist <- sapply(GroupInfo,function(x) {})
-        #   mylist[sample_idx] <- s
-        #
-        #   for (i in 1:length(mylist)){
-        #     # i = 1
-        #     if (!i %in% sample_idx){    ## length == 0, empty
-        #       ti <- which(GroupInfo[sample_idx] == GroupInfo[i])
-        #
-        #       best_next <- which(sample_idx[ti] > i)
-        #
-        #       if (length(best_next) > 0){
-        #         best_next <- min(best_next)
-        #
-        #       } else {
-        #         best_next <- length(ti) ## 240325
-        #       }
-        #       mylist[i] <- s[best_next]
-        #     }
-        #   }
-        #   s <- mylist
-        #   names(s) <- GroupInfo
-        # }
-
       }
       else { ### other cases
         s <- findSigGenes(CountData, input$FCoption, GroupInfo, coef = input$medianCoefficient)
@@ -1938,20 +1905,24 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       # colnames(logtab) <- GroupInfo
       logtab <<- logtab
 
-      #PCA
-      if (input$plotOption == "PCA") {
-        dfobj <- data.frame(Embeddings(seu, 'pca')[,1:2], col = GroupInfo, stringsAsFactors = FALSE)
+      if (input$FCoption == "CellEnrich - FGSEA") {
+        #PCA
+        if (input$plotOption == "PCA") {
+          dfobj <- data.frame(Embeddings(seu, 'pca')[,1:2], col = GroupInfo, stringsAsFactors = FALSE)
+        }
+        # TSNE
+        if (input$plotOption == "TSNE") {
+          dfobj <- data.frame(Embeddings(seu, 'tsne'), col = GroupInfo, stringsAsFactors = FALSE)
+        }
+        # UMAP
+        if (input$plotOption == "UMAP") {
+          dfobj <- data.frame(Embeddings(seu, 'umap'), col = GroupInfo, stringsAsFactors = FALSE)
+        }
+        colnames(dfobj) <- c("x", "y", "col")
+        dfobj <<- dfobj
+      } else {
+        dfobj <<- ori_dfobj
       }
-      # TSNE
-      if (input$plotOption == "TSNE") {
-        dfobj <- data.frame(Embeddings(seu, 'tsne'), col = GroupInfo, stringsAsFactors = FALSE)
-      }
-      # UMAP
-      if (input$plotOption == "UMAP") {
-        dfobj <- data.frame(Embeddings(seu, 'umap'), col = GroupInfo, stringsAsFactors = FALSE)
-      }
-      colnames(dfobj) <- c("x", "y", "col")
-      dfobj <<- dfobj
 
       cat("getTU Finished\n")
       cat("running gc\n")
@@ -2495,7 +2466,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         output$geneAct <- renderPlot(buildGeneActivity(rdf$current_pw, rdf$current_group, genesets, logtab))
 
         output$actScoredata <-  downloadHandler(
-          filename = "GA_data.csv",
+          filename = paste0("GA_data_",rdf$current_pw, " @", rdf$current_group,".csv"),
           content = function(file) {
             # write.csv(actMap$carpet, file, row.names = FALSE)
             write.csv(fullpw_data, file, row.names = TRUE)
@@ -2504,7 +2475,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
         output$actScore <- downloadHandler(
           filename = function() {
-            "GA_map.pdf"
+            # "GA_map.pdf"
+            paste0("GA_map_",rdf$current_pw, " @", rdf$current_group,".pdf")
           },
           content = function(file) {
 
