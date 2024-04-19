@@ -1,4 +1,4 @@
-## 24.04.04
+## 24.04.19
 if(!require(waiter)){
   install.packages('waiter') # install 'waiter' if not installed.
 }
@@ -1539,10 +1539,10 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         #   fullpw_data <- fullpw_data[ , which(colnames(fullpw_data)==group)]
         #
         # } else { # NULL
-          fullpw_data <- logtab[memGenes, which(colnames(logtab)==group)]
+          # fullpw_data <- logtab[memGenes, which(colnames(logtab)==group)]
+        fullpw_data <- logtab[memGenes, which(GroupInfo == group)]
         # }
-
-          saveRDS(fullpw_data, "pw_data.rds")
+        # saveRDS(fullpw_data, "pw_data.rds")
 
         ### sorting genes
         avga <- rowMeans(fullpw_data)
@@ -1555,7 +1555,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         }
         mat_data <- fullpw_data[memGenes, ]
 
-        saveRDS(mat_data, "mat_data.rds")
+        # saveRDS(mat_data, "mat_data.rds")
 
         mat_data <- round(mat_data, 2)
         col_breaks <- c(seq(min(mat_data), max(mat_data), length.out=51))
@@ -1853,7 +1853,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
             result$leadingEdge = sapply(seq_len(nrow(result)), function(x)paste0(result$leadingEdge[x][[1]], collapse = ', '))
 
-            tres <- result %>% filter(padj < q0) ### CRITICAL!
+            # tres <- result %>% filter(padj < q0) ### CRITICAL!  ### padj
+            tres <- result %>% filter(pval < q0) ### CRITICAL!   ### pval
             if (nrow(tres) == 0){
               tres <- result %>% arrange(pval) %>% top_n(-1, pval)
             }
@@ -1870,7 +1871,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           })
         }, .id = "condition")
 
-        saveRDS(finalres, "finalres3.rds")
+        # saveRDS(finalres, "finalres3.rds")
 
         s <- lapply(finalres, function(x){
           tmp <- unlist(x)
@@ -1880,7 +1881,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           tmp <- as.numeric(unlist(tmp))
         })
 
-        saveRDS(s, "s.rds")
+        # saveRDS(s, "s.rds")
 
         mytoc <- toc()
         print(mytoc)
@@ -1934,7 +1935,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         }
       })
       logtab <- t(logtab)
-      colnames(logtab) <- GroupInfo
+      # colnames(logtab) <- GroupInfo
       logtab <<- logtab
 
       #PCA
@@ -2497,7 +2498,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           filename = "GA_data.csv",
           content = function(file) {
             # write.csv(actMap$carpet, file, row.names = FALSE)
-            write.csv(fullpw_data, file, row.names = FALSE)
+            write.csv(fullpw_data, file, row.names = TRUE)
           }
         )
 
