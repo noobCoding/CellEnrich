@@ -1290,6 +1290,7 @@ solvedButton <- function(inputId, label, style = NULL, onClick = NULL, ...) {
 #' @import scran
 #' @import ggrepel
 #' @import fgsea
+#' @import ff
 #' @import shinyFeedback
 #' @import MatrixGenerics
 #'
@@ -1894,15 +1895,18 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       cat("s Finished\n")
 
       # apply logtab ####
-      logtab <- apply(seu@assays$RNA$counts, 1, function(v){
+      library(ff)
+      logtab <- ff(vmode="double", dim=c(nrow(seu), ncol(seu)))
+      logtab <- seu@assays$RNA$counts
+
+      logtab <- apply(logtab, 1, function(v){
         if (is.na(median(v[v > 0]))){
           v
         } else {
           v <- v - median(v[v > 0])
         }
       })
-      logtab <- t(logtab)
-      # colnames(logtab) <- GroupInfo
+      logtab <- vt(logtab)
       logtab <<- logtab
 
       if (input$FCoption == "CellEnrich - FGSEA") {
