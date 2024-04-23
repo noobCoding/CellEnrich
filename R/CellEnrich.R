@@ -1847,8 +1847,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
             result$leadingEdge = sapply(seq_len(nrow(result)), function(x)paste0(result$leadingEdge[x][[1]], collapse = ', '))
 
-            # tres <- result %>% filter(padj < q0) ### CRITICAL!  ### padj
-            tres <- result %>% filter(pval < q0) ### CRITICAL!   ### pval
+            tres <- result %>% filter(padj < q0) ### CRITICAL!  ### padj
+            # tres <- result %>% filter(pval < q0) ### CRITICAL!   ### pval
             if (nrow(tres) == 0){
               tres <- result %>% arrange(pval) %>% top_n(-1, pval)
             }
