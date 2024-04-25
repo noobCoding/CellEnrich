@@ -72,14 +72,6 @@ getTU <- function(CountData, GroupInfo, plotOption='UMAP', topdims= 50) {
   return (seu)
 }
 
-library(scMerge)
-gnm <- function(v) {
-  out <- scMerge:::gammaNormMix(as.matrix(v), plot = FALSE )
-  mat_prob <- matrix(out$probExpressed, nrow(v), ncol(v))
-  mat_discretised <- 1 * (mat_prob > 0.5)
-  return(mat_discretised)
-}
-
 findSigGenes <- function(v, method = "CellEnrich - median", Name, coef=1) {
 
   if (!method %in% c("CellEnrich - median",
