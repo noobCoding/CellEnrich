@@ -1901,7 +1901,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       logtab <- vt(logtab)
       logtab <<- logtab
 
-      if (input$FCoption == "CellEnrich - FGSEA") {
         #PCA
         if (input$plotOption == "PCA") {
           dfobj <- data.frame(Embeddings(seu, 'pca')[,1:2], col = GroupInfo, stringsAsFactors = FALSE)
@@ -1916,9 +1915,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         }
         colnames(dfobj) <- c("x", "y", "col")
         dfobj <<- dfobj
-      } else {
-        dfobj <<- ori_dfobj
-      }
+      
 
       cat("getTU Finished\n")
       cat("running gc\n")
