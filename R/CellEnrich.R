@@ -1831,7 +1831,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
             stats = stats,
             nPermSimple = permtimes,
             nproc = 8,
-            scoreType='pos',
+            scoreType='std',
             eps=1e-16
           )
           withr::with_seed(seed <- sample.int(.Machine$integer.max, 1L), {
