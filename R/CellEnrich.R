@@ -1526,7 +1526,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         memGenes <- unlist(memGenes)
         memGenes <- memGenes[memGenes %in% rownames(logtab)]
 
-        fullpw_data <- logtab[memGenes, which(GroupInfo == group)]
+        fullpw_data <- logtab[memGenes, which(seu$cell_type == group)]
         # saveRDS(fullpw_data, "pw_data.rds")
 
         ### sorting genes
@@ -1539,7 +1539,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           memGenes <- memGenes[1:60]
         }
         mat_data <- fullpw_data[memGenes, ]
-
         # saveRDS(mat_data, "mat_data.rds")
 
         mat_data <- round(mat_data, 2)
@@ -1761,8 +1760,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         colnames(scaleCount) <- colnames(seu)
 
         ### sampling cells if N-cell > Nmax
-        Nmax <- round(ncol(CountData) / 100 * input$fgseaNsample)
-        # Nmax <- 50
+        # Nmax <- round(ncol(CountData) / 100 * input$fgseaNsample)
+        Nmax <- 50
 
         if (is.null(Nmax)){
           shiny::showNotification("At least 50 samples are required to estimate via FGSEA. 50 samples are used.", type = "error", duration = 30)
@@ -1818,7 +1817,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
         conditions <- colnames(scaleCount)
         names(conditions) <- conditions
-        permtimes = 1000
+        permtimes = 100
 
         #
         library(tictoc)
@@ -1831,16 +1830,14 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
             stats = stats,
             nPermSimple = permtimes,
             nproc = 8,
-            scoreType='std',
+            scoreType='pos',
             eps=1e-16
           )
           withr::with_seed(seed <- sample.int(.Machine$integer.max, 1L), {
             result <- suppressWarnings(do.call(what = fgsea::fgsea, args = options))
-
             result$leadingEdge = sapply(seq_len(nrow(result)), function(x)paste0(result$leadingEdge[x][[1]], collapse = ', '))
 
-            tres <- result %>% filter(padj < q0) ### CRITICAL!  ### padj
-            # tres <- result %>% filter(pval < q0) ### CRITICAL!   ### pval
+            tres <- result %>% filter(pval < 0.01)
             if (nrow(tres) == 0){
               tres <- result %>% arrange(pval) %>% top_n(-1, pval)
             }
@@ -1850,14 +1847,13 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
               strsplit(x, ", ")[[1]]
             })
             tmp <- unlist(tmp)
-            ct <- data.frame(table(tmp))
 
-            res <- ct[ct$Freq >= 1,] #quantile(ct$Freq)["0%"],]
-            idx <- paste0(sapply(res$tmp, function(x){which(rownames(CountData)==x)}), collapse = ', ')
+            subexp <- stats[unique(tmp)]
+            names(subexp) <- unique(tmp)
+            res <- names(subexp[subexp > 0])
+            idx <- paste0(sapply(res, function(x){which(rownames(CountData)==x)}), collapse = ', ')
           })
         }, .id = "condition")
-
-        # saveRDS(finalres, "finalres3.rds")
 
         s <- lapply(finalres, function(x){
           tmp <- unlist(x)
@@ -1867,28 +1863,42 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           tmp <- as.numeric(unlist(tmp))
         })
 
-        # saveRDS(s, "s.rds")
-
+        # saveRDS(s, "s_new.rds")
         mytoc <- toc()
         print(mytoc)
-        # saveRDS(mytoc, 'mytoc.rds')
 
         # subseting samples ####
-        CountData <- CountData[, sample_idx]
-        GroupInfo <- GroupInfo[sample_idx]
         seu <- seu[, sample_idx]
-        seu <<- seu
+        names(s) <- seu$cell_type
 
-        names(s) <- GroupInfo
+        #PCA
+        if (input$plotOption == "PCA") {
+          dfobj <- data.frame(Embeddings(seu, 'pca')[,1:2], col = seu$cell_type, stringsAsFactors = FALSE)
+        }
+        # TSNE
+        if (input$plotOption == "TSNE") {
+          dfobj <- data.frame(Embeddings(seu, 'tsne'), col = seu$cell_type, stringsAsFactors = FALSE)
+        }
+        # UMAP
+        if (input$plotOption == "UMAP") {
+          dfobj <- data.frame(Embeddings(seu, 'umap'), col = seu$cell_type, stringsAsFactors = FALSE)
+        }
+        colnames(dfobj) <- c("x", "y", "col")
+        dfobj <<- dfobj
+
       }
       else { ### other cases
         s <- findSigGenes(CountData, input$FCoption, GroupInfo, coef = input$medianCoefficient)
       }
       cat("s Finished\n")
 
+      if(input$FCoption != "CellEnrich - FGSEA"){
+        dfobj <<- ori_dfobj
+      }
+
       # apply logtab ####
       library(ff)
-      logtab <- ff(vmode="double", dim=c(nrow(seu), ncol(seu)))
+      logtab <- ff(vmode="double", dim=c(nrow(seu@assays$RNA$counts), ncol(seu@assays$RNA$counts)))
       logtab <- seu@assays$RNA$counts
 
       logtab <- apply(logtab, 1, function(v){
@@ -1901,32 +1911,14 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       logtab <- vt(logtab)
       logtab <<- logtab
 
-        #PCA
-        if (input$plotOption == "PCA") {
-          dfobj <- data.frame(Embeddings(seu, 'pca')[,1:2], col = GroupInfo, stringsAsFactors = FALSE)
-        }
-        # TSNE
-        if (input$plotOption == "TSNE") {
-          dfobj <- data.frame(Embeddings(seu, 'tsne'), col = GroupInfo, stringsAsFactors = FALSE)
-        }
-        # UMAP
-        if (input$plotOption == "UMAP") {
-          dfobj <- data.frame(Embeddings(seu, 'umap'), col = GroupInfo, stringsAsFactors = FALSE)
-        }
-        colnames(dfobj) <- c("x", "y", "col")
-        dfobj <<- dfobj
-      
-
       cat("getTU Finished\n")
-      cat("running gc\n")
-      gc()
-
       # ------ Find Significant Genes with findMarkers ####
-
       s2 <- findSigGenesGroup(CountData, GroupInfo, q0, TopCutoff = 5)
       rc <- rownames(CountData)
-      # ----- Free memory to calculate biobj ####
       rm(CountData)
+
+      cat("running gc\n")
+      gc()
 
       # ------ marker l1
       markerl1 <- s2 %>% filter(Top <= 10)
@@ -1965,7 +1957,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       if (length(s) == 0) {
         tmp_cells <- unique(s2$Group) ## cells containing significant genes
         tmp_pres <- matrix(0, length(genesets), length(tmp_cells))
-        tG <- table(GroupInfo)
+        tG <- table(seu$cell_type)
         # define s
         for (i in 1:length(tmp_cells)) {
           tmp_genes <- s2 %>%
@@ -2067,10 +2059,10 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       # saveRDS(pres2, "pres2.rds")
 
       # ------ CellPathwayDF
-      CellPathwayDF <- buildCellPathwayDF(GroupInfo, pres, genesets, input$pwFrequency)
+      CellPathwayDF <- buildCellPathwayDF(seu$cell_type, pres, genesets, input$pwFrequency)
       # saveRDS(genesets, "filtered_gs.rds")
 
-      PP <- pathwayPvalue(GroupInfo, pres, pres2, genesets)
+      PP <- pathwayPvalue(seu$cell_type, pres, pres2, genesets)
 
       # OR -> # Group / PATHWAY / OddsRatio
       if (nrow(tmp_df) > 0) {
@@ -2079,7 +2071,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         OR <<- OR
       }
       else {
-        OR <<- getOddRatio(GroupInfo, pres, pres2, genesets, input$pwFrequency)
+        OR <<- getOddRatio(seu$cell_type, pres, pres2, genesets, input$pwFrequency)
       }
 
       CellPathwayDFP <- CellPathwayDF %>%
@@ -2099,8 +2091,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
       # l2
       CellMarkers <- data.frame()
-
-      Cells <- sort(unique(GroupInfo))
+      Cells <- sort(unique(seu$cell_type))
       Cells <<- Cells
 
       for (i in 1:length(Cells)) {
@@ -2214,7 +2205,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         }
       )
 
-      gt <<- groupTable(pres, genesets, dfobj, pres2)
+      gt <<- groupTable(pres, genesets, ori_dfobj, pres2)
+      # gt <<- groupTable(pres, genesets, dfobj, pres2)
+
 
       # generate dynamic table
 
@@ -2407,7 +2400,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       output$legenddn <- downloadHandler(
         filename = "mylegend.pdf",
         content = function(file) {
-          buildLegend(res, img = TRUE, name = file, GroupInfo = GroupInfo)
+          buildLegend(res, img = TRUE, name = file, GroupInfo = seu$cell_type)
         }
       )
 
@@ -2566,7 +2559,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       output$legenddn <- downloadHandler(
         filename = "mylegend.pdf",
         content = function(file) {
-          buildLegend(res, img = TRUE, name = file, GroupInfo = GroupInfo)
+          buildLegend(res, img = TRUE, name = file, GroupInfo = seu$cell_type)
         }
       )
     })
