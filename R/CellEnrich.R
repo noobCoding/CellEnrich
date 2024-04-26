@@ -1760,8 +1760,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         colnames(scaleCount) <- colnames(seu)
 
         ### sampling cells if N-cell > Nmax
-        # Nmax <- round(ncol(CountData) / 100 * input$fgseaNsample)
-        Nmax <- 50
+        Nmax <- round(ncol(CountData) / 100 * input$fgseaNsample)
 
         if (is.null(Nmax)){
           shiny::showNotification("At least 50 samples are required to estimate via FGSEA. 50 samples are used.", type = "error", duration = 30)
