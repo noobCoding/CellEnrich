@@ -646,23 +646,36 @@ CellEnrichUI <- function(GroupInfo) {
               , width = 2 ## column width
             ),
 
+            #---- Method options ####
             material_column(
-              material_card(  title = HTML("<font color='black' size='4'> </font>"),
-                material_number_box(
-                  input_id = "medianCoefficient",
-                  label = HTML("<font color='black' size='4'>Median coefficient</font>"),
-                  min_value = 0,
-                  max_value = 2,
-                  initial_value = 1,
-                  step_size = 0.05
+              material_row(
+                material_card(  title = HTML("<font color='black' size='4'> Median Parameters </font>"),
+                                material_number_box(
+                                  input_id = "medianCoefficient",
+                                  label = HTML("<font color='black' size='4'>Median coefficient</font>"),
+                                  min_value = 0,
+                                  max_value = 2,
+                                  initial_value = 1,
+                                  step_size = 0.05
+                                ),
+                                material_number_box(
+                                  input_id = "mediNsample",
+                                  label = HTML("<font color='black' size='4'>Median - N(%) of Top-depth samples</font>"),
+                                  min_value = 0,
+                                  max_value = 100,
+                                  initial_value = 100,
+                                  step_size = 1
+                                )
                 ),
-                material_number_box(
-                  input_id = "fgseaNsample",
-                  label = HTML("<font color='black' size='4'>FGSEA - N(%) of Top-depth samples</font>"),
-                  min_value = 0,
-                  max_value = 100,
-                  initial_value = 10,
-                  step_size = 1
+                material_card(  title = HTML("<font color='black' size='4'> FGSEA Parameters </font>"),
+                                material_number_box(
+                                  input_id = "fgseaNsample",
+                                  label = HTML("<font color='black' size='4'>FGSEA - N(%) of Top-depth samples</font>"),
+                                  min_value = 0,
+                                  max_value = 100,
+                                  initial_value = 10,
+                                  step_size = 1
+                                )
                 )
               )
               , width = 3 ## column width
@@ -704,38 +717,38 @@ CellEnrichUI <- function(GroupInfo) {
             ),
             material_column(
               material_card( title = HTML("<font color='black' size='5'> </font>"),
-                material_number_box(
-                  input_id = "minGenesetSize",
-                  label = HTML("<font color='black' size='4.5'>Minimum Geneset Size</font>"), #"Minimum Gene-set Size",
-                  min_value = 10,
-                  max_value = 30,
-                  initial_value = 15,
-                  step_size = 5
-                ),
-                material_number_box(
-                  input_id = "maxGenesetSize",
-                  label = HTML("<font color='black' size='4.5'>Maximum Geneset Size</font>"), #"Maximum Gene-set Size",
-                  min_value = 250,
-                  max_value = 750,
-                  initial_value = 500,
-                  step_size = 5
-                ),
-                material_number_box(
-                  input_id = "pwFrequency",
-                  label = HTML("<font color='black' size='4.5'>Pathway Frequency</font>"),
-                  min_value = 0,
-                  max_value = 0.5,
-                  initial_value = 0.1,
-                  step_size = 0.05
-                ),
-                material_number_box(
-                  input_id = "qvalueCutoff",
-                  label = HTML("<font color='black' size='4.5'>Q-value threshold</font>"),
-                  min_value = 0,
-                  max_value = 1,
-                  initial_value = 0.05,
-                  step_size = 0.01
-                )
+                             material_number_box(
+                               input_id = "minGenesetSize",
+                               label = HTML("<font color='black' size='4.5'>Minimum Geneset Size</font>"), #"Minimum Gene-set Size",
+                               min_value = 10,
+                               max_value = 30,
+                               initial_value = 15,
+                               step_size = 5
+                             ),
+                             material_number_box(
+                               input_id = "maxGenesetSize",
+                               label = HTML("<font color='black' size='4.5'>Maximum Geneset Size</font>"), #"Maximum Gene-set Size",
+                               min_value = 250,
+                               max_value = 750,
+                               initial_value = 500,
+                               step_size = 5
+                             ),
+                             material_number_box(
+                               input_id = "pwFrequency",
+                               label = HTML("<font color='black' size='4.5'>Pathway Frequency</font>"),
+                               min_value = 0,
+                               max_value = 0.5,
+                               initial_value = 0.1,
+                               step_size = 0.05
+                             ),
+                             material_number_box(
+                               input_id = "qvalueCutoff",
+                               label = HTML("<font color='black' size='4.5'>Q-value threshold</font>"),
+                               min_value = 0,
+                               max_value = 1,
+                               initial_value = 0.05,
+                               step_size = 0.01
+                             )
               ),
               width = 2
             )
@@ -775,8 +788,8 @@ CellEnrichUI <- function(GroupInfo) {
           ),
           # Cell - Comparison
           material_row(
-              material_button("sigbtn", "Odds Ratio", icon = "sort", color = "blue darken-2"),
-              material_button("freqbtn", "Frequency", icon = "menu", color = "blue darken-2")
+            material_button("sigbtn", "Odds Ratio", icon = "sort", color = "blue darken-2"),
+            material_button("freqbtn", "Frequency", icon = "menu", color = "blue darken-2")
           ),
 
           material_row(
@@ -789,7 +802,7 @@ CellEnrichUI <- function(GroupInfo) {
             )
           ),
 
-           material_row(
+          material_row(
             material_column(
               width = 2
             ),
@@ -821,8 +834,8 @@ CellEnrichUI <- function(GroupInfo) {
                 material_button("ClearList", "Clear List", color = "blue darken-2")
               ),
               material_row(
-                  shiny::downloadButton("sppcdn", "Cell-Pathway (P-values)", style = "background-color : #616161 !important"),
-                  shiny::downloadButton("tbldn", " All Significant Pathways", style = "background-color : #616161 !important")
+                shiny::downloadButton("sppcdn", "Cell-Pathway (P-values)", style = "background-color : #616161 !important"),
+                shiny::downloadButton("tbldn", " All Significant Pathways", style = "background-color : #616161 !important")
               )
             ),
             tags$head(
@@ -869,7 +882,7 @@ CellEnrichUI <- function(GroupInfo) {
                 , width = 6
               ),
               material_column(
-                 width = 3
+                width = 3
               )
             )
           )
@@ -1499,8 +1512,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                              col=my_palette,
                              scale = "none",
                              breaks=col_breaks,
-                             dendrogram="row",
-                             Colv=NA,
+                             dendrogram="both",
+                             Colv=T,
                              symkey=F,
 
                              # additional control of the presentation
@@ -1547,31 +1560,31 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
         library(gplots)
         actMap <<- heatmap.2(mat_data,
-                               main = paste0(selected_pathway, " @", group),
-                               density.info="none",
-                               trace="none",
-                               margins =c(1,10),
-                               col=my_palette,
-                               scale = "none",
-                               breaks=col_breaks,
-                               dendrogram="col",
-                               Colv=TRUE,
-                               Rowv = FALSE,
-                               labRow = NULL,
-                               labCol = NA,
-                               symkey=T,
+                             main = paste0(selected_pathway, " @", group),
+                             density.info="none",
+                             trace="none",
+                             margins =c(1,10),
+                             col=my_palette,
+                             scale = "none",
+                             breaks=col_breaks,
+                             dendrogram="col",
+                             Colv=TRUE,
+                             Rowv = FALSE,
+                             labRow = NULL,
+                             labCol = NA,
+                             symkey=T,
 
-                               # additional control of the presentation
-                               lhei = c(2, 15),       # adapt the relative areas devoted to the matrix
-                               lwid = c(2, 20),
-                               cexRow = 1.3,
-                               cexCol = 1,
-                               key.title = NA,
-                               key.xlab = NA,
-                               key.ylab = NA,
-                               key.par = list(mar=c(4, 1, 2, 1),
-                                              mgp=c(1.5, 0.5, 0),
-                                              cex=1)
+                             # additional control of the presentation
+                             lhei = c(2, 15),       # adapt the relative areas devoted to the matrix
+                             lwid = c(2, 20),
+                             cexRow = 1.3,
+                             cexCol = 1,
+                             key.title = NA,
+                             key.xlab = NA,
+                             key.ylab = NA,
+                             key.par = list(mar=c(4, 1, 2, 1),
+                                            mgp=c(1.5, 0.5, 0),
+                                            cex=1)
         )
         return(actMap)
       } else {
@@ -1732,6 +1745,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       # ------ Calculate TSNE / UMAP First
       # seu <- getTU(CountData, GroupInfo, "CellEnrich - FGSEA", topdims=50)
       seu <- getTU(CountData, GroupInfo, input$plotOption, topdims=input$topdims)
+      seu <<- seu
 
       #PCA
       if (input$plotOption == "PCA") {
@@ -1746,6 +1760,22 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         ori_dfobj <- data.frame(Embeddings(seu, 'umap'), col = GroupInfo, stringsAsFactors = FALSE)
       }
       colnames(ori_dfobj) <- c("x", "y", "col")
+
+      # apply logtab ####
+      library(ff)
+      logtab <- ff(vmode="double", dim=c(nrow(seu@assays$RNA$counts), ncol(seu@assays$RNA$counts)))
+      logtab <- seu@assays$RNA$counts
+
+      logtab <- apply(logtab, 1, function(v){
+        if (is.na(median(v[v > 0]))){
+          v
+        } else {
+          v <- v - median(v[v > 0])
+        }
+      })
+      logtab <- vt(logtab)
+      logtab <<- logtab
+
 
       # ----- FGSEA ####
       if (input$FCoption == "CellEnrich - FGSEA") {
@@ -1809,9 +1839,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
             sample_idx <- c(sample_idx, more_idx)
           }
           sample_idx <- sort(sample_idx)
-          scaleCount <- scaleCount[, sample_idx]
 
-          rdf$fgsea_sample_idx <- sample_idx
+          scaleCount <- scaleCount[, sample_idx]
+          rdf$sample_idx <- sample_idx
         }
 
         conditions <- colnames(scaleCount)
@@ -1870,13 +1900,94 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           tmp <- as.numeric(unlist(tmp))
         })
 
-        saveRDS(s, "s_294.rds")
+        # saveRDS(s, "s_294.rds")
         mytoc <- toc()
         print(mytoc)
 
         # subseting samples ####
         seu <- seu[, sample_idx]
+        #PCA
+        if (input$plotOption == "PCA") {
+          dfobj <- data.frame(Embeddings(seu, 'pca')[,1:2], col = seu$cell_type, stringsAsFactors = FALSE)
+        }
+        # TSNE
+        if (input$plotOption == "TSNE") {
+          dfobj <- data.frame(Embeddings(seu, 'tsne'), col = seu$cell_type, stringsAsFactors = FALSE)
+        }
+        # UMAP
+        if (input$plotOption == "UMAP") {
+          dfobj <- data.frame(Embeddings(seu, 'umap'), col = seu$cell_type, stringsAsFactors = FALSE)
+        }
+        colnames(dfobj) <- c("x", "y", "col")
+        dfobj <<- dfobj
+
         names(s) <- seu$cell_type
+
+      } else if (input$FCoption == "CellEnrich - Median") { # ----- Median ####
+
+        ###  genes & cells  matching
+        scaleCount <- as.matrix(seu@assays$RNA$counts)  ### counts
+        rownames(scaleCount) <- rownames(seu)
+        scaleCount <- scaleCount[rownames(scaleCount) %in% unique(unlist(genesets)),]
+        colnames(scaleCount) <- colnames(seu)
+
+        ### sampling cells if N-cell > Nmax
+        Nmax <- round(ncol(CountData) / 100 * input$mediNsample)
+
+        if (is.null(Nmax)){
+          shiny::showNotification("At least 50 samples are required to estimate. 50 samples are used.", type = "error", duration = 30)
+          Nmax = 50
+        }
+
+        if (Nmax < 50){
+          shiny::showNotification("At least 50 samples are required to estimate. 50 samples are used.", type = "error", duration = 30)
+          Nmax = 50
+        }
+
+        if (Nmax > ncol(scaleCount)){
+          shiny::showNotification("Cannot sample more than available cells. All cells are used.", type = "error", duration = 30)
+          Nmax <- ncol(scaleCount)
+        }
+        sample_idx <- NULL
+
+        if (ncol(scaleCount) > Nmax){
+          n_group <- unique(GroupInfo)
+          sample_per_group <- Nmax %/% length(n_group)
+
+          sample_idx <- lapply(n_group, function(g){
+            id_g <- which(GroupInfo==g)
+
+            if(length(id_g) > sample_per_group){
+              # id_g <- sample(id_g, sample_per_group, replace = F)
+              group_lib <- colSums(scaleCount[, id_g])
+              group_lib <- sort(group_lib, decreasing = T)
+              top <- names(group_lib[1:sample_per_group])
+              return(which(colnames(scaleCount) %in% top))
+            }
+            return(id_g)
+          })
+          sample_idx <- unlist(sample_idx)
+
+          ## add missing slots
+          if (length(sample_idx) < Nmax){
+            x <- 1:ncol(scaleCount)
+            x <- setdiff(x, sample_idx)
+
+            group_lib <- colSums(scaleCount[, x])
+            group_lib <- sort(group_lib, decreasing = T)
+            top <- names(group_lib[1:(Nmax-length(sample_idx))])
+            more_idx <- which(colnames(scaleCount) %in% top)
+
+            sample_idx <- c(sample_idx, more_idx)
+          }
+          sample_idx <- sort(sample_idx)
+
+          scaleCount <- scaleCount[, sample_idx]
+          rdf$sample_idx <- sample_idx
+        }
+
+        # Median subseting samples ####
+        seu <- seu[, sample_idx]
 
         #PCA
         if (input$plotOption == "PCA") {
@@ -1893,31 +2004,13 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         colnames(dfobj) <- c("x", "y", "col")
         dfobj <<- dfobj
 
-      } else
-        # ----- Median ####
-      if (input$FCoption == "CellEnrich - Median") {{
-        s <- findSigGenes(CountData, input$FCoption, GroupInfo, coef = input$medianCoefficient)
+        s <- findSigGenes(scaleCount, input$FCoption, seu$cell_type, coef = input$medianCoefficient)
       }
       cat("s Finished\n")
 
-      if(input$FCoption != "CellEnrich - FGSEA"){
-        dfobj <<- ori_dfobj
-      }
-
-      # apply logtab ####
-      library(ff)
-      logtab <- ff(vmode="double", dim=c(nrow(seu@assays$RNA$counts), ncol(seu@assays$RNA$counts)))
-      logtab <- seu@assays$RNA$counts
-
-      logtab <- apply(logtab, 1, function(v){
-        if (is.na(median(v[v > 0]))){
-          v
-        } else {
-          v <- v - median(v[v > 0])
-        }
-      })
-      logtab <- vt(logtab)
-      logtab <<- logtab
+      # if(input$FCoption != "CellEnrich - FGSEA"){
+      #   dfobj <<- ori_dfobj
+      # }
 
       cat("getTU Finished\n")
       # ------ Find Significant Genes with findMarkers ####
@@ -2423,7 +2516,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
     rdf <- reactiveValues(df = data.frame(Pathway=character(), Group=character()),
                           current_pw=NULL,
                           current_group=NULL,
-                          fgsea_sample_idx=NULL)
+                          sample_idx=NULL)
 
     lapply(1:length(Cells), function(i) {
       observeEvent(input[[paste0("dynamicGroupTable", i, "_cell_clicked")]],{
@@ -2671,9 +2764,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                     col=HeatPlot$col,
                     scale = "none",
                     breaks=HeatPlot$breaks,
-                    dendrogram = "row",
+                    dendrogram = "both",
                     Rowv = HeatPlot$rowDendrogram,
-                    Colv=NA,
+                    Colv=T,
                     symkey=F,
 
                     # # additional control of the presentation
@@ -2737,9 +2830,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                     col=HeatPlot$col,
                     scale = "none",
                     breaks=HeatPlot$breaks,
-                    dendrogram = "row",
+                    dendrogram = "both",
                     Rowv = HeatPlot$rowDendrogram,
-                    Colv=NA,
+                    Colv=T,
                     symkey=F,
 
                     # # additional control of the presentation
