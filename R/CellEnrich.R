@@ -1,4 +1,4 @@
-## 24.04.19
+## 24.04.29
 if(!require(waiter)){
   install.packages('waiter') # install 'waiter' if not installed.
 }
@@ -55,7 +55,7 @@ getTU <- function(CountData, GroupInfo, plotOption='UMAP', topdims= 50) {
 
   seu <- NormalizeData(seu)
   seu@assays$RNA@layers$data <- seu@assays$RNA@layers$counts
-  seu <- ScaleData(seu, do.center=FALSE)
+  seu <- ScaleData(seu, do.center=T)
   seu <- FindVariableFeatures(seu, nfeatures = nfeat)
 
   # Add cell type annotation to metadata
@@ -72,9 +72,9 @@ getTU <- function(CountData, GroupInfo, plotOption='UMAP', topdims= 50) {
   return (seu)
 }
 
-findSigGenes <- function(v, method = "CellEnrich - median", Name, coef=1) {
+findSigGenes <- function(v, method = "CellEnrich - Median", Name, coef=1) {
 
-  if (!method %in% c("CellEnrich - median",
+  if (!method %in% c("CellEnrich - Median",
                      "CellEnrich - FGSEA")) stop("wrong method")
 
   cat("findSigGenes started\n")
@@ -89,7 +89,7 @@ findSigGenes <- function(v, method = "CellEnrich - median", Name, coef=1) {
     return(median(v) * coef)
   }
 
-  if (method == "CellEnrich - median") {
+  if (method == "CellEnrich - Median") {
     for (i in 1:ncol(v)) {
       res[[i]] <- which(v[, i] > med(v[, i], coef=coef))
     }
@@ -615,10 +615,10 @@ CellEnrichUI <- function(GroupInfo) {
                     HTML("<font color='black' size='4'>CellEnrich - Median</font>"),
                     HTML("<font color='black' size='4'>CellEnrich - Fast GSEA</font>")
                   ),
-                  choiceValues = c("CellEnrich - median",
+                  choiceValues = c("CellEnrich - Median",
                                    "CellEnrich - FGSEA"),
 
-                  selected = "CellEnrich - median",
+                  selected = "CellEnrich - Median",
                 )
               ),
               material_card(
@@ -1849,7 +1849,15 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
             subexp <- stats[unique(tmp)]
             names(subexp) <- unique(tmp)
-            res <- names(subexp[subexp > 0])
+
+            res <- names(subexp[subexp > quantile(subexp)[["50%"]]])
+            if (length(res) == 0){
+              res <- names(subexp[subexp > quantile(subexp)[["25%"]]])
+            }
+            if (length(res) == 0){
+              res <- names(subexp[subexp > 0])
+            }
+
             idx <- paste0(sapply(res, function(x){which(rownames(CountData)==x)}), collapse = ', ')
           })
         }, .id = "condition")
@@ -1862,7 +1870,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           tmp <- as.numeric(unlist(tmp))
         })
 
-        # saveRDS(s, "s_new.rds")
+        saveRDS(s, "s_294.rds")
         mytoc <- toc()
         print(mytoc)
 
@@ -1885,8 +1893,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         colnames(dfobj) <- c("x", "y", "col")
         dfobj <<- dfobj
 
-      }
-      else { ### other cases
+      } else
+        # ----- Median ####
+      if (input$FCoption == "CellEnrich - Median") {{
         s <- findSigGenes(CountData, input$FCoption, GroupInfo, coef = input$medianCoefficient)
       }
       cat("s Finished\n")
