@@ -1,4 +1,4 @@
-## 24.04.29
+## 24.05.07
 if(!require(waiter)){
   install.packages('waiter') # install 'waiter' if not installed.
 }
@@ -72,10 +72,10 @@ getTU <- function(CountData, GroupInfo, plotOption='UMAP', topdims= 50) {
   return (seu)
 }
 
-findSigGenes <- function(v, method = "CellEnrich - Median", Name, coef=1) {
+findSigGenes <- function(v, method = "Median", Name, coef=1) {
 
-  if (!method %in% c("CellEnrich - Median",
-                     "CellEnrich - FGSEA")) stop("wrong method")
+  if (!method %in% c("Median",
+                     "FGSEA")) stop("wrong method")
 
   cat("findSigGenes started\n")
   rownames(v) <- colnames(v) <- NULL
@@ -89,7 +89,7 @@ findSigGenes <- function(v, method = "CellEnrich - Median", Name, coef=1) {
     return(median(v) * coef)
   }
 
-  if (method == "CellEnrich - Median") {
+  if (method == "Median") {
     for (i in 1:ncol(v)) {
       res[[i]] <- which(v[, i] > med(v[, i], coef=coef))
     }
@@ -538,10 +538,83 @@ CellEnrichUI <- function(GroupInfo) {
   library(highcharter)
   library(sortable)
   if(!require(farver)){
-    install.packages('farver') # install 'farver' if not installed.
-
+    install.packages('farver')
   }
   library(farver)
+
+  radio_names <- c("Median", "FGSEA")
+  radio_ids <- c("Median", "FGSEA")
+  radio_colors <- c("#1976d2", "#1976d2" )
+  # radio_colors <- c("#cc0000", "#009900" )
+
+  tab_content <- list(
+    material_row(
+      material_card(  title = HTML("<font color='black' size='4'> </font>"),
+                      material_number_box(
+                        input_id = "medianCoefficient",
+                        label = HTML("<font color='black' size='5'>Coefficient (max=2)</font>"),
+                        min_value = 0,
+                        max_value = 2,
+                        initial_value = 1,
+                        step_size = 0.05
+                      ),
+                      material_number_box(
+                        input_id = "mediNsample",
+                        label = HTML("<font color='black' size='5'>N(%) of top-depth samples</font>"),
+                        min_value = 0,
+                        max_value = 100,
+                        initial_value = 100,
+                        step_size = 1
+                      )
+      )
+    ),
+    material_row(
+      material_card(  title = HTML("<font color='black' size='5'> </font>"),
+                      material_number_box(
+                        input_id = "fgseaNpermuatation",
+                        label = HTML("<font color='black' size='5'>N permutations</font>"),
+                        min_value = 100,
+                        max_value = 100000,
+                        initial_value = 100,
+                        step_size = 100
+                      ),
+                      material_number_box(
+                        input_id = "fgseaNsample",
+                        label = HTML("<font color='black' size='5'>N(%) of top-depth samples</font>"),
+                        min_value = 0,
+                        max_value = 100,
+                        initial_value = 10,
+                        step_size = 1
+                      )
+      )
+    )
+  )
+
+  radio_css <- sprintf("
+  .tabs .tab a {
+    font-weight: 200;
+    text-align: center;
+    color: #000  !important;
+    background-color: #fff;
+    border: 1px !important;
+  }
+
+  .tabs .tab a[class*='active'] {
+    color: #fff !important;
+    background-color: #fff;
+  }
+
+    %s
+  ", paste(sprintf(".tabs .tab a[href*=%s][class*='active'] { background-color: %s !important; }", radio_ids, radio_colors ), collapse = "\n"))
+
+  js <- '
+        $(document).on("shiny:connected", function(){
+          Shiny.setInputValue("activeTab", $("li.tab a").attr("href"));
+
+          $(document).on("click", "li.tab a", function () {
+             Shiny.setInputValue("activeTab", $(this).attr("href"));
+          });
+        });'
 
   Cells <- sort(unique(GroupInfo))
   CardColors <- briterhex(scales::hue_pal(h = c(20, 350), c = 100, l = 65, h.start = 0, direction = 1)(length(Cells)), alpha = 1.1)
@@ -563,12 +636,12 @@ CellEnrichUI <- function(GroupInfo) {
   }
 
   .tabs .tab a:hover {
-    color: #00ffff;
+    color: #223344;
     cursor: pointer;
   }
 
   .tabs .tab a[class*='active'] {
-    background-color: #000; !important;
+    background-color: #fff;
     color: #223344;
     border-color: #223344;
   }
@@ -605,22 +678,7 @@ CellEnrichUI <- function(GroupInfo) {
           divider = TRUE,
           style = "border : solid 0.5em #1976d2",
           material_row(
-
             material_column(
-              material_card(
-                radioButtons(
-                  "FCoption",
-                  label = HTML("<font color='black' size='5'>Methods</font>"),#"Methods",
-                  choiceNames = list(
-                    HTML("<font color='black' size='4'>CellEnrich - Median</font>"),
-                    HTML("<font color='black' size='4'>CellEnrich - Fast GSEA</font>")
-                  ),
-                  choiceValues = c("CellEnrich - Median",
-                                   "CellEnrich - FGSEA"),
-
-                  selected = "CellEnrich - Median",
-                )
-              ),
               material_card(
                 radioButtons(
                   "plotOption",
@@ -649,34 +707,21 @@ CellEnrichUI <- function(GroupInfo) {
             #---- Method options ####
             material_column(
               material_row(
-                material_card(  title = HTML("<font color='black' size='4'> Median Parameters </font>"),
-                                material_number_box(
-                                  input_id = "medianCoefficient",
-                                  label = HTML("<font color='black' size='4'>Median coefficient</font>"),
-                                  min_value = 0,
-                                  max_value = 2,
-                                  initial_value = 1,
-                                  step_size = 0.05
-                                ),
-                                material_number_box(
-                                  input_id = "mediNsample",
-                                  label = HTML("<font color='black' size='4'>Median - N(%) of Top-depth samples</font>"),
-                                  min_value = 0,
-                                  max_value = 100,
-                                  initial_value = 100,
-                                  step_size = 1
-                                )
+                tags$head(
+                  tags$style(HTML(radio_css)),
+                  tags$script(HTML(js))
                 ),
-                material_card(  title = HTML("<font color='black' size='4'> FGSEA Parameters </font>"),
-                                material_number_box(
-                                  input_id = "fgseaNsample",
-                                  label = HTML("<font color='black' size='4'>FGSEA - N(%) of Top-depth samples</font>"),
-                                  min_value = 0,
-                                  max_value = 100,
-                                  initial_value = 10,
-                                  step_size = 1
-                                )
-                )
+                title = NULL,
+                material_tabs(tabs = setNames(radio_ids, radio_ids), color = "#668899"),
+                lapply(1:length(radio_ids), function(i) {
+                  material_tab_content(
+                    tab_id = radio_ids[i],
+                      shiny::tags$div(
+                        tab_content[[i]]
+                      )
+                    )
+
+                })
               )
               , width = 3 ## column width
             ),
@@ -1551,7 +1596,14 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         if (length(memGenes) > 60){  ## trimming
           memGenes <- memGenes[1:60]
         }
-        mat_data <- fullpw_data[memGenes, ]
+
+        if (is.null(rdf$sample_idx)){
+          mat_data <- logtab[memGenes, which(seu$cell_type == group)]
+
+        } else {
+          mat_data <- logtab[memGenes, which(seu$cell_type[rdf$sample_idx] == group)]
+
+        }
         # saveRDS(mat_data, "mat_data.rds")
 
         mat_data <- round(mat_data, 2)
@@ -1612,7 +1664,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
     ### CODES
     # variable initialize
-
     dtobj <- dfobj <- pres <- pres2 <- presTab <- logtab <- ""
     CellPathwayDF <- ""
     gt <- Cells <- A <- ""
@@ -1620,9 +1671,32 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
     CellHistogram <- ""
     BiPlot <- HeatPlot <- OR <- ""
 
+    Cells <- sort(unique(GroupInfo))
+    # rdf ####
+    rdf <- reactiveValues(df = data.frame(Pathway=character(), Group=character()),
+                          FCoption="Median",
+                          current_pw=NULL,
+                          current_group=NULL,
+                          sample_idx=NULL)
+
+
+    #--- tracking method selected  ####
+    # observe({
+    #   print(input[["activeTab"]])
+    # })
+
+    observeEvent(input[["activeTab"]],{
+      if (input[["activeTab"]] %in% c("#Median", "#FGSEA") ){
+        rdf$FCoption <- gsub("#", "", input[["activeTab"]])
+      }
+    })
 
     # ##### trigger value
     observeEvent(input$StartCellEnrich, {
+      ## reset indexing
+      rdf$sample_idx = NULL
+      FCoption <- rdf$FCoption
+
       pt <- proc.time()
 
       # ------ Hide Start Button
@@ -1743,7 +1817,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       A <<- getBackgroundGenes(genesets)
 
       # ------ Calculate TSNE / UMAP First
-      # seu <- getTU(CountData, GroupInfo, "CellEnrich - FGSEA", topdims=50)
+      # seu <- getTU(CountData, GroupInfo, "FGSEA", topdims=50)
       seu <- getTU(CountData, GroupInfo, input$plotOption, topdims=input$topdims)
       seu <<- seu
 
@@ -1778,7 +1852,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
 
       # ----- FGSEA ####
-      if (input$FCoption == "CellEnrich - FGSEA") {
+      if (FCoption == "FGSEA") {
         library(fgsea)
         library(purrr)
         library(tidyr)
@@ -1846,7 +1920,24 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
         conditions <- colnames(scaleCount)
         names(conditions) <- conditions
-        permtimes = 100
+
+        #---- N permutations ####
+        permtimes = input$fgseaNpermuatation
+
+        if (is.null(permtimes)){
+          shiny::showNotification("At least 100 permutations are required.", type = "error", duration = 30)
+          permtimes = 100
+        }
+
+        if (permtimes < 100){
+          shiny::showNotification("At least 100 permutations are required.", type = "error", duration = 30)
+          permtimes = 100
+        }
+
+        if (permtimes > 100000){
+          shiny::showNotification("At most 100,000 permutations can be used.", type = "error", duration = 30)
+          permtimes = 100000
+        }
 
         #
         library(tictoc)
@@ -1866,7 +1957,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
             result <- suppressWarnings(do.call(what = fgsea::fgsea, args = options))
             result$leadingEdge = sapply(seq_len(nrow(result)), function(x)paste0(result$leadingEdge[x][[1]], collapse = ', '))
 
-            tres <- result %>% filter(pval < 0.01)
+            # tres <- result %>% filter(pval < 0.01)
+            tres <- result %>% filter(pval < input$qvalueCutoff)
             if (nrow(tres) == 0){
               tres <- result %>% arrange(pval) %>% top_n(-1, pval)
             }
@@ -1900,7 +1992,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           tmp <- as.numeric(unlist(tmp))
         })
 
-        # saveRDS(s, "s_294.rds")
+        saveRDS(s, "s_0503.rds")
         mytoc <- toc()
         print(mytoc)
 
@@ -1923,7 +2015,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
         names(s) <- seu$cell_type
 
-      } else if (input$FCoption == "CellEnrich - Median") { # ----- Median ####
+      } else if (FCoption== "Median") { # ----- Median ####
 
         ###  genes & cells  matching
         scaleCount <- as.matrix(seu@assays$RNA$counts)  ### counts
@@ -2004,13 +2096,25 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         colnames(dfobj) <- c("x", "y", "col")
         dfobj <<- dfobj
 
-        s <- findSigGenes(scaleCount, input$FCoption, seu$cell_type, coef = input$medianCoefficient)
+        #---- chekcing valid coef ####
+        medianCoefficient <- input$medianCoefficient
+
+        if (medianCoefficient > 2){
+          shiny::showNotification("Maximun coefficient value 2 will be used.", type = "warning", duration = 30)
+          medianCoefficient = 2
+        }
+
+        s <- findSigGenes(scaleCount, FCoption, seu$cell_type, coef = medianCoefficient)
       }
       cat("s Finished\n")
 
-      # if(input$FCoption != "CellEnrich - FGSEA"){
-      #   dfobj <<- ori_dfobj
-      # }
+      #---- checking valid s result
+      for (m in s){
+        if (length(m)==0){
+          shiny::showNotification("Some cutoff(s) gave invalid results! Please consider other params.", type = "error", duration = 60)
+          return(NULL)
+        }
+      }
 
       cat("getTU Finished\n")
       # ------ Find Significant Genes with findMarkers ####
@@ -2306,9 +2410,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         }
       )
 
-      gt <<- groupTable(pres, genesets, ori_dfobj, pres2)
-      # gt <<- groupTable(pres, genesets, dfobj, pres2)
-
+      # gt <<- groupTable(pres, genesets, ori_dfobj, pres2)
+      gt <<- groupTable(pres, genesets, dfobj, pres2)
 
       # generate dynamic table
 
@@ -2508,15 +2611,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       output$CellPlot <- renderPlot(plotImg)
       output$Comparison <- renderPlot(compareImg)
     })
-
-
-    Cells <- sort(unique(GroupInfo))
-
-    # rdf ####
-    rdf <- reactiveValues(df = data.frame(Pathway=character(), Group=character()),
-                          current_pw=NULL,
-                          current_group=NULL,
-                          sample_idx=NULL)
 
     lapply(1:length(Cells), function(i) {
       observeEvent(input[[paste0("dynamicGroupTable", i, "_cell_clicked")]],{
