@@ -2,9 +2,9 @@
 
 Pathway Enrichment Analysis and Visualization for Single-cell Data
 
-<img src="images/ce_options_run_2024.PNG" width=450 height=270> <img src="images/ce_scatter_bar_2024.PNG" width=450 height=270> 
-<img src="images/ce_dyntab_all_2024.PNG" width=450 height=250> <img src="images/pbmc_biplot_or.png" width=450 height=250>  
-<img src="images/ce_ga_map_2024.PNG" width=450 height=270> <img src="images/ce_heatmap_pdf.PNG" width=450 height=270>  
+<img src="images/ce_options_run_2024.PNG" width=440 height=270> <img src="images/ce_scatter_bar_2024.PNG" width=440 height=270> 
+<img src="images/ce_dyntab_all_2024.PNG" width=440 height=250> <img src="images/pbmc_biplot_or.png" width=440 height=250>  
+<img src="images/ce_ga_map_2024.PNG" width=440 height=270> <img src="images/ce_heatmap_pdf.PNG" width=440 height=270>  
 
 ## Installation
 
