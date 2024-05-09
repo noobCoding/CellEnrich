@@ -1,4 +1,4 @@
-## 24.05.07
+## 24.05.09
 if(!require(waiter)){
   install.packages('waiter') # install 'waiter' if not installed.
 }
@@ -117,7 +117,6 @@ findSigGenesGroup <- function(Count = NULL, ClustInfo = NULL, q0 = 0.1, TopCutof
       stringsAsFactors = FALSE
     ) %>% select(Group, Top, genes, FDR) %>%
       filter(FDR <= q0) %>%
-      # filter(Top <= TopCutoff) %>%
       arrange(FDR)
 
     res <- rbind(res, G)
@@ -442,7 +441,6 @@ getCellHistogram <- function(GroupInfo, colV) {
 getCellPlot <- function(dfobj, Cells) {
   cat("getCellPlot\n")
   library(ggplot2)
-  # library(highcharter)
 
   colnames(dfobj) <- c("x", "y", "col")
   dfobj <<- dfobj
@@ -497,7 +495,6 @@ groupTable <- function(pres, genesets, dfobj, pres2) {
     gt <- sapply(1:length(pathways), function(j) {
       q <- pathways[j] # selected white ball, 1
       m <- unname(pres2Idx[names(pathways[j])]) # total white ball, 28
-      # n <- tot - m # total black ball
       round(1 - phyper(q - 1, m, tot - m, k), 4)
     })
 
@@ -678,7 +675,7 @@ CellEnrichUI <- function(GroupInfo) {
           divider = TRUE,
           style = "border : solid 0.5em #1976d2",
           material_row(
-            material_column(
+           material_column(
               material_card(
                 radioButtons(
                   "plotOption",
@@ -723,7 +720,7 @@ CellEnrichUI <- function(GroupInfo) {
 
                 })
               )
-              , width = 3 ## column width
+              , width = 4 ## column width
             ),
             material_column(
               material_card(
@@ -795,7 +792,7 @@ CellEnrichUI <- function(GroupInfo) {
                                step_size = 0.01
                              )
               ),
-              width = 2
+              width = 3
             )
           ),
           shiny::tags$div(class = "runbutton",
