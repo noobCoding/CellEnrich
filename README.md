@@ -4,9 +4,11 @@ Pathway Enrichment Analysis and Visualization for Single-cell Data
 
 <img src="images/ce_options_run_2024.PNG" width=450 height=270> <img src="images/ce_scatter_bar_2024.PNG" width=450 height=270> 
 <img src="images/ce_dyntab_all_2024.PNG" width=450 height=250> <img src="images/pbmc_biplot_or.png" width=450 height=250>  
-  <img src="images/ce_ga_map_2024.PNG" width=450 height=270>   <img src="images/ce_heatmap_pdf.PNG" width=450 height=270>  
+<img src="images/ce_ga_map_2024.PNG" width=450 height=270> <img src="images/ce_heatmap_pdf.PNG" width=450 height=270>  
 
 ## Installation
+
+CellEnrich [manual](https://github.com/noobCoding/CellEnrich/blob/master/CellEnrich_manual.pdf) is available.
 
 NOTE: on a fresh installation, users may need to install some required interpreter compilers for the system to install other R packages:
 * C++ compiler 
@@ -17,7 +19,6 @@ NOTE: on a fresh installation, users may need to install some required interpret
 Install Dependent Packages:
 *	Some packages must be installed from sources that need compilation and a proper version of [RTools](https://cran.r-project.org/bin/windows/Rtools/).
 *	It’s recommended to install devtools, and BiocManager packages first, to install the following packages in Github / Bioconductor (not in CRAN).
-
 
 ```R
 # install required packages
@@ -33,8 +34,6 @@ remotes::install_github('noobCoding/CellEnrich')
 <br /> 
 
 ## Example with PBMC_3K data 
-
-CellEnrich [manual](https://github.com/noobCoding/CellEnrich/blob/master/CellEnrich_manual.pdf) is available.
 
 ```R
 # Download data, if not downloaded
