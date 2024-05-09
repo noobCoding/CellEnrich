@@ -1,6 +1,6 @@
 # CellEnrich 
 
-Pathway enrichment analysis and visualization for Single Cell Data
+Pathway Enrichment Analysis and Visualization for Single Cell Data
 
 <img src="images/ce_options_run_2024.PNG" width=500 height=325> <img src="images/ce_scatter_bar_2024.PNG" width=500 height=325> 
 <img src="images/ce_dyntab_all_2024.PNG" width=500 height=250> <img src="images/pbmc_biplot_or.png" width=500 height=250>  
@@ -33,6 +33,8 @@ remotes::install_github('noobCoding/CellEnrich')
 <br /> 
 
 ## Example with PBMC_3K data 
+
+CellEnrich [manual](https://github.com/noobCoding/CellEnrich/blob/master/CellEnrich_manual.pdf) is available.
 
 ```R
 # Download data, if not downloaded
