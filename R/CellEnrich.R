@@ -1,4 +1,4 @@
-## 24.05.09
+## 24.05.13
 if(!require(waiter)){
   install.packages('waiter') # install 'waiter' if not installed.
 }
@@ -46,7 +46,6 @@ getBackgroundGenes <- function(genesets) {
 getTU <- function(CountData, GroupInfo, plotOption='UMAP', topdims= 50) {
   cat("Mapping is started\n")
   # CountData is normalized
-  # seu <- CreateSeuratObject(pbmc)
   seu <- CreateSeuratObject(CountData)
 
 
@@ -85,13 +84,21 @@ findSigGenes <- function(v, method = "Median", Name, coef=1) {
 
   cat("define Lists\n")
   med <- function(v, coef=1) {
-    v <- v[which(v > 0)]
-    return(median(v) * coef)
+    if (is.na(median(v[v > 0]))){
+      med <- 0
+    } else {
+      med <- median(v[v > 0])
+    }
+    return(med * coef)
   }
 
   if (method == "Median") {
     for (i in 1:ncol(v)) {
-      res[[i]] <- which(v[, i] > med(v[, i], coef=coef))
+      tmp <- which(v[, i] > med(v[, i], coef=coef))
+      if (length(tmp) == 0){
+        tmp <- which(v[, i] == max(v[, i]))
+      }
+      res[[i]] <- tmp
     }
   }
   names(res) <- Name
@@ -552,7 +559,7 @@ CellEnrichUI <- function(GroupInfo) {
                         label = HTML("<font color='black' size='5'>Coefficient (max=2)</font>"),
                         min_value = 0,
                         max_value = 2,
-                        initial_value = 1,
+                        initial_value = 1.5,
                         step_size = 0.05
                       ),
                       material_number_box(
@@ -780,7 +787,7 @@ CellEnrichUI <- function(GroupInfo) {
                                label = HTML("<font color='black' size='4.5'>Pathway Frequency</font>"),
                                min_value = 0,
                                max_value = 0.5,
-                               initial_value = 0.1,
+                               initial_value = 0.3,
                                step_size = 0.05
                              ),
                              material_number_box(
@@ -1954,7 +1961,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
             result <- suppressWarnings(do.call(what = fgsea::fgsea, args = options))
             result$leadingEdge = sapply(seq_len(nrow(result)), function(x)paste0(result$leadingEdge[x][[1]], collapse = ', '))
 
-            # tres <- result %>% filter(pval < 0.01)
             tres <- result %>% filter(pval < input$qvalueCutoff)
             if (nrow(tres) == 0){
               tres <- result %>% arrange(pval) %>% top_n(-1, pval)
@@ -1989,7 +1995,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           tmp <- as.numeric(unlist(tmp))
         })
 
-        saveRDS(s, "s_0503.rds")
+        # saveRDS(s, "s_0509.rds")
         mytoc <- toc()
         print(mytoc)
 
@@ -2102,6 +2108,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         }
 
         s <- findSigGenes(scaleCount, FCoption, seu$cell_type, coef = medianCoefficient)
+        # saveRDS(s, "s_0513.rds")
       }
       cat("s Finished\n")
 
