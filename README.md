@@ -18,7 +18,7 @@ NOTE: on a fresh installation, users may need to install some required interpret
 
 Install Dependent Packages:
 *	Some packages must be installed from sources that need compilation and a proper version of [RTools](https://cran.r-project.org/bin/windows/Rtools/).
-*	It’s recommended to install devtools, and BiocManager packages first, to install the following packages in Github / Bioconductor (not in CRAN).
+*	It is recommended to install devtools, and BiocManager packages first before installing the following packages in Github/Bioconductor (not in CRAN).
 
 ```R
 # install required packages
