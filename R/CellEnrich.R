@@ -567,7 +567,7 @@ CellEnrichUI <- function(GroupInfo) {
                         label = HTML("<font color='black' size='5'>N(%) of top-depth samples</font>"),
                         min_value = 0,
                         max_value = 100,
-                        initial_value = 100,
+                        initial_value = 1000,
                         step_size = 1
                       )
       )
