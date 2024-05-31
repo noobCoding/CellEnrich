@@ -73,8 +73,7 @@ getTU <- function(CountData, GroupInfo, plotOption='UMAP', topdims= 50) {
 
 findSigGenes <- function(v, method = "Median", Name, coef=1) {
 
-  if (!method %in% c("Median",
-                     "FGSEA")) stop("wrong method")
+  if (!method %in% c("Median")) stop("wrong method")
 
   cat("findSigGenes started\n")
   rownames(v) <- colnames(v) <- NULL
@@ -556,18 +555,18 @@ CellEnrichUI <- function(GroupInfo) {
       material_card(  title = HTML("<font color='black' size='4'> </font>"),
                       material_number_box(
                         input_id = "medianCoefficient",
-                        label = HTML("<font color='black' size='5'>Coefficient (max=2)</font>"),
+                        label = HTML("<font color='black' size='5'>Fold Change from median (max=4)</font>"),
                         min_value = 0,
-                        max_value = 2,
+                        max_value = 4,
                         initial_value = 1.5,
                         step_size = 0.05
                       ),
                       material_number_box(
                         input_id = "mediNsample",
-                        label = HTML("<font color='black' size='5'>N(%) of top-depth samples</font>"),
+                        label = HTML("<font color='black' size='5'>N(%) of top-depth cells</font>"),
                         min_value = 0,
                         max_value = 100,
-                        initial_value = 1000,
+                        initial_value = 100,
                         step_size = 1
                       )
       )
@@ -579,12 +578,12 @@ CellEnrichUI <- function(GroupInfo) {
                         label = HTML("<font color='black' size='5'>N permutations</font>"),
                         min_value = 100,
                         max_value = 100000,
-                        initial_value = 100,
+                        initial_value = 1000,
                         step_size = 100
                       ),
                       material_number_box(
                         input_id = "fgseaNsample",
-                        label = HTML("<font color='black' size='5'>N(%) of top-depth samples</font>"),
+                        label = HTML("<font color='black' size='5'>N(%) of top-depth cells</font>"),
                         min_value = 0,
                         max_value = 100,
                         initial_value = 10,
@@ -698,7 +697,7 @@ CellEnrichUI <- function(GroupInfo) {
 
                 material_number_box(
                   input_id = "topdims",
-                  label = HTML("<font color='black' size='4'>Top-N dims</font>"), # top dims
+                  label = HTML("<font color='black' size='4'>N principal components</font>"), # top dims
                   min_value = 30,
                   max_value = 100,
                   initial_value = 50,
@@ -2102,9 +2101,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         #---- chekcing valid coef ####
         medianCoefficient <- input$medianCoefficient
 
-        if (medianCoefficient > 2){
-          shiny::showNotification("Maximun coefficient value 2 will be used.", type = "warning", duration = 30)
-          medianCoefficient = 2
+        if (medianCoefficient > 4){
+          shiny::showNotification("Maximun coefficient value 4 will be used.", type = "warning", duration = 30)
+          medianCoefficient = 4
         }
 
         s <- findSigGenes(scaleCount, FCoption, seu$cell_type, coef = medianCoefficient)
@@ -2296,6 +2295,10 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
       OR <<- OR %>% filter(OddsRatio > 1)
       CellPathwayDF <- CellPathwayDFP %>% filter(OddsRatio > 1)
+      #Original: "Cell"      "Pathway"   "Frequency" "N_cell"    "Size"      "Qvalue"    "OddsRatio"
+      # Order: Size, OddsRatio (OR), Qvalue (-log10), Frequency
+      CellPathwayDF <- CellPathwayDF[, c(1, 2, 5, 7, 6, 3, 4)]
+
       CellPathwayDF <<- CellPathwayDF
 
       # l2
@@ -2457,11 +2460,10 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
 
       # ------ fill dynamic table
-      # ordered by Count , not length;
       lapply(1:length(Cells), function(i) {
         output[[paste0("dynamicGroupTable", i)]] <- DT::renderDataTable(
-          DT::datatable(CellPathwayDF[which(CellPathwayDF$Cell==Cells[i]), -1],
-                        colnames = c("-log10 Qvalue" = "Qvalue", " "="N_cell"),
+          DT::datatable(CellPathwayDF[which(CellPathwayDF$Cell==Cells[i], ), -1],
+                        colnames = c("Qvalue (-log10)" = "Qvalue", " "="N_cell", "OddsRatio (OR)"="OddsRatio"),
                         rownames=FALSE,
                         selection = 'single',
                         options=list(dom='ltp',
@@ -2469,7 +2471,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                                      scrollX = TRUE,
                                      autoWidth = TRUE,
                                      lengthChange = FALSE,
-                                     order = list(list(5,'desc'))) # odds ratio based
+                                     order = list(list(3,'desc'))) # odds ratio based
           ))
       })
 
