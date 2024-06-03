@@ -1481,10 +1481,13 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
     buildbiplot <- function(biFont, biX, biY, genesets, TOPN = 5, OddsRatio = TRUE, gsFont=5, axtxt=13, axlab=15,
                             myplot='biplot', tab=matrix(0, 0, 0)) {
 
-      hmtype <- 'Odds Ratio based Biplot'
-      if (!OddsRatio){
-        hmtype <- 'Frequency based Biplot'
-      }
+      # hmtype <- 'Odds Ratio based Biplot'
+      # if (!OddsRatio){
+      #   hmtype <- 'Frequency based Biplot'
+      # }
+
+      hmtype <- ''
+
       ##########  BiPlot
       labels <- rownames(tab)
 
@@ -1540,10 +1543,11 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                               myplot='biplot', tab=maxtrix(0, 0, 0)) {
 
       ###########   Heatmap
-      hmtype <- 'Odds Ratio based Heatmap'
-      if (!OddsRatio){
-        hmtype <- 'Frequency based Heatmap'
-      }
+      # hmtype <- 'Odds Ratio based Heatmap'
+      # if (!OddsRatio){
+      #   hmtype <- 'Frequency based Heatmap'
+      # }
+      hmtype <- ''
 
       # Define breaks
       mat_data <- round(tab, 2)
@@ -2471,7 +2475,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                                      scrollX = TRUE,
                                      autoWidth = TRUE,
                                      lengthChange = FALSE,
-                                     order = list(list(3,'desc'))) # odds ratio based
+                                     order = list(list(2,'desc'))) # odds ratio based
           ))
       })
 
@@ -2857,7 +2861,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
           pdf(file, width = 24, height = 16)
           heatmap.2(t(HeatPlot$carpet)[revRowInd, revColInd],
-                    main = "Frequency based Heatmap", # heat map title
+                    main = "", # heat map title
                     density.info="none",
                     trace="none",
                     margins =c(15,70),
@@ -2923,7 +2927,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
           pdf(file, width = 24, height = 16)
           heatmap.2(t(HeatPlot$carpet)[revRowInd, revColInd],
-                    main = "Odds Ratio based Heatmap", # heat map title
+                    main = "", # heat map title
                     density.info="none",
                     trace="none",
                     margins =c(15,70),
