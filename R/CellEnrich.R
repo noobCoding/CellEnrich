@@ -1478,7 +1478,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       return(tab)
     }
 
-    buildbiplot <- function(biFont, biX, biY, genesets, TOPN = 5, OddsRatio = TRUE, gsFont=5, axtxt=13, axlab=15,
+    buildbiplot <- function(biFont, biX, biY, TOPN = 5, OddsRatio = TRUE, gsFont=5, axtxt=13, axlab=15,
                             myplot='biplot', tab=matrix(0, 0, 0)) {
 
       # hmtype <- 'Odds Ratio based Biplot'
@@ -1539,7 +1539,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       return(BiPlot)
     }
 
-    buildheatplot <- function(biFont, biX, biY, genesets, TOPN = 5, OddsRatio = TRUE, gsFont=5, axtxt=13, axlab=15,
+    buildheatplot <- function(biFont, biX, biY, TOPN = 5, OddsRatio = TRUE, gsFont=5, axtxt=13, axlab=15,
                               myplot='biplot', tab=maxtrix(0, 0, 0)) {
 
       ###########   Heatmap
@@ -2280,16 +2280,15 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       if (nrow(tmp_df) > 0) {
         OR <- tmp_df
         colnames(OR) <- c("Cell", "Pathway", "OddsRatio")
-        OR <<- OR
       }
       else {
-        OR <<- getOddRatio(seu$cell_type, pres, pres2, genesets, input$pwFrequency)
+        OR <- getOddRatio(seu$cell_type, pres, pres2, genesets, input$pwFrequency)
       }
 
       CellPathwayDFP <- CellPathwayDF %>%
         inner_join(PP) %>% inner_join(OR)  %>% select(-Pvalue)  # %>% filter(Qvalue > 1)
 
-      CellPathwayDFP <- CellPathwayDFP %>% filter(Qvalue > -log10(q0))
+      # CellPathwayDFP <- CellPathwayDFP %>% filter(Qvalue > -log10(q0))
       output$tbldn <- downloadHandler(
         filename = "all_sig_pathways.csv",
         content = function(file) {
@@ -2297,13 +2296,18 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         }
       )
 
-      OR <<- OR %>% filter(OddsRatio > 1)
-      CellPathwayDF <- CellPathwayDFP %>% filter(OddsRatio > 1)
+      CellPathwayDF <- CellPathwayDFP %>% filter(Qvalue > -log10(q0)) %>% filter(OddsRatio > 1)
       #Original: "Cell"      "Pathway"   "Frequency" "N_cell"    "Size"      "Qvalue"    "OddsRatio"
       # Order: Size, OddsRatio (OR), Qvalue (-log10), Frequency
       CellPathwayDF <- CellPathwayDF[, c(1, 2, 5, 7, 6, 3, 4)]
 
       CellPathwayDF <<- CellPathwayDF
+
+      sigGS <- unique(CellPathwayDF$Pathway)
+      sigGS <<- sigGS
+
+      OR <- OR %>% filter(OddsRatio > 1) %>% filter(Pathway %in% sigGS)
+      OR <<- OR
 
       # l2
       CellMarkers <- data.frame()
@@ -2831,15 +2835,20 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         return(NULL)
       }
 
-      output$biPlot <- renderPlot(buildbiplot(input$biFont, input$biX, input$biY, genesets, TOPN = input$biCount,
+      tab=toptab(genesets, TOPN = input$biCount, OddsRatio = FALSE)
+      saveRDS(tab, "toptab.rds")
+
+      output$biPlot <- renderPlot(buildbiplot(input$biFont, input$biX, input$biY, TOPN = input$biCount,
                                               gsFont = input$gsFont, axtxt = input$axtxt, axlab = input$axlab,
                                               OddsRatio = FALSE,
-                                              tab=toptab(genesets, TOPN = input$biCount, OddsRatio = FALSE)))
+                                              tab=toptab(sigGS, TOPN = input$biCount, OddsRatio = FALSE)))
+                                              # tab=toptab(genesets, TOPN = input$biCount, OddsRatio = FALSE)))
 
-      output$heatPlot <- renderPlot(buildheatplot(input$biFont, input$biX, input$biY, genesets, TOPN = input$biCount,
+      output$heatPlot <- renderPlot(buildheatplot(input$biFont, input$biX, input$biY, TOPN = input$biCount,
                                                   gsFont = input$gsFont, axtxt = input$axtxt, axlab = input$axlab,
                                                   OddsRatio = FALSE,
-                                                  tab=toptab(genesets, TOPN = input$biCount, OddsRatio = FALSE)))
+                                                  tab=toptab(sigGS, TOPN = input$biCount, OddsRatio = FALSE)))
+                                                  # tab=toptab(genesets, TOPN = input$biCount, OddsRatio = FALSE)))
 
       output$biplotdn <- downloadHandler(
         filename = function() {
@@ -2897,12 +2906,12 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         return(NULL)
       }
 
-      output$biPlot <- renderPlot(buildbiplot(input$biFont, input$biX, input$biY, genesets, TOPN = input$biCount,
+      output$biPlot <- renderPlot(buildbiplot(input$biFont, input$biX, input$biY, TOPN = input$biCount,
                                               gsFont = input$gsFont, axtxt = input$axtxt, axlab = input$axlab,
                                               OddsRatio = TRUE,
                                               tab = toptab(genesets, TOPN = input$biCount, OddsRatio = TRUE)))
 
-      output$heatPlot <- renderPlot(buildheatplot(input$biFont, input$biX, input$biY, genesets, TOPN = input$biCount,
+      output$heatPlot <- renderPlot(buildheatplot(input$biFont, input$biX, input$biY, TOPN = input$biCount,
                                                   gsFont = input$gsFont, axtxt = input$axtxt, axlab = input$axlab,
                                                   OddsRatio = TRUE,
                                                   tab=toptab(genesets, TOPN = input$biCount, OddsRatio = TRUE)))
