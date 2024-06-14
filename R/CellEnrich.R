@@ -1368,7 +1368,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
   server <- function(input, output, session) {
 
-    toptab <- function (genesets, TOPN = 3, OddsRatio = TRUE, myplot='biplot'){
+    toptab <- function (siggs, TOPN = 3, OddsRatio = TRUE, myplot='biplot'){
       Cells <- sort(unique(GroupInfo))
       # pres : which gene-sets are significant for each cells.
       # pres2 : for each gene-sets, how many cells are significant that gene-sets.
@@ -1389,7 +1389,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         colnames(tab) <- Cells
 
         gs <- sapply(gs, function(i) {
-          which(names(genesets) == i)
+          which(names(siggs) == i)
         })
 
         for (i in 1:length(Cells)) {
@@ -1438,11 +1438,11 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       }
       else { # FREQUENCY
 
-        tab <- matrix(0, nrow = length(genesets), ncol = length(Cells))
+        tab <- matrix(0, nrow = length(siggs), ncol = length(Cells))
 
         for (i in 1:length(Cells)) {
           thisCellIdx <- which(GroupInfo == Cells[i])
-          v <- rep(0, length(genesets))
+          v <- rep(0, length(siggs))
 
           vs <- table(unlist(pres[thisCellIdx]))
           nvs <- as.numeric(names(vs))
@@ -1451,7 +1451,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
           tab[, i] <- v / length(thisCellIdx)
         }
-        rownames(tab) <- names(genesets)
+        rownames(tab) <- names(siggs)
         colnames(tab) <- Cells
         tab <- tab[-which(sapply(1:nrow(tab), function(i) {
           sum(tab[i, ]) == 0
@@ -2835,20 +2835,15 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         return(NULL)
       }
 
-      tab=toptab(genesets, TOPN = input$biCount, OddsRatio = FALSE)
-      saveRDS(tab, "toptab.rds")
-
       output$biPlot <- renderPlot(buildbiplot(input$biFont, input$biX, input$biY, TOPN = input$biCount,
                                               gsFont = input$gsFont, axtxt = input$axtxt, axlab = input$axlab,
                                               OddsRatio = FALSE,
-                                              tab=toptab(sigGS, TOPN = input$biCount, OddsRatio = FALSE)))
-                                              # tab=toptab(genesets, TOPN = input$biCount, OddsRatio = FALSE)))
+                                              tab=toptab(genesets, TOPN = input$biCount, OddsRatio = FALSE)))
 
       output$heatPlot <- renderPlot(buildheatplot(input$biFont, input$biX, input$biY, TOPN = input$biCount,
                                                   gsFont = input$gsFont, axtxt = input$axtxt, axlab = input$axlab,
                                                   OddsRatio = FALSE,
-                                                  tab=toptab(sigGS, TOPN = input$biCount, OddsRatio = FALSE)))
-                                                  # tab=toptab(genesets, TOPN = input$biCount, OddsRatio = FALSE)))
+                                                  tab=toptab(genesets, TOPN = input$biCount, OddsRatio = FALSE)))
 
       output$biplotdn <- downloadHandler(
         filename = function() {
@@ -2906,6 +2901,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         return(NULL)
       }
 
+      tab=toptab(genesets, TOPN = input$biCount, OddsRatio = FALSE)
+      saveRDS(tab, "toptab.rds")
+
       output$biPlot <- renderPlot(buildbiplot(input$biFont, input$biX, input$biY, TOPN = input$biCount,
                                               gsFont = input$gsFont, axtxt = input$axtxt, axlab = input$axlab,
                                               OddsRatio = TRUE,
@@ -2914,7 +2912,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       output$heatPlot <- renderPlot(buildheatplot(input$biFont, input$biX, input$biY, TOPN = input$biCount,
                                                   gsFont = input$gsFont, axtxt = input$axtxt, axlab = input$axlab,
                                                   OddsRatio = TRUE,
-                                                  tab=toptab(genesets, TOPN = input$biCount, OddsRatio = TRUE)))
+                                                tab=toptab(genesets, TOPN = input$biCount, OddsRatio = TRUE)))
 
       output$biplotdn <- downloadHandler(
         filename = function() {
