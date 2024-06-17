@@ -976,7 +976,7 @@ CellEnrichUI <- function(GroupInfo) {
           title = shiny::tags$h4("Heatmap between top pathways and groups"), divider = TRUE,
           material_row(
             material_column(
-              plotOutput("heatPlot", height = "900px"),
+              plotOutput("heatPlot", height = "1000px"),
               width = 10
             ),
             material_column(
@@ -1560,7 +1560,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                              main = hmtype,
                              density.info="none",
                              trace="none",
-                             margins =c(15,70),
+                             margins =c(20,70),
                              col=my_palette,
                              scale = "none",
                              breaks=col_breaks,
@@ -2683,7 +2683,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                       main = paste0(rdf$current_pw, " @", rdf$current_group),
                       density.info="none",
                       trace="none",
-                      margins =c(2,20),
+                      margins =c(3,20),
                       col=actMap$col,
                       scale = "none",
                       breaks=actMap$breaks,
@@ -2868,7 +2868,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                     main = "", # heat map title
                     density.info="none",
                     trace="none",
-                    margins =c(15,70),
+                    margins =c(20,70),
                     col=HeatPlot$col,
                     scale = "none",
                     breaks=HeatPlot$breaks,
@@ -2937,7 +2937,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                     main = "", # heat map title
                     density.info="none",
                     trace="none",
-                    margins =c(15,70),
+                    margins =c(20,70),
                     col=HeatPlot$col,
                     scale = "none",
                     breaks=HeatPlot$breaks,
