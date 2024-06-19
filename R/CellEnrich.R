@@ -886,6 +886,30 @@ CellEnrichUI <- function(GroupInfo) {
                 shiny::downloadButton("tbldn", " All Significant Pathways", style = "background-color : #616161 !important")
               )
             ),
+
+            # heatmap of selected pws ####
+            material_card(
+              title = shiny::tags$h4("Odds Ratio of selected pathways in groups"), divider = TRUE,
+              material_row(
+                material_column(
+                  plotOutput("pwAct", height = "700px")
+                  , width = 10
+                )
+              ),
+              material_row(
+                material_column(
+                  width = 3
+                ),
+                material_column(
+                  shiny::downloadButton("pwActSave", "Save Pathway Heatmap", style = "background-color : #616161 !important")
+                  , width = 6
+                ),
+                material_column(
+                  width = 3
+                )
+              )
+            ),
+
             tags$head(
               tags$style(HTML(custom_css))
             ),
@@ -1478,6 +1502,118 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       return(tab)
     }
 
+    picktab <- function (siggs, OddsRatio = TRUE){
+      Cells <- sort(unique(GroupInfo))
+      # pres : which gene-sets are significant for each cells.
+      # pres2 : for each gene-sets, how many cells are significant that gene-sets.
+      if (length(rdf$df$Pathway) < 2) return (NULL)
+
+      if (OddsRatio) { ## OddsRatio
+        total <- length(GroupInfo)
+
+        dat <- OR %>%
+          group_by(Cell) %>%
+          arrange(Cell) %>%
+          filter(Pathway %in% rdf$df$Pathway)
+
+        gs <- unique(dat$Pathway)
+
+        tab <- matrix(0, nrow = length(gs), ncol = length(Cells))
+
+        rownames(tab) <- gs
+        colnames(tab) <- Cells
+
+        gs <- sapply(gs, function(i) {
+          which(names(siggs) == i)
+        })
+
+        for (i in 1:length(Cells)) {
+          thisCellIdx <- which(GroupInfo == Cells[i])
+
+          tab[, i] <- round(unname(
+            sapply(1:length(gs), function(k) {
+              k <- gs[k]
+              B <- table(unlist(pres[thisCellIdx]))[as.character(unname(k))] # 특정 Cell에서 유의한 회수
+              if (is.na(B)) {
+                return(0)
+              }
+              A <- pres2[names(k)]
+
+              if (is.na(A)) {
+                return(0)
+              }
+              N <- total
+              K <- length(thisCellIdx)
+
+              if (is.na(N - A) || (N==A) ){
+                return (0)
+              }
+
+              if (is.na(K - B) || (K==B) ){
+                return (0)
+              }
+
+              return( (B/(K - B)) / (A/(N - A)) )
+            })
+          ), 4)
+          # Cell, Pathway, OR
+        }
+
+        # adjusted to original OR values
+        for (i in 1:length(Cells)){
+          corGeneset <- dat$Pathway[dat$Cell == Cells[i]]
+          corOddRatio <- dat$OddsRatio[dat$Cell == Cells[i]]
+          for (g in corGeneset){
+            tab[g, Cells[i]] <- corOddRatio[corGeneset==g]
+          }
+        }
+
+        ## log scale for OR
+        tab <- log1p(tab)
+      }
+      # else { # FREQUENCY
+      #
+      #   tab <- matrix(0, nrow = length(siggs), ncol = length(Cells))
+      #
+      #   for (i in 1:length(Cells)) {
+      #     thisCellIdx <- which(GroupInfo == Cells[i])
+      #     v <- rep(0, length(siggs))
+      #
+      #     vs <- table(unlist(pres[thisCellIdx]))
+      #     nvs <- as.numeric(names(vs))
+      #     vs <- unname(vs)
+      #     v[nvs] <- vs
+      #
+      #     tab[, i] <- v / length(thisCellIdx)
+      #   }
+      #   rownames(tab) <- names(siggs)
+      #   colnames(tab) <- Cells
+      #   tab <- tab[-which(sapply(1:nrow(tab), function(i) {
+      #     sum(tab[i, ]) == 0
+      #   })), ] # remove zero
+      #
+      #   # select high in groups
+      #   high <- c()
+      #   if (TOPN == 1){
+      #     for (i in 1:ncol(tab)) {
+      #       high <- c(high, rownames(tab[order(-tab[,i]),])[1])
+      #     }
+      #   }
+      #   else{
+      #     for (i in 1:ncol(tab)) {
+      #       high <- c(high, rownames(tab[order(-tab[, i]),])[1:TOPN])
+      #     }
+      #   }
+      #
+      #   high <- unique(high)
+      #   tab <- tab[high, ]
+      # }
+
+      # saveRDS(tab, "ortab.rds")
+      return(tab)
+    }
+
+
     buildbiplot <- function(biFont, biX, biY, TOPN = 5, OddsRatio = TRUE, gsFont=5, axtxt=13, axlab=15,
                             myplot='biplot', tab=matrix(0, 0, 0)) {
 
@@ -1581,6 +1717,47 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                                             cex=1)
       )
       return(HeatPlot)
+    }
+
+    buildPWSheat <- function(tab=maxtrix(0, 0, 0)) {
+
+      if (length(rdf$df$Pathway) < 2) return (NULL)
+
+      hmtype <- ''
+
+      # Define breaks
+      mat_data <- round(tab, 2)
+      col_breaks <- c(seq(0, max(mat_data), length.out=101))
+      my_palette <- c(colorRampPalette(c("white", "blue"))(length(col_breaks)-1))
+
+
+      library(gplots)
+      pwh <- heatmap.2(mat_data,
+                             main = hmtype,
+                             density.info="none",
+                             trace="none",
+                             margins =c(20,70),
+                             col=my_palette,
+                             scale = "none",
+                             breaks=col_breaks,
+                             dendrogram="both",
+                             Colv=T,
+                             symkey=F,
+
+                             # additional control of the presentation
+                             lhei = c(2, 13),       # adapt the relative areas devoted to the matrix
+                             lwid = c(2, 10),
+                             cexRow = 1.5,
+                             cexCol = 2,
+                             key.title = NA,
+                             key.xlab = NA,
+                             key.ylab = NA,
+                             key.par = list(mar=c(4, 1, 2, 1),
+                                            mgp=c(1.5, 0.5, 0),
+                                            cex=1)
+      )
+      pwh <<- pwh
+      return(pwh)
     }
 
     buildGeneActivity <- function(selected_pathway, group, genesets, logtab) {
@@ -2771,6 +2948,55 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           buildLegend(res, img = TRUE, name = file, GroupInfo = seu$cell_type)
         }
       )
+
+      ## plot corresponding heatmap
+      if (length(rdf$df$Pathway) > 1) {
+
+        output$pwAct <- renderPlot(buildPWSheat(tab=picktab(genesets, OddsRatio = TRUE)))
+
+        output$pwActSave <- downloadHandler(
+          filename = function() {
+            "picked_pathways.pdf"
+          },
+          content = function(file) {
+
+            revRowInd <- match(c(1:length(pwh$rowInd)), pwh$rowInd)
+            revColInd <- match(c(1:length(pwh$colInd)), pwh$colInd)
+
+            pdf(file, width = 20, height = 12)
+            heatmap.2(t(pwh$carpet)[revRowInd, revColInd],
+                      main = "", # heat map title
+                      density.info="none",
+                      trace="none",
+                      margins =c(20,70),
+                      col=pwh$col,
+                      scale = "none",
+                      breaks=pwh$breaks,
+                      dendrogram = "both",
+                      Rowv = pwh$rowDendrogram,
+                      Colv=T,
+                      symkey=F,
+
+                      # # additional control of the presentation
+                      lhei = c(2, 13),
+                      lwid = c(2, 10),
+                      cexRow = 1.5,
+                      cexCol = 2,
+                      key.title = NA,
+                      key.xlab = NA,
+                      key.ylab = NA,
+                      key.par = list(mar=c(5, 1, 2, 1),
+                                     mgp=c(1.5, 0.5, 0),
+                                     cex=1)
+            )
+
+            dev.off()
+          }
+        )
+      }
+      else {
+        output$pwAct <- NULL
+      }
     })
 
     observeEvent(input$Emphasize_freq, {
