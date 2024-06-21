@@ -1728,7 +1728,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       # Define breaks
       mat_data <- round(tab, 2)
       col_breaks <- c(seq(0, max(mat_data), length.out=101))
-      my_palette <- c(colorRampPalette(c("white", "blue"))(length(col_breaks)-1))
+      my_palette <- c(colorRampPalette(c("white", "green4"))(length(col_breaks)-1))
 
 
       library(gplots)
