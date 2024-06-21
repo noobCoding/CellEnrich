@@ -1497,8 +1497,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         high <- unique(high)
         tab <- tab[high, ]
       }
-
-      # saveRDS(tab, "ortab.rds")
       return(tab)
     }
 
@@ -1571,45 +1569,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         ## log scale for OR
         tab <- log1p(tab)
       }
-      # else { # FREQUENCY
-      #
-      #   tab <- matrix(0, nrow = length(siggs), ncol = length(Cells))
-      #
-      #   for (i in 1:length(Cells)) {
-      #     thisCellIdx <- which(GroupInfo == Cells[i])
-      #     v <- rep(0, length(siggs))
-      #
-      #     vs <- table(unlist(pres[thisCellIdx]))
-      #     nvs <- as.numeric(names(vs))
-      #     vs <- unname(vs)
-      #     v[nvs] <- vs
-      #
-      #     tab[, i] <- v / length(thisCellIdx)
-      #   }
-      #   rownames(tab) <- names(siggs)
-      #   colnames(tab) <- Cells
-      #   tab <- tab[-which(sapply(1:nrow(tab), function(i) {
-      #     sum(tab[i, ]) == 0
-      #   })), ] # remove zero
-      #
-      #   # select high in groups
-      #   high <- c()
-      #   if (TOPN == 1){
-      #     for (i in 1:ncol(tab)) {
-      #       high <- c(high, rownames(tab[order(-tab[,i]),])[1])
-      #     }
-      #   }
-      #   else{
-      #     for (i in 1:ncol(tab)) {
-      #       high <- c(high, rownames(tab[order(-tab[, i]),])[1:TOPN])
-      #     }
-      #   }
-      #
-      #   high <- unique(high)
-      #   tab <- tab[high, ]
-      # }
-
-      # saveRDS(tab, "ortab.rds")
       return(tab)
     }
 
@@ -1769,7 +1728,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         memGenes <- memGenes[memGenes %in% rownames(logtab)]
 
         fullpw_data <- logtab[memGenes, which(seu$cell_type == group)]
-        # saveRDS(fullpw_data, "pw_data.rds")
 
         ### sorting genes
         avga <- rowMeans(fullpw_data)
@@ -1788,7 +1746,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           mat_data <- logtab[memGenes, which(seu$cell_type[rdf$sample_idx] == group)]
 
         }
-        # saveRDS(mat_data, "mat_data.rds")
 
         mat_data <- round(mat_data, 2)
         col_breaks <- c(seq(min(mat_data), max(mat_data), length.out=51))
@@ -2175,7 +2132,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           tmp <- as.numeric(unlist(tmp))
         })
 
-        # saveRDS(s, "s_0509.rds")
         mytoc <- toc()
         print(mytoc)
 
@@ -2288,7 +2244,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         }
 
         s <- findSigGenes(scaleCount, FCoption, seu$cell_type, coef = medianCoefficient)
-        # saveRDS(s, "s_0513.rds")
       }
       cat("s Finished\n")
 
@@ -2329,7 +2284,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         )
       )
 
-      # saveRDS(s2, 'sigGeneGroup.rds')
       output$markerdownload <- downloadHandler(
         filename = "markers_of_groups.csv",
         content = function(file) {
@@ -2435,7 +2389,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       presTab <<- presTab
 
       pres <<- pres
-      # saveRDS(pres, "pres.rds")
 
       # pres : which gene-sets are significant for each cells.
       # pres2 : for each gene-sets, how many cells are significant that gene-sets.
@@ -2445,11 +2398,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         names(pres2) <- names(genesets)[as.numeric(names(pres2))]
       }
       pres2 <<- pres2
-      # saveRDS(pres2, "pres2.rds")
 
       # ------ CellPathwayDF
       CellPathwayDF <- buildCellPathwayDF(seu$cell_type, pres, genesets, input$pwFrequency)
-      # saveRDS(genesets, "filtered_gs.rds")
 
       PP <- pathwayPvalue(seu$cell_type, pres, pres2, genesets)
 
@@ -2474,10 +2425,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       )
 
       CellPathwayDF <- CellPathwayDFP %>% filter(Qvalue > -log10(q0)) %>% filter(OddsRatio > 1)
-      #Original: "Cell"      "Pathway"   "Frequency" "N_cell"    "Size"      "Qvalue"    "OddsRatio"
-      # Order: Size, OddsRatio (OR), Qvalue (-log10), Frequency
       CellPathwayDF <- CellPathwayDF[, c(1, 2, 5, 7, 6, 3, 4)]
-
       CellPathwayDF <<- CellPathwayDF
 
       sigGS <- unique(CellPathwayDF$Pathway)
@@ -2492,7 +2440,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       Cells <<- Cells
 
       for (i in 1:length(Cells)) {
-        # thisCell <- Cells[i]
         thisCellPathways <- CellPathwayDF %>%
           filter(Cell == Cells[i]) %>%
           dplyr::select(Pathway)
@@ -3126,10 +3073,6 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       if (input$orbp == 0) {
         return(NULL)
       }
-
-      tab=toptab(genesets, TOPN = input$biCount, OddsRatio = FALSE)
-      saveRDS(tab, "toptab.rds")
-
       output$biPlot <- renderPlot(buildbiplot(input$biFont, input$biX, input$biY, TOPN = input$biCount,
                                               gsFont = input$gsFont, axtxt = input$axtxt, axlab = input$axlab,
                                               OddsRatio = TRUE,
