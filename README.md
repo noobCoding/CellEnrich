@@ -59,6 +59,30 @@ CellEnrich(CountData, GroupInfo)
 ```
 <br />  
 
+# Large datasets for testing
+Two datasets for testing CellEnrich are too big for hosting on Github so you can directly download them at [Zenodo link](https://zenodo.org/records/12194770) including:
+
+* 'GBM_sub' is the glioblastoma data from [link](https://www.nature.com/articles/s41586-023-06036-1), which contains human HFC(Highly functionally connected) and LFC(Low functionally connected) glioblastoma cells with added information of GRIA2 expression.
+* 'PD_dat' is the Parkinson's disease data from [link](https://www.nature.com/articles/s41593-022-01061-1), which contains human dopamine cell cluster information about control vs Parkinson disease.
+  
+```R
+# Download data directly at Zenodo link above!
+
+gbm_sub <- readRDS(file = "GBM_sub.rds")
+gbm_sub$count<-NormalizeData(gbm_sub$count)
+
+CellEnrich(gbm_sub$count,gbm_sub$class)
+```
+<br />  
+
+```R
+PD_dat <- readRDS("PD_dat.rds")
+PD_dat$count <- NormalizeData(PD_dat$count)
+
+CellEnrich(PD_dat$count,PD_dat$type)
+```
+<br />  
+
 ## Example with Alzheimer's data 
 
 ```R
@@ -67,43 +91,14 @@ download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Alzheime
 download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Alzheimer_CellType_sampled.RDS','Alzheimer_CellType_sampled.RDS', mode = 'wb')
 download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Human_Reactome.RData', 'Human_Reactome.RData', mode = 'wb')
 
-# Load library and data
-library(CellEnrich)
-library(Seurat)
-
 GroupInfo <- readRDS("Alzheimer_CellType_sampled.RDS")
 CountData <- readRDS("Alzheimer_Counts_sampled.RDS")
 
-# CellEnrich uses normalized count data as input
 CountData <- NormalizeData(CountData)
 
-# Run cellenrich
 CellEnrich(CountData, GroupInfo)
 ```
 <br /> 
-
-# Large datasets for testing
-Two datasets for testing CellEnrich are too big for hosting on Github so you can directly download them at [Zenodo link](https://zenodo.org/records/12194770).
-  
-```R
-# Download data directly at Zenodo link above!
-
-# Load library and data
-library(CellEnrich)
-library(Seurat)
-
-gbm_sub <- readRDS(file = "GBM_sub.rds")
-gbm_sub$count<-NormalizeData(gbm_sub$count)
-CellEnrich(gbm_sub$count,gbm_sub$class)
-```
-<br />  
-
-```R
-PD_dat <- readRDS("PD_dat.rds")
-PD_dat$count <- NormalizeData(PD_dat$count)
-CellEnrich(PD_dat$count,PD_dat$type)
-```
-<br />  
 
 ## Dependency
 
