@@ -82,27 +82,26 @@ CellEnrich(CountData, GroupInfo)
 ```
 <br /> 
 
-## Example with primary mouse dendritic cells (DCs) stimulated with lipopolysaccharide (LPS)
-
+# Large datasets for testing
+Two datasets for testing CellEnrich are too big for hosting on Github so you can directly download them at [Zenodo link](https://zenodo.org/records/12194770).
+  
 ```R
-# download minimal data to the working directory
-download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/LPS_exp.rds','LPS_exp.rds', mode = 'wb')
-download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Mouse_WikiPathways.RData', 'Mouse_WikiPathways.RData', mode = 'wb')
+# Download data directly at Zenodo link above!
 
 # Load library and data
-library(Seurat)
 library(CellEnrich)
+library(Seurat)
 
-LPS_exp <- readRDS("LPS_exp.rds")
-CountData <- LPS_exp$counts
-GroupInfo <- LPS_exp$meta
+gbm_sub <- readRDS(file = "GBM_sub.rds")
+gbm_sub$count<-NormalizeData(gbm_sub$count)
+CellEnrich(gbm_sub$count,gbm_sub$class)
+```
+<br />  
 
-# CellEnrich uses normalized count data as input
-CountData <- NormalizeData(CountData)
-
-# Run cellenrich
-CellEnrich(CountData, GroupInfo)
-
+```R
+PD_dat <- readRDS("PD_dat.rds")
+PD_dat$count <- NormalizeData(PD_dat$count)
+CellEnrich(PD_dat$count,PD_dat$type)
 ```
 <br />  
 
