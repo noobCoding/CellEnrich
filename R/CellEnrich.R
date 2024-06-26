@@ -352,7 +352,9 @@ getOddRatio <- function(GroupInfo, pres, pres2, genesets, pwFrequency) {
         return (0)
       }
 
-      return( (B/(K - B)) / (A/(N - A)) )
+      # return( (B/(K - B)) / (A/(N - A)) )
+      return ( (B/(K - B)) / ((A - B) /((N - K) - (A - B))) )
+
     }))
 
     OR <- round(OR, 4)
@@ -869,45 +871,43 @@ CellEnrichUI <- function(GroupInfo) {
           material_row(
             material_card(
               title = "",
+              material_row(
               DT::dataTableOutput("legendTable"),
-              shiny::downloadButton("legenddn", "Save Legend", style = "background-color : #616161 !important; display:none;")
+                shiny::downloadButton("sppcdn", "Cell-Pathway P-values", style = "background-color : #616161 !important"),
+                shiny::downloadButton("tbldn", " All Significant Pathways", style = "background-color : #616161 !important"),
+                shiny::downloadButton("legenddn", "Save Legend", style = "background-color : #616161 !important; display:none;")
+              )
             )
           ),
           material_row(
-            material_card(
-              title = shiny::tags$h4("User chosen Pathways"), divider = TRUE,
-              DT::DTOutput("userpw"),
-              material_row(
-                material_button("Emphasize", "Plot the Selected Pathways", color = "blue darken-2"),
-                material_button("ClearList", "Clear List", color = "blue darken-2")
-              ),
-              material_row(
-                shiny::downloadButton("sppcdn", "Cell-Pathway (P-values)", style = "background-color : #616161 !important"),
-                shiny::downloadButton("tbldn", " All Significant Pathways", style = "background-color : #616161 !important")
-              )
+            material_column(
+              material_card(
+                title = shiny::tags$h4("User-selected pathways"), divider = TRUE,
+                DT::DTOutput("userpw"),
+                material_row(
+                  material_button("Emphasize", "Plot the Selected Pathways", color = "blue darken-2"),
+                  material_button("ClearList", "Clear List", color = "blue darken-2")
+                )
+              ), width = 3
             ),
 
             # heatmap of selected pws ####
-            material_card(
-              title = shiny::tags$h4("Odds Ratio of selected pathways in groups"), divider = TRUE,
-              material_row(
-                material_column(
-                  plotOutput("pwAct", height = "700px")
-                  , width = 10
-                )
-              ),
-              material_row(
-                material_column(
-                  width = 3
+            material_column(
+              material_card(
+                title = shiny::tags$h4("Heatmap for user-selected pathways (odds ratio)"), divider = TRUE,
+                material_row(
+                  material_column(
+                    plotOutput("pwAct", height = "650px")
+                    , width = 12
+                  )
                 ),
-                material_column(
-                  shiny::downloadButton("pwActSave", "Save Pathway Heatmap", style = "background-color : #616161 !important")
-                  , width = 6
-                ),
-                material_column(
-                  width = 3
+                material_row(
+                  material_column(
+                    shiny::downloadButton("pwActSave", "Save Pathway Heatmap", style = "background-color : #616161 !important")
+                    , width = 12
+                  )
                 )
-              )
+              ), width = 9
             ),
 
             tags$head(
@@ -937,7 +937,7 @@ CellEnrichUI <- function(GroupInfo) {
           ),
 
           material_card(
-            title = shiny::tags$h4("Gene Activity (GA) Map"), divider = TRUE,
+            title = shiny::tags$h4("Gene Activity: gene expression profiles in selected pathway"), divider = TRUE,
             material_row(
               material_column(
                 plotOutput("geneAct", height = "1000px")
@@ -945,17 +945,17 @@ CellEnrichUI <- function(GroupInfo) {
               )
             ),
             material_row(
-              material_column(
-                width = 3
-              ),
-              material_column(
+              # material_column(
+              #   width = 3
+              # ),
+              # material_column(
                 shiny::downloadButton("actScore", "Save GA Map", style = "background-color : #616161 !important"),
                 shiny::downloadButton("actScoredata", "Save GA Data", style = "background-color : #616161 !important")
-                , width = 6
-              ),
-              material_column(
-                width = 3
-              )
+                # , width = 6
+              # ),
+              # material_column(
+              #   width = 3
+              # )
             )
           )
         ), width = 12
@@ -967,7 +967,7 @@ CellEnrichUI <- function(GroupInfo) {
       material_card(
         title = "",
         material_card(
-          title = shiny::tags$h4("Biplot between top pathways and groups"), divider = TRUE,
+          title = shiny::tags$h4("Biplot between top pathways and cell groups"), divider = TRUE,
           material_row(
             material_column(
               plotOutput("biPlot", height = "900px"),
@@ -997,7 +997,7 @@ CellEnrichUI <- function(GroupInfo) {
           ),
         ),
         material_card(
-          title = shiny::tags$h4("Heatmap between top pathways and groups"), divider = TRUE,
+          title = shiny::tags$h4("Heatmap for top pathways in cell groups"), divider = TRUE,
           material_row(
             material_column(
               plotOutput("heatPlot", height = "1000px"),
@@ -1695,7 +1695,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                              main = hmtype,
                              density.info="none",
                              trace="none",
-                             margins =c(25,70),
+                             margins =c(20,70),
                              col=my_palette,
                              scale = "none",
                              breaks=col_breaks,
@@ -1705,7 +1705,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
                              # additional control of the presentation
                              lhei = c(2, 13),       # adapt the relative areas devoted to the matrix
-                             lwid = c(2, 10),
+                             lwid = c(2, 13),
                              cexRow = 1.5,
                              cexCol = 2,
                              key.title = NA,
@@ -2915,7 +2915,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                       main = "", # heat map title
                       density.info="none",
                       trace="none",
-                      margins =c(25,70),
+                      margins =c(20,70),
                       col=pwh$col,
                       scale = "none",
                       breaks=pwh$breaks,
@@ -2926,7 +2926,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
 
                       # # additional control of the presentation
                       lhei = c(2, 13),
-                      lwid = c(2, 10),
+                      lwid = c(2, 13),
                       cexRow = 1.5,
                       cexCol = 2,
                       key.title = NA,
