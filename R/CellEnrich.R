@@ -706,7 +706,7 @@ CellEnrichUI <- function(GroupInfo) {
                   step_size = 10
                 )
               )
-              , width = 2 ## column width
+              , width = 3 ## column width
             ),
 
             #---- Method options ####
@@ -727,6 +727,43 @@ CellEnrichUI <- function(GroupInfo) {
                     )
 
                 })
+              ),
+
+              material_row(
+                material_card( title = HTML("<font color='black' size='5'> </font>"),
+                               material_number_box(
+                                 input_id = "minGenesetSize",
+                                 label = HTML("<font color='black' size='4.5'>Minimum Geneset Size</font>"), #"Minimum Gene-set Size",
+                                 min_value = 10,
+                                 max_value = 30,
+                                 initial_value = 15,
+                                 step_size = 5
+                               ),
+                               material_number_box(
+                                 input_id = "maxGenesetSize",
+                                 label = HTML("<font color='black' size='4.5'>Maximum Geneset Size</font>"), #"Maximum Gene-set Size",
+                                 min_value = 250,
+                                 max_value = 750,
+                                 initial_value = 500,
+                                 step_size = 5
+                               ),
+                               material_number_box(
+                                 input_id = "pwFrequency",
+                                 label = HTML("<font color='black' size='4.5'>Pathway Frequency</font>"),
+                                 min_value = 0,
+                                 max_value = 0.5,
+                                 initial_value = 0.3,
+                                 step_size = 0.05
+                               ),
+                               material_number_box(
+                                 input_id = "qvalueCutoff",
+                                 label = HTML("<font color='black' size='4.5'>Q-value threshold</font>"),
+                                 min_value = 0,
+                                 max_value = 1,
+                                 initial_value = 0.05,
+                                 step_size = 0.01
+                               )
+                )
               )
               , width = 4 ## column width
             ),
@@ -763,44 +800,7 @@ CellEnrichUI <- function(GroupInfo) {
                   fileInput("user_gs", "", placeholder = "RData format is required!"),
                 )
               ),
-              width = 3
-            ),
-            material_column(
-              material_card( title = HTML("<font color='black' size='5'> </font>"),
-                             material_number_box(
-                               input_id = "minGenesetSize",
-                               label = HTML("<font color='black' size='4.5'>Minimum Geneset Size</font>"), #"Minimum Gene-set Size",
-                               min_value = 10,
-                               max_value = 30,
-                               initial_value = 15,
-                               step_size = 5
-                             ),
-                             material_number_box(
-                               input_id = "maxGenesetSize",
-                               label = HTML("<font color='black' size='4.5'>Maximum Geneset Size</font>"), #"Maximum Gene-set Size",
-                               min_value = 250,
-                               max_value = 750,
-                               initial_value = 500,
-                               step_size = 5
-                             ),
-                             material_number_box(
-                               input_id = "pwFrequency",
-                               label = HTML("<font color='black' size='4.5'>Pathway Frequency</font>"),
-                               min_value = 0,
-                               max_value = 0.5,
-                               initial_value = 0.3,
-                               step_size = 0.05
-                             ),
-                             material_number_box(
-                               input_id = "qvalueCutoff",
-                               label = HTML("<font color='black' size='4.5'>Q-value threshold</font>"),
-                               min_value = 0,
-                               max_value = 1,
-                               initial_value = 0.05,
-                               step_size = 0.01
-                             )
-              ),
-              width = 3
+              width = 4
             )
           ),
           shiny::tags$div(class = "runbutton",
