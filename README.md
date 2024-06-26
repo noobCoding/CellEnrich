@@ -60,13 +60,12 @@ CellEnrich(CountData, GroupInfo)
 <br />  
 
 # Large datasets for testing
-Two datasets for testing CellEnrich are too big for hosting on Github so you can directly download them at [Zenodo link](https://zenodo.org/records/12194770) including:
+Two datasets for testing CellEnrich are too big for hosting on GitHub so you can directly download them at [Zenodo link](https://zenodo.org/records/12194770) including:
 
 * 'GBM_sub' is the glioblastoma data from [link](https://www.nature.com/articles/s41586-023-06036-1), which contains human HFC(Highly functionally connected) and LFC(Low functionally connected) Glioblastoma cells with added information of GRIA2 expression.
-* 'PD_dat' is the Parkinson's disease data from [link](https://www.nature.com/articles/s41593-022-01061-1), which contains human dopamine cell cluster information about Parkinson disease vs. Control.
-  
+ 
 ```R
-# Download data directly at Zenodo link above!
+# Download data directly at the Zenodo link above!
 
 gbm_sub <- readRDS(file = "GBM_sub.rds")
 gbm_sub$count<-NormalizeData(gbm_sub$count)
@@ -75,6 +74,7 @@ CellEnrich(gbm_sub$count,gbm_sub$class)
 ```
 <br />  
 
+* 'PD_dat' is the Parkinson's disease data from [link](https://www.nature.com/articles/s41593-022-01061-1), which contains human dopamine cell cluster information about Parkinson's disease vs. Control.
 ```R
 PD_dat <- readRDS("PD_dat.rds")
 PD_dat$count <- NormalizeData(PD_dat$count)
