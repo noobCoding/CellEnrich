@@ -352,8 +352,12 @@ getOddRatio <- function(GroupInfo, pres, pres2, genesets, pwFrequency) {
         return (0)
       }
 
-      # return( (B/(K - B)) / (A/(N - A)) )
-      return ( (B/(K - B)) / ((A - B) /((N - K) - (A - B))) )
+      tor <- (B/(K - B)) / ((A - B) /((N - K) - (A - B)))
+
+      if (is.infinite(tor)){
+        return (0)
+      }
+      return ( tor  )
 
     }))
 
@@ -1442,7 +1446,12 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                 return (0)
               }
 
-              return( (B/(K - B)) / (A/(N - A)) )
+              tor <- (B/(K - B)) / ((A - B) /((N - K) - (A - B)))
+
+              if (is.infinite(tor)){
+                return (0)
+              }
+              return ( tor  )
             })
           ), 4)
           # Cell, Pathway, OR
@@ -1551,7 +1560,12 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                 return (0)
               }
 
-              return( (B/(K - B)) / (A/(N - A)) )
+              tor <- (B/(K - B)) / ((A - B) /((N - K) - (A - B)))
+
+              if (is.infinite(tor)){
+                return (0)
+              }
+              return ( tor  )
             })
           ), 4)
           # Cell, Pathway, OR
@@ -3073,6 +3087,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
       if (input$orbp == 0) {
         return(NULL)
       }
+
       output$biPlot <- renderPlot(buildbiplot(input$biFont, input$biX, input$biY, TOPN = input$biCount,
                                               gsFont = input$gsFont, axtxt = input$axtxt, axlab = input$axlab,
                                               OddsRatio = TRUE,
