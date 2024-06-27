@@ -730,7 +730,7 @@ CellEnrichUI <- function(GroupInfo) {
               ),
 
               material_row(
-                material_card( title = HTML("<font color='black' size='5'> </font>"),
+                material_card( title = HTML("<font color='black' size='5'>Geneset Options</font></style>"),
                                material_number_box(
                                  input_id = "minGenesetSize",
                                  label = HTML("<font color='black' size='4.5'>Minimum Geneset Size</font>"), #"Minimum Gene-set Size",
@@ -1695,7 +1695,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                              main = hmtype,
                              density.info="none",
                              trace="none",
-                             margins =c(20,70),
+                             margins =c(20,75),
                              col=my_palette,
                              scale = "none",
                              breaks=col_breaks,
@@ -1704,8 +1704,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                              symkey=F,
 
                              # additional control of the presentation
-                             lhei = c(2, 13),       # adapt the relative areas devoted to the matrix
-                             lwid = c(2, 13),
+                             lhei = c(3, 15),       # adapt the relative areas devoted to the matrix
+                             lwid = c(2, 20),
                              cexRow = 1.5,
                              cexCol = 2,
                              key.title = NA,
@@ -2915,7 +2915,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                       main = "", # heat map title
                       density.info="none",
                       trace="none",
-                      margins =c(20,70),
+                      margins =c(20,75),
                       col=pwh$col,
                       scale = "none",
                       breaks=pwh$breaks,
@@ -2925,8 +2925,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                       symkey=F,
 
                       # # additional control of the presentation
-                      lhei = c(2, 13),
-                      lwid = c(2, 13),
+                      lhei = c(3, 15),       # adapt the relative areas devoted to the matrix
+                      lwid = c(2, 20),
                       cexRow = 1.5,
                       cexCol = 2,
                       key.title = NA,
