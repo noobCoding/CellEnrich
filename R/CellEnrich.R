@@ -688,31 +688,8 @@ CellEnrichUI <- function(GroupInfo) {
           style = "border : solid 0.5em #1976d2",
           material_row(
            material_column(
-              material_card(
-                radioButtons(
-                  "plotOption",
-                  label = HTML("<font color='black' size='5'>Scatter Plot</font>"),#"Scatter Plot",
-                  choiceNames = list(
-                    HTML("<font color='black' size='4'>PCA</font>"),
-                    HTML("<font color='black' size='4'>TSNE</font>"),
-                    HTML("<font color='black' size='4'>UMAP</font>")
-                  ),
-                  choiceValues = c("PCA", "TSNE", "UMAP"),
-                  selected = "UMAP"
-                ),
-
-                material_number_box(
-                  input_id = "topdims",
-                  label = HTML("<font color='black' size='4'>N principal components</font>"), # top dims
-                  min_value = 30,
-                  max_value = 100,
-                  initial_value = 50,
-                  step_size = 10
-                )
-              )
-              , width = 3 ## column width
+               width = 2 ## column width
             ),
-
             #---- Method options ####
             material_column(
               material_row(
@@ -729,47 +706,33 @@ CellEnrichUI <- function(GroupInfo) {
                         tab_content[[i]]
                       )
                     )
-
                 })
               ),
-
               material_row(
-                material_card( title = HTML("<font color='black' size='5'>Geneset Options</font></style>"),
-                               material_number_box(
-                                 input_id = "minGenesetSize",
-                                 label = HTML("<font color='black' size='4.5'>Minimum Geneset Size</font>"), #"Minimum Gene-set Size",
-                                 min_value = 10,
-                                 max_value = 30,
-                                 initial_value = 15,
-                                 step_size = 5
-                               ),
-                               material_number_box(
-                                 input_id = "maxGenesetSize",
-                                 label = HTML("<font color='black' size='4.5'>Maximum Geneset Size</font>"), #"Maximum Gene-set Size",
-                                 min_value = 250,
-                                 max_value = 750,
-                                 initial_value = 500,
-                                 step_size = 5
-                               ),
-                               material_number_box(
-                                 input_id = "pwFrequency",
-                                 label = HTML("<font color='black' size='4.5'>Pathway Frequency</font>"),
-                                 min_value = 0,
-                                 max_value = 0.5,
-                                 initial_value = 0.3,
-                                 step_size = 0.05
-                               ),
-                               material_number_box(
-                                 input_id = "qvalueCutoff",
-                                 label = HTML("<font color='black' size='4.5'>Q-value threshold</font>"),
-                                 min_value = 0,
-                                 max_value = 1,
-                                 initial_value = 0.05,
-                                 step_size = 0.01
-                               )
+                material_card(
+                  radioButtons(
+                    "plotOption",
+                    label = HTML("<font color='black' size='5'>Scatter Plot</font>"),#"Scatter Plot",
+                    choiceNames = list(
+                      HTML("<font color='black' size='4'>PCA</font>"),
+                      HTML("<font color='black' size='4'>TSNE</font>"),
+                      HTML("<font color='black' size='4'>UMAP</font>")
+                    ),
+                    choiceValues = c("PCA", "TSNE", "UMAP"),
+                    selected = "UMAP"
+                  ),
+
+                  material_number_box(
+                    input_id = "topdims",
+                    label = HTML("<font color='black' size='4'>N principal components</font>"), # top dims
+                    min_value = 30,
+                    max_value = 100,
+                    initial_value = 50,
+                    step_size = 10
+                  )
                 )
               )
-              , width = 4 ## column width
+              , width = 3 ## column width
             ),
             material_column(
               material_card(
@@ -804,8 +767,47 @@ CellEnrichUI <- function(GroupInfo) {
                   fileInput("user_gs", "", placeholder = "RData format is required!"),
                 )
               ),
-              width = 4
-            )
+              width = 3
+            ),
+           material_column(
+             material_row(
+               material_card( title = HTML("<font color='black' size='5'>Geneset Options</font></style>"),
+                              material_number_box(
+                                input_id = "minGenesetSize",
+                                label = HTML("<font color='black' size='4.5'>Minimum Geneset Size</font>"), #"Minimum Gene-set Size",
+                                min_value = 10,
+                                max_value = 30,
+                                initial_value = 15,
+                                step_size = 5
+                              ),
+                              material_number_box(
+                                input_id = "maxGenesetSize",
+                                label = HTML("<font color='black' size='4.5'>Maximum Geneset Size</font>"), #"Maximum Gene-set Size",
+                                min_value = 250,
+                                max_value = 750,
+                                initial_value = 500,
+                                step_size = 5
+                              ),
+                              material_number_box(
+                                input_id = "pwFrequency",
+                                label = HTML("<font color='black' size='4.5'>Pathway Frequency</font>"),
+                                min_value = 0,
+                                max_value = 0.5,
+                                initial_value = 0.3,
+                                step_size = 0.05
+                              ),
+                              material_number_box(
+                                input_id = "qvalueCutoff",
+                                label = HTML("<font color='black' size='4.5'>Q-value threshold</font>"),
+                                min_value = 0,
+                                max_value = 1,
+                                initial_value = 0.05,
+                                step_size = 0.01
+                              )
+               )
+             ),
+             width = 2
+           )
           ),
           shiny::tags$div(class = "runbutton",
                           solvedButton(
