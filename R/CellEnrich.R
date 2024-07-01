@@ -1711,7 +1711,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                              main = hmtype,
                              density.info="none",
                              trace="none",
-                             margins =c(20,75),
+                             margins =c(20, 65),
                              col=my_palette,
                              scale = "none",
                              breaks=col_breaks,
@@ -2931,7 +2931,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
                       main = "", # heat map title
                       density.info="none",
                       trace="none",
-                      margins =c(20,75),
+                      margins =c(20,65),
                       col=pwh$col,
                       scale = "none",
                       breaks=pwh$breaks,
