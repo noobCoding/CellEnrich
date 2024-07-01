@@ -688,7 +688,7 @@ CellEnrichUI <- function(GroupInfo) {
           style = "border : solid 0.5em #1976d2",
           material_row(
            material_column(
-               width = 2 ## column width
+               width = 1 ## column width
             ),
             #---- Method options ####
             material_column(
@@ -732,7 +732,7 @@ CellEnrichUI <- function(GroupInfo) {
                   )
                 )
               )
-              , width = 3 ## column width
+              , width = 4 ## column width
             ),
             material_column(
               material_card(
@@ -806,7 +806,7 @@ CellEnrichUI <- function(GroupInfo) {
                               )
                )
              ),
-             width = 2
+             width = 3
            )
           ),
           shiny::tags$div(class = "runbutton",
