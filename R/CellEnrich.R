@@ -52,7 +52,7 @@ getTU <- function(CountData, GroupInfo, plotOption='UMAP', topdims= 50) {
   nfeat <- nrow(CountData)
   nfeat <- min(100*round(nfeat/100,0), 3000)
 
-  seu <- NormalizeData(seu)
+  seu <- NormalizeData(seu, verbose=F)
   seu@assays$RNA@layers$data <- seu@assays$RNA@layers$counts
   seu <- ScaleData(seu, do.center=T)
   seu <- FindVariableFeatures(seu, nfeatures = nfeat)
