@@ -1,11 +1,10 @@
 pandoc: 3.1.11
-pkgdown: 2.0.9
+pkgdown: 2.1.0
 pkgdown_sha: ~
 articles:
   how-to-install: how-to-install.html
   pbmc-2700-tutorial: pbmc-2700-tutorial.html
-last_built: 2024-07-01T12:48Z
+last_built: 2024-08-14T09:44Z
 urls:
   reference: https://noobcoding.github.io/CellEnrich/reference
   article: https://noobcoding.github.io/CellEnrich/articles
-
