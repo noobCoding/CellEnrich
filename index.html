@@ -102,18 +102,23 @@
 <p><br></p>
 </div>
 <div class="section level2">
-<h2 id="example-with-pbmc_3k-data">Example with PBMC_3K data<a class="anchor" aria-label="anchor" href="#example-with-pbmc_3k-data"></a>
+<h2 id="load-essential-libraries">Load essential libraries<a class="anchor" aria-label="anchor" href="#load-essential-libraries"></a>
 </h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/noobcoding/CellEnrich" class="external-link">CellEnrich</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://satijalab.org/seurat" class="external-link">Seurat</a></span><span class="op">)</span></span></code></pre></div>
+<p><br></p>
+</div>
+<div class="section level2">
+<h2 id="example-with-pbmc_3k-data">Example with PBMC_3K data<a class="anchor" aria-label="anchor" href="#example-with-pbmc_3k-data"></a>
+</h2>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Download data, if not downloaded</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span><span class="st">'https://github.com/noobcoding/CellEnrich/raw/master/data/pbmcData.RData'</span>,<span class="st">'pbmcData.RData'</span>, mode <span class="op">=</span> <span class="st">'wb'</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span><span class="st">'https://github.com/noobcoding/CellEnrich/raw/master/data/pbmcClustInfo.RData'</span>,<span class="st">'pbmcClustInfo.RData'</span>, mode <span class="op">=</span> <span class="st">'wb'</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span><span class="st">'https://github.com/noobcoding/CellEnrich/raw/master/data/Human_Reactome.RData'</span>, <span class="st">'Human_Reactome.RData'</span>, mode <span class="op">=</span> <span class="st">'wb'</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Load library and data</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/noobcoding/CellEnrich" class="external-link">CellEnrich</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://satijalab.org/seurat" class="external-link">Seurat</a></span><span class="op">)</span></span>
-<span></span>
+<span><span class="co"># Load data</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/load.html" class="external-link">load</a></span><span class="op">(</span><span class="st">"pbmcData.RData"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/load.html" class="external-link">load</a></span><span class="op">(</span><span class="st">"pbmcClustInfo.RData"</span><span class="op">)</span></span>
 <span></span>
@@ -135,7 +140,7 @@
 <ul>
 <li>‘GBM_sub’ is the Glioblastoma data from <a href="https://www.nature.com/articles/s41586-023-06036-1" class="external-link">link</a>, which contains human HFC(Highly functionally connected) and LFC(Low functionally connected) Glioblastoma cells with added information of GRIA2 expression.</li>
 </ul>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Glioblastoma data can be directly downloaded using the Zenodo link above!</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span><span class="st">'https://github.com/noobcoding/CellEnrich/raw/master/data/Human_WikiPathways.RData'</span>, <span class="st">'Human_WikiPathways.RData'</span>, mode <span class="op">=</span> <span class="st">'wb'</span><span class="op">)</span></span>
 <span></span>
@@ -147,7 +152,7 @@
 <ul>
 <li>‘PD_dat’ is the Parkinson’s disease data from <a href="https://www.nature.com/articles/s41593-022-01061-1" class="external-link">link</a>, which contains human dopamine cell cluster information about Parkinson’s disease vs. Control.</li>
 </ul>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Parkinson's disease data can be directly downloaded using the Zenodo link above!</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span><span class="st">'https://github.com/noobcoding/CellEnrich/raw/master/data/Human_Reactome.RData'</span>, <span class="st">'Human_Reactome.RData'</span>, mode <span class="op">=</span> <span class="st">'wb'</span><span class="op">)</span></span>
 <span></span>
@@ -159,7 +164,7 @@
 <div class="section level2">
 <h2 id="example-with-alzheimers-data">Example with Alzheimer’s data<a class="anchor" aria-label="anchor" href="#example-with-alzheimers-data"></a>
 </h2>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Download Alzheimer's data to the working directory</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span><span class="st">'https://github.com/noobcoding/CellEnrich/raw/master/data/Alzheimer_Counts_sampled.RDS'</span>,<span class="st">'Alzheimer_Counts_sampled.RDS'</span>, mode <span class="op">=</span> <span class="st">'wb'</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span><span class="st">'https://github.com/noobcoding/CellEnrich/raw/master/data/Alzheimer_CellType_sampled.RDS'</span>,<span class="st">'Alzheimer_CellType_sampled.RDS'</span>, mode <span class="op">=</span> <span class="st">'wb'</span><span class="op">)</span></span>
