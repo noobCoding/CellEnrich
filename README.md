@@ -64,7 +64,7 @@ CellEnrich(CountData, GroupInfo)
 ```
 <br />  
 
-# Large datasets for testing
+## Large datasets for testing
 Two datasets for testing CellEnrich are too big for hosting on GitHub so you can directly download them at [Zenodo link](https://zenodo.org/records/13891393) including:
 
 * 'GBM_sub' is the Glioblastoma data from [link](https://www.nature.com/articles/s41586-023-06036-1), which contains human HFC(Highly functionally connected) and LFC(Low functionally connected) Glioblastoma cells with added information of GRIA2 expression.
