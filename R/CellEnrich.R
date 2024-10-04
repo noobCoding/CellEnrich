@@ -1,4 +1,4 @@
-## 24.05.13
+## 24.10.05
 if(!require(waiter)){
   install.packages('waiter') # install 'waiter' if not installed.
 }
@@ -71,7 +71,7 @@ getTU <- function(CountData, GroupInfo, plotOption='UMAP', topdims= 50) {
   return (seu)
 }
 
-findSigGenes <- function(v, method = "Median", Name, coef=1) {
+findSigGenes <- function(v, method = "Median", Name, coef=1, nq=4) {
 
   if (!method %in% c("Median")) stop("wrong method")
 
@@ -82,18 +82,21 @@ findSigGenes <- function(v, method = "Median", Name, coef=1) {
   cat("scaling\n")
 
   cat("define Lists\n")
-  med <- function(v, coef=1) {
-    if (is.na(median(v[v > 0]))){
-      med <- 0
+  
+  qrv <- function(v, coef=1, nq=4) {
+    qv <- quantile(v[v > 0])
+    
+    if (is.na(qv[nq])){
+      xnq <- 0
     } else {
-      med <- median(v[v > 0])
+      xnq <- qv[nq]
     }
-    return(med * coef)
+    return(coef * xnq)
   }
 
   if (method == "Median") {
     for (i in 1:ncol(v)) {
-      tmp <- which(v[, i] > med(v[, i], coef=coef))
+      tmp <- which(v[, i] > qrv(v[, i], coef=coef, nq=nq))
       if (length(tmp) == 0){
         tmp <- which(v[, i] == max(v[, i]))
       }
@@ -554,18 +557,29 @@ CellEnrichUI <- function(GroupInfo) {
   radio_names <- c("Median", "FGSEA")
   radio_ids <- c("Median", "FGSEA")
   radio_colors <- c("#1976d2", "#1976d2" )
-  # radio_colors <- c("#cc0000", "#009900" )
 
   tab_content <- list(
     material_row(
-      material_card(  title = HTML("<font color='black' size='4'> </font>"),
+      material_card(  title = "",
+                      material_dropdown(
+                        input_id = "NthQuartiles",
+                        label = HTML("<font color='black' size='4'>N-th Quartiles </font>"),
+                        choices = c(
+                          "1Q" = "2",
+                          "2Q (Median)" = "3",
+                          "3Q" = "4"
+                        ),
+                        selected = c("4"),
+                        multiple = FALSE,
+                        color = "#1976d2"
+                      ),
                       material_number_box(
                         input_id = "medianCoefficient",
-                        label = HTML("<font color='black' size='5'>Fold Change from median (max=4)</font>"),
+                        label = HTML("<font color='black' size='5'>Fold Change (max=4) from N-th Quartiles </font>"),
                         min_value = 0,
                         max_value = 4,
                         initial_value = 1.5,
-                        step_size = 0.05
+                        step_size = 0.1
                       ),
                       material_number_box(
                         input_id = "mediNsample",
@@ -724,7 +738,7 @@ CellEnrichUI <- function(GroupInfo) {
 
                   material_number_box(
                     input_id = "topdims",
-                    label = HTML("<font color='black' size='4'>N principal components</font>"), # top dims
+                    label = HTML("<font color='black' size='5'>N principal components</font>"), # top dims
                     min_value = 30,
                     max_value = 100,
                     initial_value = 50,
@@ -1392,9 +1406,9 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
   library(ggrepel)
   options(useFancyQuotes = FALSE)
 
-  if (is.factor(GroupInfo)){
-    GroupInfo <- unfactor(GroupInfo)
-  }
+  # if (is.factor(GroupInfo)){
+  #   GroupInfo <- unfactor(GroupInfo)
+  # }
 
   server <- function(input, output, session) {
 
@@ -2252,14 +2266,19 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         dfobj <<- dfobj
 
         #---- chekcing valid coef ####
+        NthQuartiles <- input$NthQuartiles
+        if (!NthQuartiles %in% c(2, 3, 4)){
+          shiny::showNotification("Not a valid N-th Quartiles.", type = "warning", duration = 30)
+          NthQuartiles = 4
+        }
+        
         medianCoefficient <- input$medianCoefficient
-
         if (medianCoefficient > 4){
           shiny::showNotification("Maximun coefficient value 4 will be used.", type = "warning", duration = 30)
           medianCoefficient = 4
         }
-
-        s <- findSigGenes(scaleCount, FCoption, seu$cell_type, coef = medianCoefficient)
+        
+        s <- findSigGenes(scaleCount, FCoption, seu$cell_type, coef = medianCoefficient, nq = NthQuartiles)
       }
       cat("s Finished\n")
 
