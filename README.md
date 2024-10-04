@@ -33,6 +33,14 @@ remotes::install_github('noobCoding/CellEnrich')
 ```
 <br /> 
 
+
+## Load essential libraries
+```R
+library(CellEnrich)
+library(Seurat)
+```
+<br />
+
 ## Example with PBMC_3K data 
 
 ```R
@@ -41,10 +49,7 @@ download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/pbmcData
 download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/pbmcClustInfo.RData','pbmcClustInfo.RData', mode = 'wb')
 download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Human_Reactome.RData', 'Human_Reactome.RData', mode = 'wb')
 
-# Load library and data
-library(CellEnrich)
-library(Seurat)
-
+# Load data
 load("pbmcData.RData")
 load("pbmcClustInfo.RData")
 
