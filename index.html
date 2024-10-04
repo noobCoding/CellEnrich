@@ -131,13 +131,13 @@
 <div class="section level1">
 <h1 id="large-datasets-for-testing">Large datasets for testing<a class="anchor" aria-label="anchor" href="#large-datasets-for-testing"></a>
 </h1>
-<p>Two datasets for testing CellEnrich are too big for hosting on GitHub so you can directly download them at <a href="https://zenodo.org/records/12194770" class="external-link">Zenodo link</a> including:</p>
+<p>Two datasets for testing CellEnrich are too big for hosting on GitHub so you can directly download them at <a href="https://zenodo.org/records/13884920" class="external-link">Zenodo link</a> including:</p>
 <ul>
 <li>‘GBM_sub’ is the Glioblastoma data from <a href="https://www.nature.com/articles/s41586-023-06036-1" class="external-link">link</a>, which contains human HFC(Highly functionally connected) and LFC(Low functionally connected) Glioblastoma cells with added information of GRIA2 expression.</li>
 </ul>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Glioblastoma data can be directly downloaded at the Zenodo link above!</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span><span class="st">'https://github.com/noobcoding/CellEnrich/raw/master/data/Human_Reactome.RData'</span>, <span class="st">'Human_Reactome.RData'</span>, mode <span class="op">=</span> <span class="st">'wb'</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># Glioblastoma data can be directly downloaded using the Zenodo link above!</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span><span class="st">'https://github.com/noobcoding/CellEnrich/raw/master/data/Human_WikiPathways.RData'</span>, <span class="st">'Human_WikiPathways.RData'</span>, mode <span class="op">=</span> <span class="st">'wb'</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">gbm_sub</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span>file <span class="op">=</span> <span class="st">"GBM_sub.rds"</span><span class="op">)</span></span>
 <span><span class="va">gbm_sub</span><span class="op">$</span><span class="va">count</span><span class="op">&lt;-</span><span class="fu"><a href="https://satijalab.org/seurat/reference/NormalizeData.html" class="external-link">NormalizeData</a></span><span class="op">(</span><span class="va">gbm_sub</span><span class="op">$</span><span class="va">count</span><span class="op">)</span></span>
@@ -148,7 +148,7 @@
 <li>‘PD_dat’ is the Parkinson’s disease data from <a href="https://www.nature.com/articles/s41593-022-01061-1" class="external-link">link</a>, which contains human dopamine cell cluster information about Parkinson’s disease vs. Control.</li>
 </ul>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Parkinson's disease data can be directly downloaded at the Zenodo link above!</span></span>
+<code class="sourceCode R"><span><span class="co"># Parkinson's disease data can be directly downloaded using the Zenodo link above!</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span><span class="st">'https://github.com/noobcoding/CellEnrich/raw/master/data/Human_Reactome.RData'</span>, <span class="st">'Human_Reactome.RData'</span>, mode <span class="op">=</span> <span class="st">'wb'</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">PD_dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="st">"PD_dat.rds"</span><span class="op">)</span></span>
@@ -229,8 +229,7 @@
 <ul>
 <li>Hai Nguyen <em><a href="mailto:hainct@unist.ac.kr" class="email">hainct@unist.ac.kr</a></em> – <a href="http://github.com/noobCoding" class="external-link">@noobCoding</a>
 </li>
-<li>Jinhwan Kim <a href="http://github.com/jhk0530" class="external-link">@jhk0530</a>
-</li>
+<li>Jinhwan Kim</li>
 <li>Prof. Dougu Nam <em><a href="mailto:dougnam@unist.ac.kr" class="email">dougnam@unist.ac.kr</a></em>
 </li>
 </ul>
@@ -288,7 +287,7 @@
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
       </footer>
