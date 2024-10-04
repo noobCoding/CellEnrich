@@ -60,13 +60,13 @@ CellEnrich(CountData, GroupInfo)
 <br />  
 
 # Large datasets for testing
-Two datasets for testing CellEnrich are too big for hosting on GitHub so you can directly download them at [Zenodo link](https://zenodo.org/records/12194770) including:
+Two datasets for testing CellEnrich are too big for hosting on GitHub so you can directly download them at [Zenodo link](https://zenodo.org/records/13884920) including:
 
 * 'GBM_sub' is the Glioblastoma data from [link](https://www.nature.com/articles/s41586-023-06036-1), which contains human HFC(Highly functionally connected) and LFC(Low functionally connected) Glioblastoma cells with added information of GRIA2 expression.
  
 ```R
-# Glioblastoma data can be directly downloaded at the Zenodo link above!
-download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Human_Reactome.RData', 'Human_Reactome.RData', mode = 'wb')
+# Glioblastoma data can be directly downloaded using the Zenodo link above!
+download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Human_WikiPathways.RData', 'Human_WikiPathways.RData', mode = 'wb')
 
 gbm_sub <- readRDS(file = "GBM_sub.rds")
 gbm_sub$count<-NormalizeData(gbm_sub$count)
@@ -77,7 +77,7 @@ CellEnrich(gbm_sub$count,gbm_sub$class)
 
 * 'PD_dat' is the Parkinson's disease data from [link](https://www.nature.com/articles/s41593-022-01061-1), which contains human dopamine cell cluster information about Parkinson's disease vs. Control.
 ```R
-# Parkinson's disease data can be directly downloaded at the Zenodo link above!
+# Parkinson's disease data can be directly downloaded using the Zenodo link above!
 download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Human_Reactome.RData', 'Human_Reactome.RData', mode = 'wb')
 
 PD_dat <- readRDS("PD_dat.rds")
@@ -131,7 +131,7 @@ CellEnrich(CountData, GroupInfo)
 
 ## Authors
 * Hai Nguyen *hainct@unist.ac.kr* -- [@noobCoding](http://github.com/noobCoding)
-* Jinhwan Kim [@jhk0530](http://github.com/jhk0530)
+* Jinhwan Kim
 * Prof. Dougu Nam *dougnam@unist.ac.kr* 
 
 ## License
