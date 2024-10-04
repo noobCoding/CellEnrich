@@ -69,9 +69,9 @@ Two datasets for testing CellEnrich are too big for hosting on GitHub so you can
 download.file('https://github.com/noobcoding/CellEnrich/raw/master/data/Human_WikiPathways.RData', 'Human_WikiPathways.RData', mode = 'wb')
 
 gbm_sub <- readRDS(file = "GBM_sub.rds")
-gbm_sub$count<-NormalizeData(gbm_sub$count)
+gbm_sub$nCount_RNA<-NormalizeData(gbm_sub$nCount_RNA)
 
-CellEnrich(gbm_sub$count,gbm_sub$class)
+CellEnrich(gbm_sub$nCount_RNA,gbm_sub$class)
 ```
 <br />  
 
