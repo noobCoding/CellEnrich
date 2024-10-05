@@ -1,7 +1,7 @@
 ---
 title: "How to install CellEnrich"
 author: "Hai Nguyen"
-date : "2023.06.20"
+date : "2024.06.20"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{How to install CellEnrich}
