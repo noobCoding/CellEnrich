@@ -136,7 +136,7 @@ CellEnrich(CountData, GroupInfo)
 
 ## Authors
 * Hai Nguyen *hainct@unist.ac.kr* -- [@noobCoding](http://github.com/noobCoding)
-* Jinhwan Kim [@jhk0530](HTTP://github.com/jhk0530)
+* Jinhwan Kim 
 * Prof. Dougu Nam *dougnam@unist.ac.kr* 
 
 ## License
