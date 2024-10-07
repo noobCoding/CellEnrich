@@ -565,9 +565,9 @@ CellEnrichUI <- function(GroupInfo) {
                         input_id = "NthQuartiles",
                         label = HTML("<font color='black' size='4'>N-th Quartiles </font>"),
                         choices = c(
-                          "1Q" = "2",
+                          "1Q (Lower Quartile)" = "2",
                           "2Q (Median)" = "3",
-                          "3Q" = "4"
+                          "3Q (Upper Quartile)" = "4"
                         ),
                         selected = c("4"),
                         multiple = FALSE,
@@ -2278,7 +2278,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           medianCoefficient = 4
         }
         
-        s <- findSigGenes(scaleCount, FCoption, seu$cell_type, coef = medianCoefficient, nq = NthQuartiles)
+        #s <- findSigGenes(scaleCount, FCoption, seu$cell_type, coef = medianCoefficient, nq = NthQuartiles)
+        s <- findSigGenes(scaleCount, FCoption, seu$cell_type, coef = 1, nq = NthQuartiles)
       }
       cat("s Finished\n")
 
