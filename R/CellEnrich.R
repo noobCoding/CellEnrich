@@ -2279,7 +2279,8 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           medianCoefficient = 4
         }
         
-        s <- findSigGenes(scaleCount, FCoption, seu$cell_type, coef = medianCoefficient, nq = NthQuartiles) ####
+        # s <- findSigGenes(scaleCount, FCoption, seu$cell_type, coef = medianCoefficient, nq = NthQuartiles) ####
+        s <- findSigGenes(scaleCount, FCoption, seu$cell_type, coef = 1, nq = NthQuartiles) ####
       }
       cat("s Finished\n")
       
