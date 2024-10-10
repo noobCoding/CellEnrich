@@ -2266,20 +2266,19 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         dfobj <<- dfobj
 
         #---- chekcing valid coef ####
-        NthQuartiles <- input$NthQuartiles
+        NthQuartiles <- as.numeric(input$NthQuartiles)
         if (!NthQuartiles %in% c(2, 3, 4)){
           shiny::showNotification("Not a valid N-th Quartiles.", type = "warning", duration = 30)
           NthQuartiles = 4
         }
         
-        medianCoefficient <- input$medianCoefficient
+        medianCoefficient <- as.numeric(input$medianCoefficient)
         if (medianCoefficient > 4){
           shiny::showNotification("Maximun coefficient value 4 will be used.", type = "warning", duration = 30)
           medianCoefficient = 4
         }
-        
-        #s <- findSigGenes(scaleCount, FCoption, seu$cell_type, coef = medianCoefficient, nq = NthQuartiles)
-        s <- findSigGenes(scaleCount, FCoption, seu$cell_type, coef = 1, nq = NthQuartiles)
+          
+        s <- findSigGenes(scaleCount, FCoption, seu$cell_type, coef = medianCoefficient, nq = NthQuartiles)        
       }
       cat("s Finished\n")
 
