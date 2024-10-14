@@ -1,4 +1,4 @@
-## 24.10.10
+## 24.10.14
 if(!require(waiter)){
   install.packages('waiter') # install 'waiter' if not installed.
 }
@@ -71,7 +71,7 @@ getTU <- function(CountData, GroupInfo, plotOption='UMAP', topdims= 50) {
   return (seu)
 }
 
-findSigGenes <- function(v, method = "Median", Name, coef=1, nq=4) {
+findSigGenes <- function(v, method = "Median", Name, coef=1.5, nq=4) {
   
   if (!method %in% c("Median")) stop("wrong method")
   
@@ -80,7 +80,7 @@ findSigGenes <- function(v, method = "Median", Name, coef=1, nq=4) {
   
   res <- list()
   
-  qrv <- function(v, coef=1, nq=4) {
+  qrv <- function(v, coef=1.5, nq=3) {
     qv <- quantile(v[v > 0])
     
     if (is.na(qv[nq])){
@@ -94,7 +94,7 @@ findSigGenes <- function(v, method = "Median", Name, coef=1, nq=4) {
   
   if (method == "Median") {
     for (i in 1:ncol(v)) {
-      tmp <- which(v[, i] > qrv(v[, i], coef=coef, nq=nq))
+      tmp <- which(v[, i] > qrv(v[, i], coef=coef, nq=3))
       
       if (length(tmp) == 0){
         tmp <- which(v[, i] == max(v[, i]))
@@ -560,25 +560,26 @@ CellEnrichUI <- function(GroupInfo) {
   tab_content <- list(
     material_row(
       material_card(  title = "",
-                      material_dropdown(
-                        input_id = "NthQuartiles",
-                        label = HTML("<font color='black' size='4'>N-th Quartiles </font>"),
-                        choices = c(
-                          "1Q (Lower Quartile)" = 2,
-                          "2Q (Median)" = 3,
-                          "3Q (Upper Quartile)" = 4
-                        ),
-                        selected = c(4),
-                        multiple = FALSE,
-                        color = "#1976d2"
-                      ),
+                      # material_dropdown(
+                      #   input_id = "NthQuartiles",
+                      #   label = HTML("<font color='black' size='4'>N-th Quartiles </font>"),
+                      #   choices = c(
+                      #     "1Q (Lower Quartile)" = 2,
+                      #     "2Q (Median)" = 3,
+                      #     "3Q (Upper Quartile)" = 4
+                      #   ),
+                      #   selected = c(4),
+                      #   multiple = FALSE,
+                      #   color = "#1976d2"
+                      # ),
                       material_number_box(
                         input_id = "medianCoefficient",
-                        label = HTML("<font color='black' size='5'>Fold Change (max=4) from N-th Quartiles </font>"),
+                        # label = HTML("<font color='black' size='5'>Fold Change (max=4) from N-th Quartiles </font>"),
+                        label = HTML("<font color='black' size='5'>Fold Change (max=4) from Median </font>"),
                         min_value = 0,
                         max_value = 4,
                         initial_value = 1.5,
-                        step_size = 0.1
+                        step_size = 0.5
                       ),
                       material_number_box(
                         input_id = "mediNsample",
@@ -2266,12 +2267,12 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
         dfobj <<- dfobj
         
         #---- checking valid coef ####
-        NthQuartiles <- as.numeric(input$NthQuartiles)
         
-        if (!NthQuartiles %in% c(2, 3, 4)){
-          shiny::showNotification("Not a valid N-th Quartiles.", type = "warning", duration = 30)
-          NthQuartiles = 4
-        }
+        # NthQuartiles <- as.numeric(input$NthQuartiles)
+        # if (!NthQuartiles %in% c(2, 3, 4)){
+        #   shiny::showNotification("Not a valid N-th Quartiles.", type = "warning", duration = 30)
+        #   NthQuartiles = 4
+        # }
         
         medianCoefficient <- as.numeric(input$medianCoefficient)
         if (medianCoefficient > 4){
@@ -2279,8 +2280,7 @@ CellEnrich <- function(CountData, GroupInfo, genesets = NULL, use.browser=TRUE) 
           medianCoefficient = 4
         }
         
-        # s <- findSigGenes(scaleCount, FCoption, seu$cell_type, coef = medianCoefficient, nq = NthQuartiles) ####
-        s <- findSigGenes(scaleCount, FCoption, seu$cell_type, coef = 1, nq = NthQuartiles) ####
+        s <- findSigGenes(scaleCount, FCoption, seu$cell_type, coef = medianCoefficient) #---find significant genes ####
       }
       cat("s Finished\n")
       
