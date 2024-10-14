@@ -8,7 +8,7 @@ Pathway Enrichment Analysis and Visualization for Single-cell Data
 
 ## Installation
 
-CellEnrich [manual](https://github.com/noobCoding/CellEnrich/blob/master/CellEnrich_manual.pdf) is available.
+CellEnrich [manual](https://github.com/noobCoding/CellEnrich/blob/master/CellEnrich_Manual.pdf) is available.
 
 NOTE: on a fresh installation, users may need to install some required interpreter compilers for the system to install other R packages:
 * C++ compiler 
