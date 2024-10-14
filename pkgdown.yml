@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   how-to-install: how-to-install.html
   pbmc-2700-tutorial: pbmc-2700-tutorial.html
-last_built: 2024-10-14T05:54Z
+last_built: 2024-10-14T05:57Z
 urls:
   reference: https://noobcoding.github.io/CellEnrich/reference
   article: https://noobcoding.github.io/CellEnrich/articles
